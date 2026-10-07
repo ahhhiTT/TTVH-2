@@ -33,6 +33,13 @@ export function GmvChart({
   return (
     <div className="relative">
       <svg viewBox={`0 0 ${width} ${height}`} className="h-auto w-full" role="img" aria-label="GMV">
+        <defs>
+          {/* One series, one hue: a light-to-dark ramp of the same blue. */}
+          <linearGradient id="gmv-bar" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="var(--chart-bar-top)" />
+            <stop offset="100%" stopColor="var(--chart-bar)" />
+          </linearGradient>
+        </defs>
         {[0.25, 0.5, 0.75].map((f) => (
           <line
             key={f}
@@ -54,7 +61,9 @@ export function GmvChart({
               {/* Bar with 4px rounded top, square at the baseline. */}
               <path
                 d={`M${cx - barW / 2},${base} V${top + r} Q${cx - barW / 2},${top} ${cx - barW / 2 + r},${top} H${cx + barW / 2 - r} Q${cx + barW / 2},${top} ${cx + barW / 2},${top + r} V${base} Z`}
-                fill="var(--chart-bar)"
+                fill="url(#gmv-bar)"
+                className="grow-y"
+                style={{ "--i": i, transition: "opacity 150ms" } as React.CSSProperties}
                 opacity={hover === null || hover === i ? 1 : 0.45}
               />
               <line

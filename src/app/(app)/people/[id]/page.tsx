@@ -1,4 +1,5 @@
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Gauge, Store, TrendingUp, Weight } from "lucide-react";
+import { MODULE_META } from "@/components/module-meta";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Badge, Card, PageHeader, StatTile, StatusLabel, td, th } from "@/components/ui";
@@ -26,6 +27,8 @@ export default async function PersonPage({ params }: PageProps<"/people/[id]">) 
         </Link>
       )}
       <PageHeader
+        icon={MODULE_META.people.icon}
+        accent={MODULE_META.people.accent}
         title={person.name}
         subtitle={[person.title, getTeam(person.teamId)?.name, manager && `${t.settings.reportsTo}: ${manager.name}`]
           .filter(Boolean)
@@ -41,21 +44,27 @@ export default async function PersonPage({ params }: PageProps<"/people/[id]">) 
       />
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatTile label={t.people.storeCount} value={String(s.items.length)} />
+        <StatTile index={1} icon={Store} accent="cyan" label={t.people.storeCount} value={String(s.items.length)} />
         <StatTile
+          featured
+          index={2}
+          icon={TrendingUp}
           label={`${t.kpi.gmv} · ${t.common.mtd}`}
           value={money(s.kpis.gmv, locale)}
           sub={s.items.length ? <StatusLabel status={s.status} label={`${pct(s.kpis.achievement, locale)} · ${t.pace[s.status]}`} /> : undefined}
         />
-        <StatTile label={t.people.weighted} value={money(s.weightedGmv, locale)} sub={t.people.weightedHint} />
+        <StatTile index={3} icon={Weight} accent="purple" label={t.people.weighted} value={money(s.weightedGmv, locale)} sub={t.people.weightedHint} />
         <StatTile
+          index={4}
+          icon={Gauge}
+          accent="orange"
           label={t.common.workload}
           value={`${s.workload}%`}
           sub={other > 0 ? `${t.common.otherProjects}: ${other}%` : undefined}
         />
       </div>
 
-      <Card title={t.people.assigned} className="mt-6" padded={false}>
+      <Card index={5} icon={Store} accent="cyan" title={t.people.assigned} className="mt-6" padded={false}>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="border-b border-hairline">

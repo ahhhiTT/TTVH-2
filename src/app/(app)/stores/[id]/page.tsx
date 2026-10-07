@@ -1,4 +1,5 @@
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, BadgeDollarSign, ChartLine, History, MousePointerClick, TrendingUp, Users } from "lucide-react";
+import { MODULE_META } from "@/components/module-meta";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Badge, Card, PageHeader, StatTile, StatusLabel, td, th } from "@/components/ui";
@@ -28,6 +29,8 @@ export default async function StoreDetailPage({ params }: PageProps<"/stores/[id
         <ArrowLeft size={14} aria-hidden /> {t.common.back}
       </Link>
       <PageHeader
+        icon={MODULE_META.stores.icon}
+        accent={MODULE_META.stores.accent}
         title={store.name}
         subtitle={`${brand?.name} · ${brand?.category} · ${t.channel[store.channel]}`}
         actions={
@@ -45,17 +48,20 @@ export default async function StoreDetailPage({ params }: PageProps<"/stores/[id
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatTile
+          featured
+          index={1}
+          icon={TrendingUp}
           label={`${t.kpi.gmv} · ${t.common.mtd}`}
           value={money(kpis.gmv, locale)}
           sub={<StatusLabel status={status} label={`${pct(kpis.achievement, locale)} · ${t.pace[status]}`} />}
         />
-        <StatTile label={t.kpi.nmv} value={money(kpis.nmv, locale)} sub={`${t.kpi.orders}: ${num(kpis.orders, locale)}`} />
-        <StatTile label={t.kpi.cr} value={pct(kpis.cr, locale, 2)} sub={`${t.kpi.aov}: ${money(kpis.aov, locale)}`} />
-        <StatTile label={t.kpi.roi} value={ratio(kpis.roi, locale)} sub={`${t.kpi.adSpend}: ${money(kpis.adSpend, locale)}`} />
+        <StatTile index={2} icon={BadgeDollarSign} accent="green" label={t.kpi.nmv} value={money(kpis.nmv, locale)} sub={`${t.kpi.orders}: ${num(kpis.orders, locale)}`} />
+        <StatTile index={3} icon={MousePointerClick} accent="purple" label={t.kpi.cr} value={pct(kpis.cr, locale, 2)} sub={`${t.kpi.aov}: ${money(kpis.aov, locale)}`} />
+        <StatTile index={4} icon={ChartLine} accent="orange" label={t.kpi.roi} value={ratio(kpis.roi, locale)} sub={`${t.kpi.adSpend}: ${money(kpis.adSpend, locale)}`} />
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
-        <Card title={t.stores.history} className="lg:col-span-2" padded={false}>
+        <Card index={5} icon={History} accent="blue" title={t.stores.history} className="lg:col-span-2" padded={false}>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="border-b border-hairline">
@@ -87,7 +93,7 @@ export default async function StoreDetailPage({ params }: PageProps<"/stores/[id
           </div>
         </Card>
 
-        <Card title={t.stores.team} padded={false}>
+        <Card index={6} icon={Users} accent="purple" title={t.stores.team} padded={false}>
           <ul className="divide-y divide-hairline">
             {team.map(({ a, person }) => {
               const linkable = isLeader(user.role) ? canViewUser(user, person.id) : person.id === user.id;

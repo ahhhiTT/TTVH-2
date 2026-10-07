@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MODULE_META } from "@/components/module-meta";
 import { notFound, redirect } from "next/navigation";
 import { Card, PageHeader, StatusLabel, td, th } from "@/components/ui";
 import { getTeam } from "@/lib/data/repo";
@@ -17,8 +18,8 @@ export default async function PeoplePage() {
 
   return (
     <>
-      <PageHeader title={t.people.title} subtitle={`${t.people.subtitle} · ${rows.length} ${t.common.people.toLowerCase()}`} />
-      <Card padded={false}>
+      <PageHeader icon={MODULE_META.people.icon} accent={MODULE_META.people.accent} title={t.people.title} subtitle={`${t.people.subtitle} · ${rows.length} ${t.common.people.toLowerCase()}`} />
+      <Card index={1} padded={false}>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="border-b border-hairline">

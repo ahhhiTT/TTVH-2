@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MODULE_META } from "@/components/module-meta";
 import { notFound } from "next/navigation";
 import { Card, EmptyState, PageHeader, StatusLabel, td, th } from "@/components/ui";
 import { money, monthLabel, pct, ratio } from "@/lib/format";
@@ -17,10 +18,12 @@ export default async function StoresPage() {
   return (
     <>
       <PageHeader
+        icon={MODULE_META.stores.icon}
+        accent={MODULE_META.stores.accent}
         title={t.stores.title}
         subtitle={`${t.stores.subtitle} · ${t.common.mtd} ${monthLabel(currentMonth(), locale)} · ${rows.length} ${t.common.stores.toLowerCase()}`}
       />
-      <Card padded={false}>
+      <Card index={1} padded={false}>
         {rows.length === 0 ? (
           <EmptyState>{t.common.noStores}</EmptyState>
         ) : (

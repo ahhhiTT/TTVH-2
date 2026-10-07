@@ -15,11 +15,19 @@ export default async function LoginPage() {
   const users = listUsers();
 
   return (
-    <div
-      className="flex min-h-screen items-center justify-center px-4 py-12"
-      style={{ background: "radial-gradient(ellipse at top, var(--sky-light), var(--canvas) 60%)" }}
-    >
-      <div className="w-full max-w-md rounded-xl border border-hairline-strong bg-canvas p-8 shadow-[var(--shadow-soft)]">
+    <div className="sky-wash relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-12">
+      {/* Slow-drifting color fields behind the card. */}
+      <span
+        aria-hidden
+        className="drift pointer-events-none absolute -top-32 -left-24 size-[28rem] rounded-full opacity-50 blur-3xl"
+        style={{ background: "radial-gradient(circle, var(--sky-mid), transparent 65%)" }}
+      />
+      <span
+        aria-hidden
+        className="drift pointer-events-none absolute -right-24 -bottom-32 size-[26rem] rounded-full opacity-40 blur-3xl"
+        style={{ background: "radial-gradient(circle, var(--accent-purple), transparent 65%)", animationDelay: "-7s" }}
+      />
+      <div className="enter relative w-full max-w-md rounded-xl border border-hairline-strong bg-canvas/90 p-8 shadow-[0_24px_64px_var(--shadow-hover)] backdrop-blur">
         <div className="mb-6 flex items-center justify-between">
           <span className="flex items-center gap-2">
             <span className="flex size-8 items-center justify-center rounded-md bg-primary text-on-primary">

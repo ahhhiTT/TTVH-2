@@ -1,9 +1,11 @@
+import { BadgeDollarSign, CalendarClock, ChartLine, CircleAlert, CircleCheck, MousePointerClick, Store, TrendingUp, TriangleAlert, Trophy, Users } from "lucide-react";
 import Link from "next/link";
+import { Hero } from "@/components/hero";
 import { GmvChart } from "@/components/gmv-chart";
-import { Card, EmptyState, PageHeader, ProgressBar, StatTile, StatusLabel, td, th } from "@/components/ui";
+import { Card, EmptyState, ProgressBar, StatTile, StatusLabel, td, th } from "@/components/ui";
 import { money, monthLabel, num, pct, ratio } from "@/lib/format";
-import { currentMonth, kpisFor, paceStatus, trendFor } from "@/lib/metrics";
-import { hasPermission, isLeader, visibleStoreIds } from "@/lib/rbac";
+import { currentMonth, kpisFor, monthElapsedShare, paceStatus, trendFor } from "@/lib/metrics";
+import { hasPermission, isLeader, visibleStoreIds, visibleUserIds } from "@/lib/rbac";
 import { getI18n, requireUser } from "@/lib/session";
 import { personRows, storeRows } from "@/lib/views";
 import { listStores } from "@/lib/data/repo";
@@ -28,11 +30,30 @@ export default async function OverviewPage() {
       ? kpisFor(new Set(listStores().map((s) => s.id)))
       : null;
 
+  // Greeting in Vietnam time regardless of where the server runs.
+  const hour = Number(
+    new Intl.DateTimeFormat("en-GB", { hour: "numeric", hour12: false, timeZone: "Asia/Ho_Chi_Minh" }).format(new Date()),
+  );
+  const greeting =
+    hour < 11 ? t.overview.greetingMorning : hour < 18 ? t.overview.greetingAfternoon : t.overview.greetingEvening;
+  const now = new Date();
+  const daysLeft = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate() - now.getDate();
+  const peopleCount = visibleUserIds(user).size;
+  const onTrack = rows.length - behind.length;
+
   return (
     <>
-      <PageHeader
-        title={t.overview.title}
-        subtitle={`${t.overview.subtitle} · ${t.common.mtd} ${monthLabel(currentMonth(), locale)} · ${scope.size} ${t.common.stores.toLowerCase()}`}
+      <Hero
+        eyebrow={`${t.overview.title} · ${t.common.mtd} ${monthLabel(currentMonth(), locale)} · ${pct(monthElapsedShare(), locale)}`}
+        title={`${greeting}, ${user.name}`}
+        line={`${t.overview.heroLine} ${t.overview.subtitle}.`}
+        chips={[
+          { icon: Store, accent: "cyan", value: String(scope.size), label: t.overview.chipStores },
+          ...(peopleCount > 1 ? [{ icon: Users, accent: "purple" as const, value: String(peopleCount), label: t.overview.chipPeople }] : []),
+          { icon: CircleCheck, accent: "green", value: String(onTrack), label: t.overview.chipOnTrack },
+          { icon: TriangleAlert, accent: "orange", value: String(behind.length), label: t.overview.chipBehind },
+          { icon: CalendarClock, accent: "blue", value: String(daysLeft), label: t.overview.daysLeft },
+        ]}
       />
 
       {scope.size === 0 ? (
@@ -43,6 +64,9 @@ export default async function OverviewPage() {
         <div className="space-y-6">
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             <StatTile
+              featured
+              index={1}
+              icon={TrendingUp}
               label={`${t.kpi.gmv} · ${t.common.mtd}`}
               value={money(kpis.gmv, locale)}
               sub={
@@ -55,13 +79,19 @@ export default async function OverviewPage() {
                 </span>
               }
             />
-            <StatTile label={t.kpi.nmv} value={money(kpis.nmv, locale)} sub={`${t.kpi.orders}: ${num(kpis.orders, locale)}`} />
+            <StatTile index={2} icon={BadgeDollarSign} accent="green" label={t.kpi.nmv} value={money(kpis.nmv, locale)} sub={`${t.kpi.orders}: ${num(kpis.orders, locale)}`} />
             <StatTile
+              index={3}
+              icon={MousePointerClick}
+              accent="purple"
               label={`${t.kpi.cr} · ${t.kpi.aov}`}
               value={pct(kpis.cr, locale, 2)}
               sub={`${t.kpi.aov}: ${money(kpis.aov, locale)} · ${t.kpi.traffic}: ${num(kpis.traffic, locale)}`}
             />
             <StatTile
+              index={4}
+              icon={ChartLine}
+              accent="orange"
               label={t.kpi.roi}
               value={ratio(kpis.roi, locale)}
               sub={`${t.kpi.adSpend}: ${money(kpis.adSpend, locale)}`}
@@ -77,7 +107,7 @@ export default async function OverviewPage() {
           <p className="text-[13px] text-muted">* {t.common.provisional}</p>
 
           <div className="grid gap-6 lg:grid-cols-5">
-            <Card title={t.overview.trend} hint={t.overview.trendHint} className="lg:col-span-3">
+            <Card index={5} icon={ChartLine} accent="blue" title={t.overview.trend} hint={t.overview.trendHint} className="lg:col-span-3">
               <GmvChart
                 labels={{ actual: t.common.actual, target: t.common.target, achievement: t.common.achievement }}
                 points={trend.map((p) => ({
@@ -91,7 +121,7 @@ export default async function OverviewPage() {
               />
             </Card>
 
-            <Card title={t.overview.alerts} hint={String(behind.length)} className="lg:col-span-2" padded={false}>
+            <Card index={6} icon={CircleAlert} accent="orange" title={t.overview.alerts} hint={String(behind.length)} className="lg:col-span-2" padded={false}>
               {behind.length === 0 ? (
                 <EmptyState>{t.overview.alertsEmpty}</EmptyState>
               ) : (
@@ -121,7 +151,7 @@ export default async function OverviewPage() {
           </div>
 
           {people.length > 0 ? (
-            <Card title={t.overview.peopleSummary} padded={false}>
+            <Card index={7} icon={Users} accent="purple" title={t.overview.peopleSummary} padded={false}>
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead className="border-b border-hairline">
@@ -154,7 +184,7 @@ export default async function OverviewPage() {
               </div>
             </Card>
           ) : (
-            <Card title={t.overview.topStores} padded={false}>
+            <Card index={7} icon={Trophy} accent="green" title={t.overview.topStores} padded={false}>
               <ul className="divide-y divide-hairline">
                 {top.map((r) => (
                   <li key={r.store.id}>

@@ -21,18 +21,33 @@
   --canvas: #ffffff;
   --canvas-soft: #fafafa;
   --surface-strong: #f0f0f3;
+  --surface-dark: #171717;
+  --on-dark: #ffffff;
+  --on-dark-soft: #b0b4ba;
   --sky-light: #cfe7ff;
+  --sky-mid: #a8c8e8;
   --warning: #ab6400;
   --warning-soft: #fff4e5;
   --success: #16a34a;
   --error: #c4373b; /* darkened from #eb8e90 so status text passes contrast on white */
   --chart-bar: #0d74ce;
+  --chart-bar-top: #47c2ff;
   --shadow-color: rgba(0, 0, 0, 0.04);
+  --shadow-hover: rgba(0, 0, 0, 0.08);
+
+  /* Module accents — identity colors for icons and plates only, never for text
+     on large areas or CTAs. Derived from the design's link/preview accents. */
+  --accent-blue: #0d74ce;
+  --accent-purple: #8145b5;
+  --accent-cyan: #0b8fc4;
+  --accent-green: #16a34a;
+  --accent-orange: #d4700a;
+  --accent-pink: #c53d8a;
 }
 
 /* Dark: Expo's dark surfaces (#171717 / #1a1a1a) become the canvas; the CTA
    inverts to white-on-black so black stays "the" action color in light mode
-   and white plays that role in dark mode. */
+   and white plays that role in dark mode. Keep both dark blocks identical. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
@@ -50,13 +65,25 @@
     --canvas: #171717;
     --canvas-soft: #0e0e0f;
     --surface-strong: #26262a;
+    --surface-dark: #000000;
+    --on-dark: #ffffff;
+    --on-dark-soft: #b0b4ba;
     --sky-light: #10263d;
+    --sky-mid: #1b2f52;
     --warning: #e8a64a;
     --warning-soft: #2b2112;
     --success: #4ccb76;
     --error: #f08a8c;
-    --chart-bar: #4a9be6;
+    --chart-bar: #3a8ee0;
+    --chart-bar-top: #6fd0ff;
     --shadow-color: rgba(0, 0, 0, 0.4);
+    --shadow-hover: rgba(0, 0, 0, 0.6);
+    --accent-blue: #5aa9f0;
+    --accent-purple: #b388e0;
+    --accent-cyan: #47c2ff;
+    --accent-green: #4ccb76;
+    --accent-orange: #f0a050;
+    --accent-pink: #ec7ab8;
   }
 }
 
@@ -76,13 +103,25 @@
   --canvas: #171717;
   --canvas-soft: #0e0e0f;
   --surface-strong: #26262a;
+  --surface-dark: #000000;
+  --on-dark: #ffffff;
+  --on-dark-soft: #b0b4ba;
   --sky-light: #10263d;
+  --sky-mid: #1b2f52;
   --warning: #e8a64a;
   --warning-soft: #2b2112;
   --success: #4ccb76;
   --error: #f08a8c;
-  --chart-bar: #4a9be6;
+  --chart-bar: #3a8ee0;
+  --chart-bar-top: #6fd0ff;
   --shadow-color: rgba(0, 0, 0, 0.4);
+  --shadow-hover: rgba(0, 0, 0, 0.6);
+  --accent-blue: #5aa9f0;
+  --accent-purple: #b388e0;
+  --accent-cyan: #47c2ff;
+  --accent-green: #4ccb76;
+  --accent-orange: #f0a050;
+  --accent-pink: #ec7ab8;
 }
 
 @theme inline {
@@ -100,6 +139,9 @@
   --color-canvas: var(--canvas);
   --color-canvas-soft: var(--canvas-soft);
   --color-surface-strong: var(--surface-strong);
+  --color-surface-dark: var(--surface-dark);
+  --color-on-dark: var(--on-dark);
+  --color-on-dark-soft: var(--on-dark-soft);
   --color-warning: var(--warning);
   --color-warning-soft: var(--warning-soft);
   --color-success: var(--success);
@@ -123,4 +165,87 @@ body {
 
 .tabular {
   font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Accent plates ----------
+   .accent-{name} sets --accent; .accent-plate tints it for icon backgrounds. */
+.accent-blue { --accent: var(--accent-blue); }
+.accent-purple { --accent: var(--accent-purple); }
+.accent-cyan { --accent: var(--accent-cyan); }
+.accent-green { --accent: var(--accent-green); }
+.accent-orange { --accent: var(--accent-orange); }
+.accent-pink { --accent: var(--accent-pink); }
+
+.accent-plate {
+  color: var(--accent);
+  background: color-mix(in oklab, var(--accent) 14%, transparent);
+}
+
+/* Status colors inside a dark card must use the dark-theme values in both themes. */
+.on-dark {
+  --warning: #e8a64a;
+  --success: #4ccb76;
+  --error: #f08a8c;
+  --surface-strong: rgba(255, 255, 255, 0.14);
+}
+
+/* ---------- Hero sky wash (Overview + Login only, per design) ---------- */
+.sky-wash {
+  background:
+    radial-gradient(60% 120% at 15% 0%, color-mix(in oklab, var(--sky-light) 90%, transparent), transparent 70%),
+    radial-gradient(50% 100% at 85% 10%, color-mix(in oklab, var(--accent-purple) 14%, transparent), transparent 70%),
+    radial-gradient(40% 80% at 60% 100%, color-mix(in oklab, var(--accent-cyan) 12%, transparent), transparent 70%),
+    var(--canvas);
+}
+
+/* ---------- Motion ---------- */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes grow-x {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+@keyframes grow-y {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+@keyframes drift {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(2%, -3%, 0) scale(1.05); }
+}
+
+/* Staggered entrance: set style="--i: n" on each item. */
+.enter {
+  animation: fade-up 480ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation-delay: calc(var(--i, 0) * 60ms);
+}
+.grow-x {
+  transform-origin: left;
+  animation: grow-x 900ms cubic-bezier(0.2, 0.7, 0.2, 1) both 200ms;
+}
+.grow-y {
+  transform-box: fill-box;
+  transform-origin: bottom;
+  animation: grow-y 700ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation-delay: calc(var(--i, 0) * 70ms + 150ms);
+}
+.drift {
+  animation: drift 14s ease-in-out infinite;
+}
+
+/* Hover lift for clickable cards — the design's single soft-drop tier. */
+.lift {
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+.lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px var(--shadow-hover);
+  border-color: color-mix(in oklab, var(--accent, var(--ink)) 35%, var(--hairline-strong));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .enter, .grow-x, .grow-y, .drift { animation: none; }
+  .lift, .lift:hover { transition: none; transform: none; }
 }

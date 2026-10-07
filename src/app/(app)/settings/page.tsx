@@ -1,5 +1,6 @@
 import { Check, Minus } from "lucide-react";
 import Link from "next/link";
+import { MODULE_META } from "@/components/module-meta";
 import { notFound } from "next/navigation";
 import { Card, PageHeader, td, th } from "@/components/ui";
 import { getUser, listTeams, listUsers } from "@/lib/data/repo";
@@ -20,13 +21,13 @@ export default async function SettingsPage() {
 
   return (
     <>
-      <PageHeader title={t.settings.title} subtitle={t.settings.subtitle} />
+      <PageHeader icon={MODULE_META.settings.icon} accent={MODULE_META.settings.accent} title={t.settings.title} subtitle={t.settings.subtitle} />
       <p className="mb-6 rounded-md border border-hairline-strong bg-canvas px-4 py-3 text-[13px] text-body">
         {t.settings.editNote}
       </p>
 
       <div className="space-y-6">
-        <Card title={t.settings.org} hint={`${people.length} ${t.common.people.toLowerCase()}`}>
+        <Card index={1} title={t.settings.org} hint={`${people.length} ${t.common.people.toLowerCase()}`}>
           <div className="mb-4 text-sm">
             <span className="font-semibold">{director?.name}</span>
             <span className="text-body"> · {director?.title}</span>
@@ -58,7 +59,7 @@ export default async function SettingsPage() {
           </div>
         </Card>
 
-        <Card title={t.settings.permissions} padded={false}>
+        <Card index={2} title={t.settings.permissions} padded={false}>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="border-b border-hairline">
