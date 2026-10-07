@@ -7,7 +7,8 @@
 // staff     → own stores and own figures
 // viewer / brand → only explicitly granted stores, no people data
 
-import { assignments, stores, teams, users } from "./data/seed";
+import { listStores, listTeams, listUsers } from "./data/repo";
+import { assignments } from "./data/seed";
 import type { Permission, Role, User } from "./data/types";
 
 export function isLeader(role: Role) {
@@ -19,6 +20,8 @@ export function hasPermission(user: User, permission: Permission) {
 }
 
 export function visibleUserIds(user: User): Set<string> {
+  const users = listUsers();
+  const teams = listTeams();
   switch (user.role) {
     case "director":
       return new Set(users.filter((u) => u.role !== "viewer" && u.role !== "brand").map((u) => u.id));
@@ -41,10 +44,13 @@ export function visibleUserIds(user: User): Set<string> {
 }
 
 export function visibleStoreIds(user: User): Set<string> {
+  const stores = listStores();
   if (user.role === "director") return new Set(stores.map((s) => s.id));
-  if (user.role === "viewer" || user.role === "brand") return new Set(user.grantedStoreIds);
+  if (user.role === "viewer" || user.role === "brand")
+    return new Set(user.grantedStoreIds.filter((id) => stores.some((s) => s.id === id)));
   const people = visibleUserIds(user);
-  return new Set(assignments.filter((a) => people.has(a.userId)).map((a) => a.storeId));
+  const live = new Set(stores.map((s) => s.id));
+  return new Set(assignments.filter((a) => people.has(a.userId) && live.has(a.storeId)).map((a) => a.storeId));
 }
 
 export function canViewStore(user: User, storeId: string) {
@@ -57,6 +63,7 @@ export function canViewUser(user: User, targetId: string) {
 
 // Which sidebar modules a role can open.
 export type ModuleKey =
+  | "home"
   | "overview"
   | "stores"
   | "people"
@@ -68,12 +75,12 @@ export type ModuleKey =
   | "settings";
 
 const MODULES_BY_ROLE: Record<Role, ModuleKey[]> = {
-  director: ["overview", "stores", "people", "planning", "tasks", "reports", "career", "knowledge", "settings"],
-  manager: ["overview", "stores", "people", "planning", "tasks", "reports", "career", "knowledge"],
-  teamlead: ["overview", "stores", "people", "planning", "tasks", "reports", "career", "knowledge"],
-  staff: ["overview", "stores", "people", "planning", "tasks", "reports", "career", "knowledge"],
-  viewer: ["overview", "stores", "knowledge"],
-  brand: ["overview", "stores", "reports"],
+  director: ["home", "overview", "stores", "people", "planning", "tasks", "reports", "career", "knowledge", "settings"],
+  manager: ["home", "overview", "stores", "people", "planning", "tasks", "reports", "career", "knowledge"],
+  teamlead: ["home", "overview", "stores", "people", "planning", "tasks", "reports", "career", "knowledge"],
+  staff: ["home", "overview", "stores", "people", "planning", "tasks", "reports", "career", "knowledge"],
+  viewer: ["home", "overview", "stores", "knowledge"],
+  brand: ["home", "overview", "stores", "reports"],
 };
 
 export function canOpen(user: User, module: ModuleKey) {

@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UpBase — Trung tâm báo cáo</title>
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   [1] DESIGN TOKENS — ĐỔI MÀU BRAND UPBASE CHỈ TRONG KHỐI NÀY
+   ═══════════════════════════════════════════════════════════════════ */
+:root{
+  --ink:#16223c;          /* chữ chính  */
+  --ink-2:#5a6577;        /* chữ phụ    */
+  --ink-3:#8b95a5;        /* chữ mờ     */
+  --paper:#eef1f5;        /* nền ngoài  */
+  --surface:#ffffff;      /* nền khối   */
+  --surface-2:#f7f9fb;
+  --line:#dde3ec;
+  --line-2:#c7d0dd;
+  --brand:#1f4e78;        /* xanh header Excel của tool cũ */
+  --brand-soft:#e6eef6;
+  --ready:#2f7a57;        /* đã có tool */
+  --ready-soft:#e4f1ea;
+  --wait:#94703a;         /* build sau  */
+  --wait-soft:#f6efe1;
+  --focus:#0d6efd;
+  --radius:10px;
+  --rail:268px;
+  --shadow:0 1px 2px rgba(22,34,60,.06), 0 8px 24px -16px rgba(22,34,60,.28);
+  --font:"Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", Arial, sans-serif;
+  color-scheme:light;
+}
+html[data-theme="dark"]{
+  --ink:#e7ecf3; --ink-2:#a3aebe; --ink-3:#77839a;
+  --paper:#0e141f; --surface:#161e2c; --surface-2:#1b2433;
+  --line:#26314420; --line:#2a3548; --line-2:#3a4760;
+  --brand:#7fb0e0; --brand-soft:#1d2b3d;
+  --ready:#7fcaa5; --ready-soft:#172c24;
+  --wait:#d9b775; --wait-soft:#2c2417;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px -18px rgba(0,0,0,.8);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--font); font-size:14px; line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+button,input,select{font:inherit; color:inherit}
+a{color:var(--brand)}
+:focus-visible{outline:2px solid var(--focus); outline-offset:2px; border-radius:4px}
+.num{font-variant-numeric:tabular-nums}
+
+/* ── Khung ────────────────────────────────────────────────────────── */
+#app{display:grid; grid-template-columns:var(--rail) 1fr; height:100vh}
+#app.wide{grid-template-columns:0 1fr}
+
+/* ── Thanh trái ───────────────────────────────────────────────────── */
+#rail{
+  background:var(--surface); border-right:1px solid var(--line);
+  display:flex; flex-direction:column; overflow:hidden;
+}
+#app.wide #rail{display:none}
+.brand{
+  display:flex; align-items:center; gap:10px;
+  padding:16px 16px 12px; border-bottom:1px solid var(--line);
+}
+.brand .mark{
+  width:26px; height:26px; border-radius:7px; background:var(--brand);
+  color:#fff; display:grid; place-items:center; font-weight:700; font-size:13px; flex:none;
+}
+html[data-theme="dark"] .brand .mark{color:#0e141f}
+.brand h1{font-size:14.5px; margin:0; font-weight:650; letter-spacing:-.01em}
+.brand p{margin:0; font-size:11.5px; color:var(--ink-3)}
+.search{padding:10px 12px; border-bottom:1px solid var(--line)}
+.search input{
+  width:100%; padding:7px 10px; border:1px solid var(--line-2); border-radius:8px;
+  background:var(--surface-2);
+}
+.search input::placeholder{color:var(--ink-3)}
+nav{flex:1; overflow-y:auto; padding:8px 8px 16px}
+.sec{margin-top:6px}
+.sec > .sec-hd{
+  display:flex; gap:9px; align-items:baseline; width:100%;
+  padding:8px 8px 5px; background:none; border:0; text-align:left; cursor:pointer;
+}
+.sec-hd .idx{
+  font-size:11px; color:var(--ink-3); width:13px; flex:none;
+  font-variant-numeric:tabular-nums;
+}
+.sec-hd .nm{font-size:12.5px; font-weight:650; color:var(--ink-2); letter-spacing:.005em}
+.sec-hd .cnt{margin-left:auto; font-size:11px; color:var(--ink-3)}
+.grp{
+  font-size:11.5px; color:var(--ink-3); padding:5px 8px 2px 30px;
+  display:flex; align-items:center; gap:8px;
+}
+.grp::after{content:""; flex:1; height:1px; background:var(--line)}
+.home-grp{padding:10px 0 6px; font-size:12px; color:var(--ink-2); font-weight:600}
+.item{
+  display:flex; align-items:center; gap:8px; width:100%;
+  padding:6px 9px 6px 30px; border:0; background:none; border-radius:8px;
+  text-align:left; cursor:pointer; color:var(--ink); font-size:13px;
+}
+.item:hover{background:var(--surface-2)}
+.item[aria-current="true"]{background:var(--brand-soft); color:var(--brand); font-weight:600}
+.item .dot{width:6px; height:6px; border-radius:50%; flex:none; background:var(--line-2)}
+.item.ok .dot{background:var(--ready)}
+.item .lbl{overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.item .plat{
+  margin-left:auto; font-size:10.5px; color:var(--ink-3); flex:none;
+  border:1px solid var(--line); border-radius:5px; padding:0 5px;
+}
+.rail-ft{
+  border-top:1px solid var(--line); padding:10px 12px;
+  display:flex; gap:6px; flex-wrap:wrap;
+}
+
+/* ── Nút ──────────────────────────────────────────────────────────── */
+.btn{
+  border:1px solid var(--line-2); background:var(--surface); border-radius:7px;
+  padding:5px 10px; cursor:pointer; font-size:12.5px; color:var(--ink-2);
+}
+.btn:hover{border-color:var(--brand); color:var(--brand)}
+.btn.primary{background:var(--brand); border-color:var(--brand); color:#fff}
+html[data-theme="dark"] .btn.primary{color:#0e141f}
+.btn.primary:hover{opacity:.9; color:#fff}
+html[data-theme="dark"] .btn.primary:hover{color:#0e141f}
+
+/* ── Vùng phải ────────────────────────────────────────────────────── */
+#main{display:flex; flex-direction:column; min-width:0; overflow:hidden}
+#bar{
+  display:flex; align-items:center; gap:10px; padding:9px 14px;
+  background:var(--surface); border-bottom:1px solid var(--line); flex:none;
+}
+#crumb{font-size:13px; color:var(--ink-2); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+#crumb b{color:var(--ink); font-weight:650}
+#src{font-size:11.5px; color:var(--ink-3); flex:none}
+#bar .sp{flex:1}
+#stage{flex:1; position:relative; overflow:auto; background:var(--paper)}
+iframe{position:absolute; inset:0; width:100%; height:100%; border:0; background:var(--surface)}
+
+/* ── Trang chủ: bản đồ build ──────────────────────────────────────── */
+.home{max-width:1080px; margin:0 auto; padding:30px 24px 60px}
+.hero{display:flex; gap:28px; align-items:flex-end; flex-wrap:wrap; margin-bottom:6px}
+.hero h2{margin:0 0 6px; font-size:24px; letter-spacing:-.02em; font-weight:650}
+.hero p{margin:0; color:var(--ink-2); max-width:62ch}
+.gauge{flex:none; text-align:right}
+.gauge .big{font-size:40px; font-weight:650; letter-spacing:-.03em; line-height:1}
+.gauge .big span{font-size:18px; color:var(--ink-3); font-weight:500}
+.gauge .cap{font-size:12px; color:var(--ink-3)}
+.track{height:5px; background:var(--line); border-radius:3px; overflow:hidden; margin:22px 0 30px}
+.track i{display:block; height:100%; background:var(--ready)}
+.map{display:grid; gap:14px}
+.card{
+  background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+  padding:14px 16px 16px; box-shadow:var(--shadow);
+}
+.card > h3{
+  margin:0 0 3px; font-size:14.5px; font-weight:650;
+  display:flex; align-items:baseline; gap:9px;
+}
+.card > h3 .idx{color:var(--ink-3); font-size:12px; font-variant-numeric:tabular-nums}
+.card > .sub{margin:0 0 12px; font-size:12.5px; color:var(--ink-3)}
+.tiles{display:grid; grid-template-columns:repeat(auto-fill,minmax(228px,1fr)); gap:8px}
+.tile{
+  display:flex; flex-direction:column; gap:3px; text-align:left;
+  border:1px solid var(--line); border-radius:8px; background:var(--surface-2);
+  padding:9px 11px; cursor:pointer;
+}
+.tile:hover{border-color:var(--brand)}
+.tile .t{font-size:13px; font-weight:600; display:flex; align-items:center; gap:7px}
+.tile .d{font-size:11.5px; color:var(--ink-3); line-height:1.45}
+.pill{
+  font-size:10.5px; padding:1px 7px; border-radius:20px; flex:none;
+  background:var(--wait-soft); color:var(--wait); border:1px solid transparent;
+}
+.pill.ok{background:var(--ready-soft); color:var(--ready)}
+
+/* ── Trạng thái trống / lỗi ───────────────────────────────────────── */
+.state{max-width:620px; margin:0 auto; padding:64px 24px}
+.state h3{margin:0 0 8px; font-size:19px; font-weight:650; letter-spacing:-.015em}
+.state p{color:var(--ink-2); margin:0 0 14px}
+.state ul{color:var(--ink-2); margin:0 0 18px; padding-left:20px}
+.state li{margin:3px 0}
+.state .row{display:flex; gap:8px; flex-wrap:wrap}
+.path{
+  font-family:ui-monospace, "Cascadia Mono", Consolas, monospace; font-size:12px;
+  background:var(--surface-2); border:1px solid var(--line); border-radius:6px; padding:1px 6px;
+}
+
+/* ── Hộp thoại cấu hình ───────────────────────────────────────────── */
+dialog{
+  border:1px solid var(--line); border-radius:12px; padding:0; max-width:620px; width:92vw;
+  background:var(--surface); color:var(--ink); box-shadow:var(--shadow);
+}
+dialog::backdrop{background:rgba(14,20,31,.5)}
+.dlg-hd{padding:16px 18px 12px; border-bottom:1px solid var(--line)}
+.dlg-hd h3{margin:0 0 4px; font-size:16px; font-weight:650}
+.dlg-hd p{margin:0; font-size:12.5px; color:var(--ink-3)}
+.dlg-bd{padding:14px 18px; max-height:56vh; overflow:auto}
+.dlg-ft{padding:12px 18px; border-top:1px solid var(--line); display:flex; gap:8px; justify-content:flex-end}
+.prow{display:grid; grid-template-columns:1fr 210px; gap:8px; align-items:center; margin-bottom:7px}
+.prow label{font-size:12.5px; color:var(--ink-2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.prow input{
+  padding:5px 8px; border:1px solid var(--line-2); border-radius:6px;
+  background:var(--surface-2); font-size:12px; width:100%;
+}
+.note{font-size:12px; color:var(--ink-3); margin:14px 0 0; line-height:1.5}
+
+#toast{
+  position:fixed; left:50%; bottom:26px; transform:translateX(-50%) translateY(10px);
+  background:var(--ink); color:var(--paper); padding:8px 14px; border-radius:8px;
+  font-size:13px; opacity:0; pointer-events:none; transition:opacity .18s, transform .18s; z-index:9;
+}
+#toast.on{opacity:1; transform:translateX(-50%) translateY(0)}
+@media (prefers-reduced-motion:reduce){*{transition:none !important}}
+
+@media (max-width:900px){
+  #app{grid-template-columns:1fr; grid-template-rows:auto 1fr}
+  #rail{border-right:0; border-bottom:1px solid var(--line); max-height:46vh}
+  #app.wide #rail{display:flex}
+  .hero{gap:14px}
+  .gauge{text-align:left}
+}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <aside id="rail">
+    <div class="brand">
+      <div class="mark">U</div>
+      <div>
+        <h1>Trung tâm báo cáo</h1>
+        <p>UpBase — vận hành sàn</p>
+      </div>
+    </div>
+    <div class="search">
+      <input id="q" type="search" placeholder="Tìm báo cáo… (phím /)" autocomplete="off">
+    </div>
+    <nav id="nav"></nav>
+    <div class="rail-ft">
+      <button class="btn" id="btnFolder">Chọn thư mục</button>
+      <button class="btn" id="btnPaths">Đường dẫn</button>
+      <button class="btn" id="btnTheme" title="Sáng / tối">◐</button>
+    </div>
+  </aside>
+
+  <section id="main">
+    <div id="bar">
+      <button class="btn" id="btnRail" title="Ẩn/hiện thanh trái">☰</button>
+      <div id="crumb"><b>Bản đồ báo cáo</b></div>
+      <div class="sp"></div>
+      <span id="src"></span>
+      <button class="btn" id="btnPick">Mở file từ máy</button>
+      <button class="btn" id="btnReload">Tải lại</button>
+      <button class="btn" id="btnNew">Mở tab mới</button>
+    </div>
+    <div id="stage"></div>
+  </section>
+</div>
+
+<dialog id="dlgPaths">
+  <form method="dialog">
+    <div class="dlg-hd">
+      <h3>Đường dẫn file tool con</h3>
+      <p>Tên file đặt cạnh file hub này. Sửa ở đây nếu tool con nằm trong thư mục khác.</p>
+    </div>
+    <div class="dlg-bd" id="pathBody"></div>
+    <div class="dlg-ft">
+      <button class="btn" value="reset" id="btnResetPaths" type="button">Khôi phục mặc định</button>
+      <button class="btn primary" value="ok">Xong</button>
+    </div>
+  </form>
+</dialog>
+
+<input type="file" id="fPick" accept=".html,.htm" hidden>
+<input type="file" id="fFolder" webkitdirectory directory multiple hidden>
+<div id="toast"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   [2] MANIFEST — thêm/sửa báo cáo chỉ cần sửa khối này
+   status: 'ok'   = đã có file HTML
+           'wait' = build sau (hiện trang giữ chỗ)
+   ═══════════════════════════════════════════════════════════════════ */
+const SECTIONS = [
+ {id:'s1', name:'Tổng quan report', sub:'Bức tranh chung toàn gian hàng theo kỳ.', items:[
+   {id:'overview', label:'Tổng quan report', plat:'', status:'wait', file:'report_tong_quan.html',
+    desc:'Báo cáo tổng hợp toàn kỳ, điểm vào của mọi phân tích bên dưới. Anh đã build nhưng chưa gửi file — gửi sang là bật ngay.'},
+ ]},
+
+ {id:'s2', name:'Theo chiều ngày', sub:'Campaign và daily — chung cho mọi sàn, không tách Shopee với TikTok.', items:[
+   {id:'camp-main', group:'Campaign', label:'Campaign', plat:'', status:'ok', file:'HTMLCAMP.html',
+    desc:'Diễn biến ngày campaign: dán data thô, đọc ra xu hướng ngay.'},
+   {id:'camp-live', group:'Campaign', label:'Livestream campaign detail', plat:'', status:'ok', file:'campaign_livestream_detail.html',
+    desc:'Phân tích D-Day theo từng khung giờ — phiên nào, giờ nào tạo ra phần tăng thêm của campaign.'},
+   {id:'daily', group:'Daily', label:'Daily', plat:'', status:'wait', file:'daily.html',
+    desc:'Nhịp bán ngày thường, làm nền so sánh để biết campaign thực sự cộng thêm bao nhiêu.'},
+ ]},
+
+ {id:'s3', name:'Theo hoạt động gian hàng', sub:'Sáu nguồn traffic của gian hàng, mỗi nguồn một báo cáo.', items:[
+   {id:'act-video-kenh', label:'Video kênh', plat:'', status:'wait', file:'hd1_video_kenh.html',
+    desc:'Hiệu quả video do kênh tự sản xuất: lượt xem, click, đơn, GMV theo từng video.'},
+   {id:'act-video-koc', label:'Video KOC', plat:'', status:'ok', file:'hd2_video_koc.html',
+    desc:'Chẩn đoán video affiliate: video nào của KOC nào đang ra đơn, video nào chỉ ăn view.'},
+   {id:'act-live-shopee', label:'Livestream kênh — Shopee', plat:'Shopee', status:'ok', file:'hd3_live_shopee.html',
+    desc:'Bảng phân tích phiên live kênh trên Shopee.'},
+   {id:'act-live-tts', label:'Livestream kênh — TikTok', plat:'TTS', status:'ok', file:'hd3_live_tiktok.html',
+    desc:'Chẩn đoán phiên live TikTok theo traffic, conversion và AOV, kèm chi phí ads. Bản nhân sự đang dùng thử.'},
+   {id:'act-live-koc', label:'Livestream KOC', plat:'', status:'wait', file:'hd4_live_koc.html',
+    desc:'Phiên live do KOC chạy. Cần file export có cột host/creator — ba file raw hiện tại chưa có.'},
+   {id:'act-card', label:'Thẻ sản phẩm', plat:'', status:'wait', file:'hd5_the_san_pham.html',
+    desc:'Traffic và đơn đến từ thẻ sản phẩm trong nội dung.'},
+   {id:'act-cms', label:'CMS chung', plat:'', status:'wait', file:'hd6_cms.html',
+    desc:'Tổng hợp toàn bộ hoạt động nội dung về một mặt bằng để so sánh nguồn nào đáng đổ tiền.'},
+ ]},
+
+ {id:'s4', name:'Theo chiều sản phẩm', sub:'SKU nào kéo doanh thu, SKU nào cần xử lý tồn.', items:[
+   {id:'prd-shopee', label:'Sản phẩm — Shopee', plat:'Shopee', status:'ok', file:'sp_shopee.html',
+    desc:'Phân tích dữ liệu sản phẩm Shopee: xếp hạng SKU, vai trò sản phẩm, GMV share.'},
+   {id:'prd-tts', label:'Sản phẩm — TikTok', plat:'TTS', status:'ok', file:'sp_tiktok.html',
+    desc:'Phân tích nguồn hoạt động và hiệu quả sản phẩm trên TikTok Shop.'},
+   {id:'prd-po', label:'PO và tồn kho', plat:'', status:'ok', file:'sp_po_ton_kho.html',
+    desc:'Kế hoạch đặt hàng: đối chiếu tồn kho với tốc độ bán để biết cần nhập thêm hay cần đẩy hàng.'},
+ ]},
+
+ {id:'s5', name:'Sức khoẻ gian hàng', sub:'Chỉ số nền của shop, không thuộc một hoạt động nào.', items:[
+   {id:'health', label:'Sức khoẻ gian hàng', plat:'', status:'wait', file:'suc_khoe_gian_hang.html',
+    desc:'Điểm shop, tỷ lệ huỷ, thời gian xử lý đơn, vi phạm, đánh giá — các chỉ số quyết định hiển thị của gian hàng.'},
+ ]},
+
+ {id:'s6', name:'Checklist công việc', sub:'Việc cần làm sinh ra từ chẩn đoán.', items:[
+   {id:'checklist', label:'Checklist công việc', plat:'', status:'wait', file:'checklist.html',
+    desc:'Danh sách hành động theo tuần, gắn với nhóm bottleneck đang chiếm nhiều phiên nhất và người phụ trách.'},
+ ]},
+
+ {id:'s7', name:'Đo lường hiệu quả', sub:'Đã làm gì, kết quả ra sao.', items:[
+   {id:'impact', label:'Đo lường hiệu quả', plat:'', status:'wait', file:'do_luong_hieu_qua.html',
+    desc:'Đối chiếu tác động dự kiến với tác động thực tế sau khi làm — khép vòng lặp từ checklist về lại báo cáo.'},
+ ]},
+];
+
+/* ═══════════════════════════════════════════════════════════════════
+   [3] TRẠNG THÁI
+   ═══════════════════════════════════════════════════════════════════ */
+const LS = 'upbase_hub_v1';
+const ALL = SECTIONS.flatMap(s => s.items.map(i => ({...i, sec:s})));
+const byId = Object.fromEntries(ALL.map(i => [i.id, i]));
+const DEFAULTS = Object.fromEntries(ALL.map(i => [i.id, i.file]));
+const localSrc = {};          // id → blob URL (chỉ trong phiên làm việc)
+const frames = {};            // id → iframe (giữ nguyên state khi đổi tab)
+let current = null;
+
+const prefs = Object.assign({theme:'light', paths:{}, last:null}, load());
+function load(){ try{ return JSON.parse(localStorage.getItem(LS)) || {}; }catch(e){ return {}; } }
+function save(){ try{ localStorage.setItem(LS, JSON.stringify(prefs)); }catch(e){} }
+const pathOf = id => (prefs.paths[id] || DEFAULTS[id]);
+
+const $ = s => document.querySelector(s);
+const stage = $('#stage');
+
+/* ═══════════════════════════════════════════════════════════════════
+   [4] THANH ĐIỀU HƯỚNG
+   ═══════════════════════════════════════════════════════════════════ */
+function renderNav(filter=''){
+  const f = filter.trim().toLowerCase();
+  const nav = $('#nav'); nav.innerHTML = '';
+  SECTIONS.forEach((s, si) => {
+    const hits = s.items.filter(i =>
+      !f || (i.label + ' ' + s.name + ' ' + i.plat + ' ' + i.desc).toLowerCase().includes(f));
+    if(!hits.length) return;
+    const box = document.createElement('div'); box.className = 'sec';
+    const ok = s.items.filter(i => i.status === 'ok').length;
+    const hd = document.createElement('div'); hd.className = 'sec-hd';
+    hd.innerHTML = `<span class="idx num">${si+1}</span><span class="nm"></span>
+                    <span class="cnt num">${ok}/${s.items.length}</span>`;
+    hd.querySelector('.nm').textContent = s.name;
+    box.appendChild(hd);
+    let lastGroup = null;
+    hits.forEach(i => {
+      if(i.group && i.group !== lastGroup){
+        const g = document.createElement('div'); g.className = 'grp';
+        g.textContent = i.group; box.appendChild(g);
+      }
+      lastGroup = i.group || null;
+      const b = document.createElement('button');
+      b.className = 'item' + (i.status === 'ok' ? ' ok' : '');
+      b.setAttribute('aria-current', String(current === i.id));
+      b.innerHTML = `<span class="dot"></span><span class="lbl"></span>` +
+                    (i.plat ? `<span class="plat"></span>` : '');
+      b.querySelector('.lbl').textContent = i.label;
+      if(i.plat) b.querySelector('.plat').textContent = i.plat;
+      b.onclick = () => open(i.id);
+      box.appendChild(b);
+    });
+    nav.appendChild(box);
+  });
+  if(!nav.children.length)
+    nav.innerHTML = `<p style="padding:14px;color:var(--ink-3);font-size:12.5px">Không có báo cáo nào khớp.</p>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   [5] TRANG CHỦ — bản đồ build
+   ═══════════════════════════════════════════════════════════════════ */
+function renderHome(){
+  current = null; renderNav($('#q').value);
+  $('#crumb').innerHTML = '<b>Bản đồ báo cáo</b>';
+  $('#src').textContent = '';
+  Object.values(frames).forEach(f => f.style.display = 'none');
+  let host = stage.querySelector('.home');
+  if(host){ host.style.display = ''; return; }
+
+  const ok = ALL.filter(i => i.status === 'ok').length;
+  host = document.createElement('div'); host.className = 'home';
+  host.innerHTML = `
+    <div class="hero">
+      <div>
+        <h2>Bảy nhóm báo cáo cho một gian hàng</h2>
+        <p>Mỗi ô bên dưới là một file HTML chạy độc lập. Hub này chỉ gom chúng lại một chỗ,
+           không đọc và không gửi dữ liệu của bạn đi đâu.</p>
+      </div>
+      <div class="gauge">
+        <div class="big num">${ok}<span>/${ALL.length}</span></div>
+        <div class="cap">báo cáo đã có</div>
+      </div>
+    </div>
+    <div class="track"><i style="width:${Math.round(ok/ALL.length*100)}%"></i></div>
+    <div class="map"></div>`;
+
+  const map = host.querySelector('.map');
+  SECTIONS.forEach((s, si) => {
+    const c = document.createElement('div'); c.className = 'card';
+    c.innerHTML = `<h3><span class="idx num">${si+1}</span><span class="nm"></span></h3>
+                   <p class="sub"></p><div class="tiles"></div>`;
+    c.querySelector('.nm').textContent = s.name;
+    c.querySelector('.sub').textContent = s.sub;
+    let t = c.querySelector('.tiles'), lastGroup = null;
+    s.items.forEach(i => {
+      if(i.group && i.group !== lastGroup){
+        const g = document.createElement('div'); g.className = 'grp home-grp';
+        g.textContent = i.group; c.appendChild(g);
+        t = document.createElement('div'); t.className = 'tiles'; c.appendChild(t);
+      }
+      lastGroup = i.group || null;
+      const b = document.createElement('button'); b.className = 'tile';
+      b.innerHTML = `<span class="t"><span class="nm"></span>
+                     <span class="pill ${i.status === 'ok' ? 'ok' : ''}">${i.status === 'ok' ? 'đã có' : 'build sau'}</span></span>
+                     <span class="d"></span>`;
+      b.querySelector('.nm').textContent = i.label;
+      b.querySelector('.d').textContent = i.desc;
+      b.onclick = () => open(i.id);
+      t.appendChild(b);
+    });
+    map.appendChild(c);
+  });
+  stage.appendChild(host);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   [6] MỞ MỘT BÁO CÁO
+   ═══════════════════════════════════════════════════════════════════ */
+function open(id){
+  const it = byId[id]; if(!it) return;
+  current = id; prefs.last = id; save();
+  renderNav($('#q').value);
+  $('#crumb').innerHTML = `${esc(it.sec.name)} · <b>${esc(it.label)}</b>`;
+  const home = stage.querySelector('.home'); if(home) home.style.display = 'none';
+  Object.entries(frames).forEach(([k, f]) => f.style.display = k === id ? '' : 'none');
+  clearState();
+
+  if(it.status !== 'ok' && !localSrc[id]){ $('#src').textContent = ''; return renderPending(it); }
+
+  if(frames[id]) { $('#src').textContent = frames[id].dataset.src; return; }
+  const fr = document.createElement('iframe');
+  fr.title = it.label;
+  fr.src = localSrc[id] || pathOf(id);
+  fr.dataset.src = localSrc[id] ? 'mở từ máy' : pathOf(id);
+  $('#src').textContent = fr.dataset.src;
+  frames[id] = fr; stage.appendChild(fr);
+}
+
+function clearState(){ const s = stage.querySelector('.state'); if(s) s.remove(); }
+
+function renderPending(it){
+  const d = document.createElement('div'); d.className = 'state';
+  d.innerHTML = `
+    <h3></h3>
+    <p class="desc"></p>
+    <p>Khi file đã build xong, đặt nó cạnh file hub với tên <span class="path">${esc(pathOf(it.id))}</span>
+       rồi tải lại trang. Muốn xem thử ngay thì mở file từ máy.</p>
+    <div class="row">
+      <button class="btn primary" id="sPick">Mở file từ máy</button>
+      <button class="btn" id="sHome">Về bản đồ</button>
+    </div>`;
+  d.querySelector('h3').textContent = it.label;
+  d.querySelector('.desc').textContent = it.desc;
+  d.querySelector('#sPick').onclick = pickFile;
+  d.querySelector('#sHome').onclick = renderHome;
+  stage.appendChild(d);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   [7] GẮN FILE TỪ MÁY (chạy được cả khi mở bằng double-click)
+   ═══════════════════════════════════════════════════════════════════ */
+function attach(id, file){
+  return file.text().then(html => {
+    if(localSrc[id]) URL.revokeObjectURL(localSrc[id]);
+    localSrc[id] = URL.createObjectURL(new Blob([html], {type:'text/html'}));
+    if(frames[id]){ frames[id].remove(); delete frames[id]; }
+    byId[id]._file = file.name;
+    current = id; clearState(); open(id);
+  });
+}
+function pickFile(){ if(!current) return toast('Chọn một báo cáo trước.'); $('#fPick').click(); }
+$('#fPick').onchange = e => {
+  const f = e.target.files[0]; if(f && current) attach(current, f).then(() => toast('Đã mở ' + f.name));
+  e.target.value = '';
+};
+$('#btnPick').onclick = pickFile;
+$('#btnFolder').onclick = () => $('#fFolder').click();
+$('#fFolder').onchange = async e => {
+  const files = [...e.target.files].filter(f => /\.html?$/i.test(f.name));
+  const want = {}; ALL.forEach(i => want[base(pathOf(i.id)).toLowerCase()] = i.id);
+  let n = 0;
+  for(const f of files){
+    const id = want[f.name.toLowerCase()];
+    if(id){ await attach(id, f); n++; }
+  }
+  e.target.value = '';
+  renderNav($('#q').value);
+  if(current) open(current); else renderHome();
+  toast(n ? `Đã gắn ${n} file theo tên.` : 'Không có file nào trùng tên trong bảng đường dẫn.');
+};
+const base = p => p.split(/[\\/]/).pop();
+
+/* ═══════════════════════════════════════════════════════════════════
+   [8] CẤU HÌNH ĐƯỜNG DẪN
+   ═══════════════════════════════════════════════════════════════════ */
+$('#btnPaths').onclick = () => {
+  const b = $('#pathBody'); b.innerHTML = '';
+  SECTIONS.forEach(s => {
+    const h = document.createElement('p');
+    h.style.cssText = 'margin:12px 0 6px;font-size:12px;font-weight:650;color:var(--ink-2)';
+    h.textContent = s.name; b.appendChild(h);
+    s.items.forEach(i => {
+      const r = document.createElement('div'); r.className = 'prow';
+      r.innerHTML = `<label></label><input type="text" data-id="${i.id}">`;
+      r.querySelector('label').textContent = i.label;
+      r.querySelector('input').value = pathOf(i.id);
+      b.appendChild(r);
+    });
+  });
+  const n = document.createElement('p'); n.className = 'note';
+  n.textContent = 'Đường dẫn tương đối tính từ vị trí file hub. Ví dụ: tools/live_tiktok.html';
+  b.appendChild(n);
+  $('#dlgPaths').showModal();
+};
+$('#dlgPaths').addEventListener('close', () => {
+  $('#pathBody').querySelectorAll('input[data-id]').forEach(inp => {
+    const v = inp.value.trim(), id = inp.dataset.id;
+    if(v && v !== DEFAULTS[id]) prefs.paths[id] = v; else delete prefs.paths[id];
+  });
+  save();
+  Object.entries(frames).forEach(([id, f]) => { if(!localSrc[id]){ f.remove(); delete frames[id]; } });
+  current ? open(current) : renderHome();
+});
+$('#btnResetPaths').onclick = () => {
+  $('#pathBody').querySelectorAll('input[data-id]').forEach(i => i.value = DEFAULTS[i.dataset.id]);
+};
+
+/* ═══════════════════════════════════════════════════════════════════
+   [9] THANH CÔNG CỤ
+   ═══════════════════════════════════════════════════════════════════ */
+$('#btnRail').onclick = () => $('#app').classList.toggle('wide');
+$('#btnReload').onclick = () => {
+  if(!current) return renderHome();
+  const f = frames[current];
+  if(f){ f.src = f.src; toast('Đã tải lại.'); } else open(current);
+};
+$('#btnNew').onclick = () => {
+  if(!current) return toast('Chọn một báo cáo trước.');
+  const url = localSrc[current] || pathOf(current);
+  window.open(url, '_blank');
+};
+$('#btnTheme').onclick = () => {
+  prefs.theme = prefs.theme === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = prefs.theme; save();
+};
+$('#q').oninput = e => renderNav(e.target.value);
+document.addEventListener('keydown', e => {
+  if(e.key === '/' && document.activeElement.tagName !== 'INPUT'){ e.preventDefault(); $('#q').focus(); }
+  if(e.key === 'Escape' && document.activeElement === $('#q')){ $('#q').value = ''; renderNav(); $('#q').blur(); }
+});
+$('#crumb').onclick = renderHome;
+$('#crumb').style.cursor = 'pointer';
+
+stage.addEventListener('dragover', e => { e.preventDefault(); });
+stage.addEventListener('drop', e => {
+  e.preventDefault();
+  const f = [...e.dataTransfer.files].find(f => /\.html?$/i.test(f.name));
+  if(!f) return toast('Kéo vào một file .html.');
+  if(!current) return toast('Chọn một báo cáo trước rồi thả file vào.');
+  attach(current, f).then(() => toast('Đã mở ' + f.name));
+});
+
+let tt;
+function toast(m){ const t = $('#toast'); t.textContent = m; t.classList.add('on'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('on'), 2400); }
+function esc(s){ return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+/* ── Khởi động ────────────────────────────────────────────────────── */
+document.documentElement.dataset.theme = prefs.theme;
+renderHome();
+if(prefs.last && byId[prefs.last] && byId[prefs.last].status === 'ok') open(prefs.last);
+</script>
+</body>
+</html>

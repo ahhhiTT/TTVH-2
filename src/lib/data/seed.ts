@@ -1,5 +1,8 @@
 // SAMPLE DATA ONLY. Names, brands and figures are fictional and generated
 // deterministically. Never put real brand or employee data in this file.
+// Some values are deliberately null to exercise the Missing vs Zero handling:
+// Website stores have no traffic feed, some stores have no Ads import yet,
+// onboarding stores have no target.
 
 import type {
   Assignment,
@@ -39,6 +42,7 @@ export const brands: Brand[] = Array.from({ length: 20 }, (_, i) => ({
   id: `b${pad(i + 1)}`,
   name: `Brand ${String.fromCharCode(65 + i)}`,
   category: pick(CATEGORIES),
+  archivedAt: null,
 }));
 
 // 51 stores: every brand has Shopee, most have TikTok Shop, some have more.
@@ -57,6 +61,7 @@ for (const brand of brands) {
       scale: pick(["S", "M", "M", "L", "L", "XL"] as const),
       difficulty: pick([1, 2, 3, 3, 4, 5] as const),
       status: rand() > 0.92 ? "onboarding" : "active",
+      archivedAt: null,
     });
   }
 }
@@ -71,12 +76,13 @@ while (stores.length < 51) {
     scale: "M",
     difficulty: 3,
     status: "active",
+    archivedAt: null,
   });
 }
 
 export const teams: Team[] = [
-  { id: "t1", name: "Growth Team 1", leadId: "u02", managerId: null },
-  { id: "t2", name: "Growth Team 2", leadId: null, managerId: null },
+  { id: "t1", name: "Growth Team 1", leadId: "u02", managerId: null, archivedAt: null },
+  { id: "t2", name: "Growth Team 2", leadId: null, managerId: null, archivedAt: null },
 ];
 
 const LEVELS = ["L1", "L2", "L2", "L3", "L3", "L4"];
@@ -95,6 +101,7 @@ export const users: User[] = [
     managerId: null,
     permissions: ["benchmark:view", "peers:view"],
     grantedStoreIds: [],
+    archivedAt: null,
   },
   {
     id: "u02",
@@ -108,6 +115,7 @@ export const users: User[] = [
     managerId: "u01",
     permissions: ["benchmark:view", "peers:view"],
     grantedStoreIds: [],
+    archivedAt: null,
   },
 ];
 for (let i = 1; i <= 25; i++) {
@@ -125,6 +133,7 @@ for (let i = 1; i <= 25; i++) {
     // A couple of staff granted benchmark visibility to demo the permission.
     permissions: i <= 3 ? ["benchmark:view"] : [],
     grantedStoreIds: [],
+    archivedAt: null,
   });
 }
 
@@ -168,6 +177,7 @@ users.push(
     managerId: null,
     permissions: [],
     grantedStoreIds: demoGranted,
+    archivedAt: null,
   },
   {
     id: "x02",
@@ -181,6 +191,7 @@ users.push(
     managerId: null,
     permissions: [],
     grantedStoreIds: stores.filter((s) => s.brandId === "b01").map((s) => s.id),
+    archivedAt: null,
   },
 );
 
@@ -200,22 +211,24 @@ const mtdShare = now.getDate() / new Date(now.getFullYear(), now.getMonth() + 1,
 for (const store of stores) {
   const base = SCALE_GMV[store.scale] * between(0.6, 1.4);
   const growth = between(-0.03, 0.08);
+  const noAdsImport = rand() > 0.85; // Ads report not connected yet → Missing
+  const noAds = !noAdsImport && rand() > 0.9; // store genuinely runs no Ads → Zero
   monthKeys(6, now).forEach((month, i, all) => {
     const isCurrent = i === all.length - 1;
-    const gmvTarget = Math.round(base * (1 + growth) ** i * between(1.0, 1.15));
+    const target = Math.round(base * (1 + growth) ** i * between(1.0, 1.15));
     const achievement = between(0.7, 1.2);
-    const gmv = Math.round(gmvTarget * achievement * (isCurrent ? mtdShare : 1));
+    const gmv = Math.round(target * achievement * (isCurrent ? mtdShare : 1));
     const aov = between(180e3, 450e3);
     const orders = Math.max(1, Math.round(gmv / aov));
     metrics.push({
       storeId: store.id,
       month,
-      gmvTarget,
+      gmvTarget: store.status === "onboarding" ? null : target,
       gmv,
       nmv: Math.round(gmv * between(0.78, 0.9)),
       orders,
-      traffic: Math.round(orders / between(0.012, 0.045)),
-      adSpend: Math.round(gmv / between(5, 14)),
+      traffic: store.channel === "website" ? null : Math.round(orders / between(0.012, 0.045)),
+      adSpend: noAdsImport ? null : noAds ? 0 : Math.round(gmv / between(5, 14)),
     });
   });
 }

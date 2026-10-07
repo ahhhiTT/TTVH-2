@@ -1,11 +1,11 @@
 @AGENTS.md
 
-# TTVH2 OS
+# Marketing Ecom (TTVH2)
 
-Internal management system for UpBase's Operations Center 2 (TTVH2). Short term:
-TTVH2 only; long term: an E-commerce Operating System for the whole Ecom division.
-Three axes — department, people, brands/stores — each running Planning → Execution
-(checklist, SLA) → Report, plus career path / L&D.
+Internal management system for UpBase's Operations Center 2 (TTVH2), product name
+"Marketing Ecom". Short term: TTVH2 only; long term: an E-commerce Operating System
+for the whole Ecom division. Three axes (department, people, brands/stores), each
+running Planning, Execution (checklist, SLA) and Report, plus career path / L&D.
 
 ## Stack
 - Next.js 16 (App Router, Cache Components on), TypeScript, Tailwind v4.
@@ -13,27 +13,53 @@ Three axes — department, people, brands/stores — each running Planning → E
   `src/lib/data/repo.ts`. Planned: PostgreSQL + Prisma, swapped in behind `repo.ts`.
 - Auth is a demo cookie (`src/lib/session.ts`). Planned: Auth.js + Lark OAuth.
 - Bilingual vi/en via `src/lib/i18n/dictionaries.ts` (cookie `ttvh2_locale`).
-  Every user-visible string goes in both dictionaries — no hard-coded text.
+  Every user-visible string goes in both dictionaries, no hard-coded text.
+- `/` is the department homepage (public, richer when signed in). The KPI
+  dashboard lives at `/overview`.
+- `/reports` lists the report tools from the Director's manifest
+  (`src/lib/reports.ts`). Tool files are served unchanged from `public/reports/`.
 
-## Rules
-- **Sample data only** until UpBase security signs off. Never commit real brand,
-  revenue or employee data.
-- **Every page goes through `requireUser()` and the `rbac.ts` helpers.** Never read
-  `seed`/`repo` lists directly in a page without filtering by `visibleStoreIds` /
-  `visibleUserIds`. Out-of-scope records return `notFound()` (same as missing).
-- KPI formulas live only in `src/lib/metrics.ts` and are **provisional** until the
-  Director confirms definitions (GMV, NMV, CR, AOV, ROI, roll-up rules).
+## Data rules (set by the Director, non-negotiable)
+1. Never change business logic without the Director's confirmation.
+2. Never generate fake data that a user could mistake for real data. Sample data
+   must always be labelled as sample in the UI.
+3. If a KPI formula, data source or permission is not confirmed, mark it
+   `TBD` / `Not configured` (see `src/lib/kpi-definitions.ts`). Do not guess.
+4. Org structure and master data must be configurable from Admin.
+5. No hard deletes unless strictly needed: archive / soft delete (`archivedAt`).
+6. Every important change keeps an edit history (audit log).
+7. Never change the database schema or core KPI logic to fix a short-term UI bug.
+8. Never present an insight as a fact. Thresholds, alerts and statuses derived
+   from unconfirmed rules are labelled as such.
+9. Distinguish Missing Data (`null`, shown as "Chưa có dữ liệu") from Zero (`0`).
+   Ratios with a missing input or zero denominator are `null`, never `0`.
+10. Report tools in `public/reports/` are the Director's files: do not edit their
+    logic. Wrap them, do not rewrite them.
+
+## UI rules
+- No icon library and no emoji. Any graphic is hand-written inline SVG
+  (`src/components/svg.tsx`): status marks, diagrams, charts, logo.
+- Plain, factual copy. No AI-style phrasing, no em dashes in UI text.
 - Design tokens follow `docs/DESIGN.md`: colors are CSS variables in `globals.css`;
   black is the only CTA color; Inter 600 for headings; 8px buttons, 12px cards.
-  Status is never color-only (icon + label).
+  Status is never color-only (shape + label).
 - Two themes, light and dark. Dark values live in `globals.css` (both the
-  `prefers-color-scheme` block and `:root[data-theme="dark"]` — keep them in sync).
-  Use tokens (`bg-canvas`, `text-ink`, `text-on-primary`…), never raw hex or `text-white`.
+  `prefers-color-scheme` block and `:root[data-theme="dark"]`, keep them in sync).
+  Use tokens (`bg-canvas`, `text-ink`, `text-on-primary`), never raw hex.
+- Mobile: every page must work at 375px wide. Sidebar becomes a drawer below `md`.
+
+## Access rules
+- Every app page goes through `requireUser()` and the `rbac.ts` helpers. Never read
+  `seed`/`repo` lists directly in a page without filtering by `visibleStoreIds` /
+  `visibleUserIds`. Out-of-scope records return `notFound()` (same as missing).
+- The public homepage shows only public information (UpBase public figures,
+  roles, process). Names and internal data appear only when signed in.
 
 ## Commands
-- `npm run dev` — local dev at http://localhost:3000
-- `npm run build` — must pass before any deploy
+- `npm run dev`: local dev at http://localhost:3000
+- `npm run build`: must pass before any deploy
 - `npm run lint`
 
 ## Deploy
-Vercel. Set `DEMO_PASSWORD` to enable the site-wide password gate in `src/proxy.ts`.
+Push to `main` on github.com/ahhhiTT/TTVH-2; Vercel project `trungtamvanhanh2`
+builds automatically. Set `DEMO_PASSWORD` to enable the password gate in `src/proxy.ts`.

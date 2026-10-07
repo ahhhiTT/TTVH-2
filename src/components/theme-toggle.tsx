@@ -1,6 +1,5 @@
 "use client";
 
-import { Moon, Sun } from "lucide-react";
 import { useSyncExternalStore } from "react";
 import { cx } from "./ui";
 
@@ -32,30 +31,34 @@ function applyTheme(next: Theme) {
   document.cookie = `${THEME_COOKIE}=${next}; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax`;
 }
 
-export function ThemeToggle({ labels, className }: { labels: { light: string; dark: string }; className?: string }) {
+export function ThemeToggle({
+  labels,
+  className,
+}: {
+  labels: { light: string; dark: string; group: string };
+  className?: string;
+}) {
   const theme = useSyncExternalStore(subscribe, readTheme, () => null);
 
   return (
-    <div role="group" className={cx("flex rounded-md border border-hairline-strong p-0.5", className)}>
+    <div role="group" aria-label={labels.group} className={cx("flex rounded-md border border-hairline-strong p-0.5", className)}>
       {(
         [
-          ["light", Sun, labels.light],
-          ["dark", Moon, labels.dark],
+          ["light", labels.light],
+          ["dark", labels.dark],
         ] as const
-      ).map(([value, Icon, label]) => (
+      ).map(([value, label]) => (
         <button
           key={value}
           type="button"
           onClick={() => applyTheme(value)}
           aria-pressed={theme === value}
-          aria-label={label}
-          title={label}
           className={cx(
-            "flex h-8 w-8 items-center justify-center rounded-sm",
+            "flex h-8 items-center justify-center rounded-sm px-2.5 text-[13px] font-medium",
             theme === value ? "bg-primary text-on-primary" : "text-body hover:text-ink",
           )}
         >
-          <Icon size={15} aria-hidden />
+          {label}
         </button>
       ))}
     </div>

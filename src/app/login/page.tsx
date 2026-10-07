@@ -1,5 +1,6 @@
-import { ChartColumn } from "lucide-react";
+import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Chevron, LogoMark } from "@/components/svg";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { buttonPrimary, buttonSecondary, cx } from "@/components/ui";
 import { demoSignIn, setLocale } from "@/lib/actions";
@@ -15,7 +16,7 @@ export default async function LoginPage() {
   const users = listUsers();
 
   return (
-    <div className="sky-wash relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-12">
+    <div className="sky-wash relative flex min-h-dvh flex-col items-center justify-center overflow-hidden px-4 py-10">
       {/* Slow-drifting color fields behind the card. */}
       <span
         aria-hidden
@@ -27,32 +28,30 @@ export default async function LoginPage() {
         className="drift pointer-events-none absolute -right-24 -bottom-32 size-[26rem] rounded-full opacity-40 blur-3xl"
         style={{ background: "radial-gradient(circle, var(--accent-purple), transparent 65%)", animationDelay: "-7s" }}
       />
-      <div className="enter relative w-full max-w-md rounded-xl border border-hairline-strong bg-canvas/90 p-8 shadow-[0_24px_64px_var(--shadow-hover)] backdrop-blur">
-        <div className="mb-6 flex items-center justify-between">
-          <span className="flex items-center gap-2">
-            <span className="flex size-8 items-center justify-center rounded-md bg-primary text-on-primary">
-              <ChartColumn size={18} aria-hidden />
-            </span>
+      <div className="enter relative w-full max-w-md rounded-xl border border-hairline-strong bg-canvas/90 p-6 shadow-[0_24px_64px_var(--shadow-hover)] backdrop-blur sm:p-8">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+          <Link href="/" className="flex items-center gap-2.5">
+            <LogoMark size={30} />
             <span className="text-lg font-semibold tracking-[-0.3px]">{t.app.name}</span>
-          </span>
+          </Link>
           <div className="flex items-center gap-2">
-          <ThemeToggle labels={{ light: t.common.themeLight, dark: t.common.themeDark }} />
-          <form action={setLocale} className="flex gap-1">
-            {(["vi", "en"] as const).map((l) => (
-              <button
-                key={l}
-                name="locale"
-                value={l}
-                aria-pressed={locale === l}
-                className={cx(
-                  "h-7 rounded-sm px-2 text-xs font-medium uppercase",
-                  locale === l ? "bg-surface-strong text-ink" : "text-muted hover:text-ink",
-                )}
-              >
-                {l}
-              </button>
-            ))}
-          </form>
+            <ThemeToggle labels={{ light: t.common.themeLight, dark: t.common.themeDark, group: t.common.themeLabel }} />
+            <form action={setLocale} aria-label={t.common.languageLabel} className="flex gap-1">
+              {(["vi", "en"] as const).map((l) => (
+                <button
+                  key={l}
+                  name="locale"
+                  value={l}
+                  aria-pressed={locale === l}
+                  className={cx(
+                    "h-8 rounded-sm px-2 text-xs font-medium uppercase",
+                    locale === l ? "bg-surface-strong text-ink" : "text-muted hover:text-ink",
+                  )}
+                >
+                  {l}
+                </button>
+              ))}
+            </form>
           </div>
         </div>
 
@@ -74,7 +73,7 @@ export default async function LoginPage() {
             id="userId"
             name="userId"
             defaultValue="u01"
-            className="h-11 w-full rounded-md border border-hairline-strong bg-canvas px-3 text-sm text-ink focus:border-2 focus:border-ink focus:outline-none"
+            className="h-11 w-full rounded-md border border-hairline-strong bg-canvas px-3 text-base text-ink focus:border-2 focus:border-ink focus:outline-none sm:text-sm"
           >
             {ROLE_ORDER.map((role) => {
               const members = users.filter((u) => u.role === role);
@@ -83,7 +82,7 @@ export default async function LoginPage() {
                 <optgroup key={role} label={t.roles[role]}>
                   {members.map((u) => (
                     <option key={u.id} value={u.id}>
-                      {u.name} — {u.title}
+                      {u.name}, {u.title}
                     </option>
                   ))}
                 </optgroup>
@@ -96,6 +95,9 @@ export default async function LoginPage() {
           </button>
         </form>
       </div>
+      <Link href="/" className="enter relative mt-5 inline-flex items-center gap-1 text-sm text-body hover:text-ink">
+        <Chevron size={14} /> {t.login.backHome}
+      </Link>
     </div>
   );
 }

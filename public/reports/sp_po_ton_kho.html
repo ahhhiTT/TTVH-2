@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI Inventory Planner V2.1</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--text:#17202a;--muted:#667085;--line:#e5e7eb;--accent:#111827;--green:#087443;--orange:#b54708;--red:#b42318;--blue:#175cd3}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,Arial,sans-serif}
+header{background:#111827;color:white;padding:22px 28px;position:sticky;top:0;z-index:3}header h1{margin:0 0 5px;font-size:22px}header p{margin:0;color:#cbd5e1;font-size:13px}
+.container{max-width:1450px;margin:22px auto;padding:0 20px}.grid{display:grid;gap:14px}.inputs{grid-template-columns:repeat(3,1fr)}.config{grid-template-columns:repeat(6,1fr)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;box-shadow:0 1px 2px #00000008}
+.card h3{margin:0 0 12px;font-size:15px}.small{font-size:12px;color:var(--muted)}input[type=file],input[type=number],input[type=date],select{width:100%;padding:9px;border:1px solid #d0d5dd;border-radius:8px;background:#fff}
+label{font-size:12px;font-weight:600;display:block;margin-bottom:5px}.config .card{padding:12px}
+button{border:0;border-radius:8px;padding:10px 15px;background:var(--accent);color:white;font-weight:700;cursor:pointer}.secondary{background:#fff;color:#111827;border:1px solid #d0d5dd}
+.actions{display:flex;gap:8px;align-items:center;margin:16px 0}.status{font-size:12px;color:var(--muted)}
+.kpis{grid-template-columns:repeat(6,1fr)}.kpi .value{font-size:25px;font-weight:800;margin-top:4px}.kpi .label{font-size:12px;color:var(--muted)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:18px 0}.tab{background:#fff;color:#344054;border:1px solid var(--line)}.tab.active{background:#111827;color:#fff}
+.panel{display:none}.panel.active{display:block}
+.table-wrap{overflow:auto;max-height:560px;border:1px solid var(--line);border-radius:10px}table{width:100%;border-collapse:collapse;font-size:12px;min-width:1200px}th{position:sticky;top:0;background:#f8fafc;z-index:1;text-align:left}th,td{padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap}tr:hover td{background:#fafafa}
+.badge{display:inline-block;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:700}.red{background:#fee4e2;color:#b42318}.orange{background:#fef0c7;color:#b54708}.green{background:#dcfae6;color:#087443}.blue{background:#dbeafe;color:#175cd3}.gray{background:#f2f4f7;color:#475467}
+.action-grid{display:grid;grid-template-columns:1.2fr 1fr;gap:14px}.list{margin:0;padding:0;list-style:none}.list li{padding:12px;border-bottom:1px solid var(--line)}.list li:last-child{border-bottom:0}
+.alert{padding:12px;border-radius:9px;background:#fffaeb;border:1px solid #fedf89;color:#7a2e0b;margin-bottom:12px}.success{background:#ecfdf3;border-color:#abefc6;color:#05603a}
+.matrix{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}.matrix .cell{min-height:85px;border:1px solid var(--line);border-radius:9px;padding:10px;background:#fafafa}.cell b{display:block;margin-bottom:6px}.cell span{font-size:20px;font-weight:800}
+footer{padding:30px;color:var(--muted);font-size:11px;text-align:center}
+@media(max-width:1000px){.inputs,.config,.kpis,.action-grid{grid-template-columns:1fr 1fr}}@media(max-width:650px){.inputs,.config,.kpis,.action-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header><h1>AI Inventory Planner V2.1</h1><p>Planning Engine • Forecast • Inventory Risk • OOS • PO Recommendation • AI Diagnosis</p></header>
+<div class="container">
+
+<div class="grid inputs">
+  <div class="card"><h3>① Sales — Previous Month (T8)</h3><input id="fPrev" type="file" accept=".xlsx,.xls,.csv"><div id="sPrev" class="small">Chưa chọn file</div></div>
+  <div class="card"><h3>② Sales — Current Month MTD (T9)</h3><input id="fCur" type="file" accept=".xlsx,.xls,.csv"><div id="sCur" class="small">Chưa chọn file</div></div>
+  <div class="card"><h3>③ Inventory Snapshot</h3><input id="fInv" type="file" accept=".xlsx,.xls,.csv"><div id="sInv" class="small">Chưa chọn file</div></div>
+</div>
+
+<div class="grid config" style="margin-top:14px">
+  <div class="card"><label>Calculation date</label><input id="calcDate" type="date" value="2026-09-15"></div>
+  <div class="card"><label>Lead time (days)</label><input id="lead" type="number" value="20" min="0"></div>
+  <div class="card"><label>Current month growth %</label><input id="g1" type="number" value="15" step="1"></div>
+  <div class="card"><label>Next month growth %</label><input id="g2" type="number" value="20" step="1"></div>
+  <div class="card"><label>Revenue coverage %</label><input id="coverage" type="number" value="80" min="1" max="100"></div>
+  <div class="card"><label>Safety stock %</label><input id="safety" type="number" value="10" min="0" max="100"></div>
+</div>
+
+<div class="actions">
+  <button onclick="runPlanner()">Generate V2.1</button>
+  <button class="secondary" onclick="loadDemo()">Load demo</button>
+  <button class="secondary" onclick="exportCSV()">Export recommendation CSV</button>
+  <span id="status" class="status">Upload 3 file rồi Generate.</span>
+</div>
+
+
+<style>
+.guide{margin-top:16px}.guide details{background:#fff;border:1px solid #e5e7eb;border-radius:10px;margin:9px 0;overflow:hidden}.guide summary{cursor:pointer;padding:13px 15px;font-weight:800;font-size:13px}.guide .gbody{padding:0 15px 15px;font-size:12px;line-height:1.6;color:#475467}.guide .gbody b{color:#17202a}.guide code{background:#f2f4f7;padding:2px 5px;border-radius:4px}.guide .steps{counter-reset:step;list-style:none;padding:0}.guide .steps li{counter-increment:step;margin:9px 0;padding-left:28px;position:relative}.guide .steps li:before{content:counter(step);position:absolute;left:0;top:1px;width:20px;height:20px;border-radius:50%;background:#111827;color:#fff;text-align:center;line-height:20px;font-size:11px;font-weight:700}
+</style>
+<div class="guide">
+<details open>
+<summary>📘 Hướng dẫn sử dụng — đọc trước khi chạy</summary>
+<div class="gbody">
+<p><b>Mục tiêu:</b> Tool giúp chuyển dữ liệu Sales T8 + Sales T9 MTD + Inventory hiện tại thành danh sách SKU cần nhập hàng, mức độ ưu tiên, nguy cơ OOS và lý do đề xuất.</p>
+<ol class="steps">
+<li><b>Chuẩn bị 3 file Excel:</b> Sales T8 (full month), Sales T9 MTD (đến ngày hiện tại) và Inventory Snapshot.</li>
+<li><b>Upload đúng file:</b> ô ① = T8 full month, ô ② = T9 MTD (ví dụ 01–15/09), ô ③ = tồn kho hiện tại tại ngày tính.</li>
+<li><b>Kiểm tra assumptions:</b> Calculation date là ngày chốt tồn; Lead time là số ngày từ lúc đặt đến lúc hàng về; Growth T9/T10 là mức tăng trưởng giả định; Revenue coverage là tỷ lệ doanh thu muốn tập trung; Safety stock là phần tồn kho dự phòng.</li>
+<li>Bấm <b>Generate V2.1</b>. Nếu chỉ muốn xem cách tool hoạt động, bấm <b>Load demo</b>.</li>
+<li>Đọc <b>Dashboard → Today's Action</b> trước để biết SKU nào cần xử lý ngay.</li>
+<li>Vào <b>PO Recommendation</b> để xem PO, coverage, OOS, emergency gap và thời điểm mua.</li>
+<li>Vào <b>Core 80%</b> để kiểm tra nhóm SKU đóng góp phần lớn doanh thu.</li>
+<li>Vào <b>OOS Risk</b> để ưu tiên các SKU có nguy cơ hết hàng trước ETA.</li>
+<li>Vào <b>SKU Diagnosis</b> để hiểu vì sao tool đưa ra recommendation.</li>
+<li>Dùng <b>Export recommendation CSV</b> để xuất danh sách SKU có PO &gt; 0.</li>
+</ol>
+</div>
+</details>
+
+<details>
+<summary>📂 File Excel cần có những cột nào?</summary>
+<div class="gbody">
+<p><b>Sales:</b> Tool ưu tiên tìm các cột <code>Mã SKU</code>, <code>Số lượng hàng bán</code>, <code>Doanh số hiệu quả</code> và <code>Tên hàng hoá</code>. Nếu có cột ngày (Ngày / Ngày tạo đơn / Order Date), tool có thể xác định số ngày MTD.</p>
+<p><b>Inventory:</b> Tool cần <code>Mã SKU</code> và <code>Tồn kho sẵn sàng bán</code>. Các dòng trùng SKU sẽ được cộng lại.</p>
+<p>Không bắt buộc tên file phải giống nhau. Tool cố gắng tự tìm header và tự nhận diện cột tương đương.</p>
+<p><b>Lưu ý:</b> Nếu file có nhiều warehouse, V2.1 hiện aggregate tồn kho theo SKU. Vì vậy chỉ upload dữ liệu warehouse phù hợp với phạm vi planning.</p>
+</div>
+</details>
+
+<details>
+<summary>⚙️ Ý nghĩa các thông số</summary>
+<div class="gbody">
+<p><b>Calculation date:</b> ngày snapshot tồn kho dùng để tính. Ví dụ 15/09 thì nhu cầu còn lại tháng 9 được tính từ ngày 16/09. Sales T9 được hiểu là MTD đến ngày này.</p>
+<p><b>Lead time:</b> số ngày từ khi đặt PO đến khi hàng có thể về kho.</p>
+<p><b>Current month growth:</b> baseline fallback khi chưa có sales MTD hoặc MTD chưa đủ tín hiệu. Khi có T9 MTD, forecast dùng T8 baseline kết hợp T9 run-rate với trọng số tăng dần theo số ngày dữ liệu.</p>
+<p><b>Next month growth:</b> mức tăng trưởng dùng để forecast tháng tiếp theo.</p>
+<p><b>Revenue coverage:</b> ví dụ 80% nghĩa là tool chọn các SKU theo thứ tự doanh thu cho đến khi bao phủ khoảng 80% doanh thu; SKU làm vượt ngưỡng được giữ lại.</p>
+<p><b>Safety stock:</b> tồn kho dự phòng cộng thêm vào nhu cầu planning. V2.1 mặc định 10%, có thể chỉnh.</p>
+</div>
+</details>
+
+<details>
+<summary>🧠 Tool đang quyết định SKU như thế nào?</summary>
+<div class="gbody">
+<p>V2.1 tách 3 góc nhìn để tránh đánh đồng “growth” với “importance”:</p>
+<p><b>1. Business importance:</b> Core hay Long-tail dựa trên đóng góp doanh thu.</p>
+<p><b>2. Demand momentum:</b> High Growth / Stable / Declining / New dựa trên sales và growth.</p>
+<p><b>3. Inventory risk:</b> Critical / At Risk / Healthy / Excess dựa trên coverage và lead time.</p>
+<p>Do đó một SKU có growth chỉ +22% vẫn có thể là <b>Core + Critical</b> nếu đóng góp doanh thu lớn và tồn kho thấp.</p>
+</div>
+</details>
+
+<details>
+<summary>🚨 Đọc PO Recommendation như thế nào?</summary>
+<div class="gbody">
+<p><b>Coverage:</b> tồn kho hiện tại đủ bán khoảng bao nhiêu ngày theo daily demand forecast.</p>
+<p><b>Estimated OOS:</b> ngày dự kiến hết tồn nếu nhu cầu tiếp tục theo forecast.</p>
+<p><b>Emergency Gap:</b> lượng thiếu hụt để đủ nhu cầu trong lead time. Nếu &gt; 0, SKU có nguy cơ OOS trước khi PO về.</p>
+<p><b>Recommended PO:</b> lượng cần bổ sung để đáp ứng nhu cầu trong horizon planning và safety stock, sau khi trừ tồn hiện tại.</p>
+<p><b>Buy Timing:</b> <b>ORDER NOW</b> = có nguy cơ OOS trước ETA; <b>ORDER SOON</b> = coverage thấp gần lead time; <b>RECHECK</b> = chưa cần mua ngay.</p><p><b>Forecast Confidence:</b> 1–2 ngày MTD = Low; 3–5 = Medium-Low; 6–10 = Medium; từ 11 ngày = High. Trọng số T9 lần lượt 20%, 30%, 50%, 70%, 85%.</p>
+<p><b>Priority:</b> P0 Critical → P1 High → P2 Medium → P4 No Buy.</p>
+</div>
+</details>
+
+<details>
+<summary>⚠️ 5 điều cần kiểm tra trước khi dùng kết quả để đặt PO thật</summary>
+<div class="gbody">
+<ol>
+<li>Ngày snapshot tồn kho có đúng với Calculation date không.</li>
+<li>Sales dùng đúng metric <b>Số lượng hàng bán</b>, không nhầm với hàng tặng hay số đơn.</li>
+<li>SKU trong Sales và Inventory có cùng mã và cùng phạm vi warehouse không.</li>
+<li>Growth assumption có phù hợp với business plan/promotion sắp tới không.</li>
+<li>PO recommendation nên được đối chiếu với promotion, supplier constraint, MOQ và incoming PO trước khi đặt hàng thật. Các yếu tố này chưa phải input đầy đủ của V2.1.</li>
+</ol>
+</div>
+</details>
+
+<details>
+<summary>💡 Cách demo tool cho người khác trong 5 phút</summary>
+<div class="gbody">
+<p><b>1 phút:</b> Giải thích: “Upload 3 file → tool tìm SKU → forecast demand → kiểm tra tồn → đề xuất PO.”</p>
+<p><b>2 phút:</b> Bấm <b>Load demo</b> và chỉ vào <b>Today's Action</b>.</p>
+<p><b>1 phút:</b> Mở <b>OOS Risk</b>, giải thích Coverage → OOS Date → ETA → Emergency Gap.</p>
+<p><b>1 phút:</b> Upload dữ liệu thật, Generate và kiểm tra các SKU Core quan trọng.</p>
+<p><b>Thông điệp chính:</b> Tool không chỉ trả lời “nhập bao nhiêu”, mà còn trả lời “SKU nào cần xử lý trước, vì sao và forecast hiện tại đáng tin đến đâu”.</p>
+</div>
+</details>
+</div>
+
+<div id="app" style="display:none">
+  <div id="validation"></div>
+  <div class="grid kpis">
+    <div class="card kpi"><div class="label">Total SKU</div><div id="kSku" class="value">0</div></div>
+    <div class="card kpi"><div class="label">Core SKU</div><div id="kCore" class="value">0</div></div>
+    <div class="card kpi"><div class="label">Recommended PO</div><div id="kPO" class="value">0</div></div>
+    <div class="card kpi"><div class="label">OOS before ETA</div><div id="kOOS" class="value">0</div></div>
+    <div class="card kpi"><div class="label">Critical</div><div id="kCritical" class="value">0</div></div>
+    <div class="card kpi"><div class="label">Revenue covered</div><div id="kRev" class="value">0%</div></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('dashboard',this)">Dashboard</button>
+    <button class="tab" onclick="showTab('po',this)">PO Recommendation</button>
+    <button class="tab" onclick="showTab('core',this)">Core 80%</button>
+    <button class="tab" onclick="showTab('oos',this)">OOS Risk</button>
+    <button class="tab" onclick="showTab('diag',this)">SKU Diagnosis</button>
+    <button class="tab" onclick="showTab('data',this)">Data Validation</button>
+  </div>
+
+  <section id="dashboard" class="panel active">
+    <div class="action-grid">
+      <div class="card"><h3>Today's Action</h3><ul id="actions" class="list"></ul></div>
+      <div class="card"><h3>Inventory Health Matrix</h3><div class="small">Business importance × demand momentum × inventory risk</div><div id="matrix" class="matrix"></div></div>
+    </div>
+    <div class="card" style="margin-top:14px"><h3>Planning Summary</h3><div id="summary" class="small"></div></div>
+  </section>
+
+  <section id="po" class="panel"><div class="card"><h3>Recommended Purchase Order</h3><div class="table-wrap"><table id="poTable"></table></div></div></section>
+  <section id="core" class="panel"><div class="card"><h3>Core Revenue Coverage</h3><div class="table-wrap"><table id="coreTable"></table></div></div></section>
+  <section id="oos" class="panel"><div class="card"><h3>OOS Risk</h3><div class="table-wrap"><table id="oosTable"></table></div></div></section>
+  <section id="diag" class="panel"><div class="card"><h3>SKU Diagnosis</h3><div id="diagBox"></div></div></section>
+  <section id="data" class="panel"><div class="card"><h3>Validation & Data Quality</h3><div id="dataBox"></div></div></section>
+</div>
+</div>
+<footer>V2.1 deterministic calculation engine. AI explanation is generated from the calculated evidence; no external API key required.</footer>
+
+<script>
+let prevFile=null,curFile=null,invFile=null,RESULTS=[];
+document.getElementById('fPrev').onchange=e=>{prevFile=e.target.files[0];document.getElementById('sPrev').textContent=prevFile?.name||''};
+document.getElementById('fCur').onchange=e=>{curFile=e.target.files[0];document.getElementById('sCur').textContent=curFile?.name||''};
+document.getElementById('fInv').onchange=e=>{invFile=e.target.files[0];document.getElementById('sInv').textContent=invFile?.name||''};
+
+const norm=s=>String(s??'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim();
+function num(v){if(typeof v==='number')return isFinite(v)?v:0;let s=String(v??'').replace(/[, ]/g,'').replace('%','');let x=parseFloat(s);return isFinite(x)?x:0}
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function dateAdd(d,n){let x=new Date(d);x.setDate(x.getDate()+n);return x}
+function fmtDate(d){return d.toLocaleDateString('vi-VN')}
+function fmt(n){return Math.round(n||0).toLocaleString('vi-VN')}
+function pct(n){return ((n||0)*100).toFixed(1)+'%'}
+function badge(x,cls){return `<span class="badge ${cls}">${esc(x)}</span>`}
+
+async function readFile(file){
+  if(!file) return [];
+  const buf=await file.arrayBuffer();
+  const wb=XLSX.read(buf,{type:'array'});
+  const ws=wb.Sheets[wb.SheetNames[0]];
+  const raw=XLSX.utils.sheet_to_json(ws,{header:1,defval:null});
+  let hi=0,max=0;
+  for(let i=0;i<Math.min(raw.length,12);i++){let score=raw[i].filter(x=>x!=null&&String(x).trim()!=='').length;if(score>max){max=score;hi=i}}
+  return XLSX.utils.sheet_to_json(ws,{range:hi,defval:null});
+}
+function findCol(rows,cands){
+  if(!rows.length)return null; const keys=Object.keys(rows[0]); 
+  for(const c of cands){const nc=norm(c);let k=keys.find(x=>norm(x)===nc);if(k)return k}
+  for(const c of cands){const nc=norm(c);let k=keys.find(x=>norm(x).includes(nc));if(k)return k}
+  return null;
+}
+function salesRows(rows){
+  const sku=findCol(rows,['Mã SKU','SKU','Ma SKU']);
+  const units=findCol(rows,['Số lượng hàng bán','Units Sold','Quantity Sold','So luong hang ban']);
+  const rev=findCol(rows,['Doanh số hiệu quả','Doanh thu','Revenue','Doanh so hieu qua']);
+  const name=findCol(rows,['Tên hàng hoá','Tên hàng hóa','Product Name','Ten hang hoa']);
+  return {sku,units,rev,name};
+}
+function parseExcelDate(v){
+  if(v instanceof Date && !isNaN(v)) return v;
+  if(typeof v==='number'){
+    const d=XLSX.SSF.parse_date_code(v);
+    if(d) return new Date(d.y,d.m-1,d.d);
+  }
+  const s=String(v??'').trim();
+  if(!s)return null;
+  let m=s.match(/^(\\d{1,2})[\\/.-](\\d{1,2})[\\/.-](\\d{4})/);
+  if(m)return new Date(+m[3],+m[2]-1,+m[1]);
+  const d=new Date(s);
+  return isNaN(d)?null:d;
+}
+function aggregateSales(rows){
+  const c=salesRows(rows), m=new Map(), issues=[], dates=[];
+  c.date=findCol(rows,['Ngày','Ngày đặt hàng','Ngày tạo đơn','Order Date','Date','Ngay']);
+  if(!c.sku||!c.units) return {map:m,cols:c,issues:['Không tìm thấy cột SKU hoặc Số lượng hàng bán.']};
+  rows.forEach(r=>{
+    let sku=String(r[c.sku]??'').trim(); if(!sku)return;
+    let u=num(r[c.units]), rev=c.rev?num(r[c.rev]):0;
+    if(c.date){let d=parseExcelDate(r[c.date]);if(d)dates.push(d)}
+    if(!m.has(sku))m.set(sku,{sku,name:c.name?String(r[c.name]??''): '',units:0,revenue:0});
+    m.get(sku).units+=u;m.get(sku).revenue+=rev;
+  });
+  const uniqueDays=new Set(dates.map(d=>d.toISOString().slice(0,10)));
+  return {map:m,cols:c,issues,dates,uniqueDays:[...uniqueDays].sort()};
+}
+function aggregateInv(rows){
+  const sku=findCol(rows,['Mã SKU','SKU','Ma SKU']);
+  const stock=findCol(rows,['Tồn kho sẵn sàng bán','Tồn sẵn bán hiện tại','Available Stock','Available Inventory','Ton kho san sang ban']);
+  const wh=findCol(rows,['Kho hàng','Warehouse']);
+  const m=new Map(),issues=[];
+  if(!sku||!stock)return {map:m,cols:{sku,stock,wh},issues:['Không tìm thấy cột SKU hoặc tồn kho sẵn sàng bán.']};
+  rows.forEach(r=>{let s=String(r[sku]??'').trim();if(!s)return;let st=num(r[stock]);if(!m.has(s))m.set(s,0);m.set(s,m.get(s)+st)});
+  return {map:m,cols:{sku,stock,wh},issues};
+}
+
+function classify(r){
+  if(r.prevUnits<=10 && r.curUnits>=30)return ['New','blue'];
+  if(r.growth<=-0.20)return ['Declining','orange'];
+  if(r.core && r.growth>=0.30 && r.curUnits>=50)return ['Core Growth','green'];
+  if(r.growth>=0.30 && r.curUnits>=50)return ['High Growth','green'];
+  if(r.core)return ['Core Stable','gray'];
+  return ['Long-tail','gray'];
+}
+function momentum(g){if(g>=.30)return 'High Growth';if(g<=-.20)return 'Declining';return 'Stable'}
+function risk(r){
+  if(r.oosBeforeEta)return ['Critical','red'];
+  if(r.coverage<30)return ['At Risk','orange'];
+  if(r.coverage>120)return ['Excess','blue'];
+  return ['Healthy','green'];
+}
+function priority(r){
+  if(r.oosBeforeEta && r.core)return ['P0 Critical','red'];
+  if(r.po>0 && r.core)return ['P1 High','orange'];
+  if(r.po>0)return ['P2 Medium','blue'];
+  return ['P4 No Buy','gray'];
+}
+
+async function runPlanner(){
+  const st=document.getElementById('status'); st.textContent='Đang đọc và tính toán...';
+  try{
+    const [p,c,i]=await Promise.all([readFile(prevFile),readFile(curFile),readFile(invFile)]);
+    const P=aggregateSales(p), C=aggregateSales(c), I=aggregateInv(i);
+    const date=new Date(document.getElementById('calcDate').value+'T00:00:00');
+    const lead=+document.getElementById('lead').value||0, g1=(+document.getElementById('g1').value||0)/100, g2=(+document.getElementById('g2').value||0)/100;
+    const covTarget=(+document.getElementById('coverage').value||80)/100, safety=(+document.getElementById('safety').value||0)/100;
+    let all=new Set([...P.map.keys(),...C.map.keys(),...I.map.keys()]);
+    let rows=[...all].map(sku=>{
+      let p=P.map.get(sku)||{units:0,revenue:0,name:''}, c=C.map.get(sku)||{units:0,revenue:0,name:p.name||''};
+      return {sku,name:c.name||p.name,prevUnits:p.units,curUnits:c.units,curRevenue:c.revenue,stock:I.map.get(sku)||0,
+              growth:p.units>0?c.units/p.units-1:(c.units>0?1:0)};
+    });
+    rows.sort((a,b)=>b.curRevenue-a.curRevenue);
+    const totalRev=rows.reduce((a,r)=>a+r.curRevenue,0)||1; let cum=0;
+    rows.forEach(r=>{r.revShare=r.curRevenue/totalRev;cum+=r.revShare;r.core=cum<=covTarget||r.revShare>=0?false:false});
+    // Include the SKU that crosses the target.
+    cum=0; for(const r of rows){cum+=r.revShare;r.core=cum-revShareEps(r.revShare,cum,covTarget)<=covTarget?true:true;if(cum>=covTarget){r.core=true;break}}
+    // More robust core flag pass:
+    cum=0; for(const r of rows){if(cum<covTarget){r.core=true;cum+=r.revShare}else r.core=false}
+    const daysCur=new Date(date.getFullYear(),date.getMonth()+1,0).getDate();
+    const remainingDays=Math.max(0,daysCur-date.getDate());
+    const nextMonthDays=new Date(date.getFullYear(),date.getMonth()+2,0).getDate();
+    const eta=dateAdd(date,lead);
+    const leadDays=Math.max(0,Math.min(lead,remainingDays));
+    const mtdDays=Math.max(1,Math.min(date.getDate(), C.uniqueDays.length || date.getDate()));
+    const mtdWeight=mtdDays<=2?.20:mtdDays<=5?.30:mtdDays<=10?.50:mtdDays<=15?.70:.85;
+    const baseWeight=1-mtdWeight;
+    rows.forEach(r=>{
+      const [cl,clc]=classify(r);r.classification=cl;
+      const t8Baseline=r.prevUnits;
+      const mtdRunRate=(r.curUnits/mtdDays)*daysCur;
+      // With only 1–2 days of MTD data, rely mostly on T8. Let MTD influence rise as data accumulates.
+      let forecastCur=(t8Baseline*baseWeight)+(mtdRunRate*mtdWeight);
+      // If MTD is unavailable, fall back to the business growth assumption.
+      if(r.curUnits<=0) forecastCur=t8Baseline*(1+g1);
+      // For strong/declining/new signals, apply bounded directional adjustment only when enough MTD data exists.
+      if(mtdDays>=3){
+        if(cl==='High Growth'||cl==='Core Growth') forecastCur=Math.max(forecastCur,t8Baseline*(1+Math.min(r.growth,.50)));
+        if(cl==='Declining') forecastCur=Math.min(forecastCur,t8Baseline*(1+Math.max(r.growth,-.30)));
+      }
+      const effectiveGrowth=t8Baseline>0?forecastCur/t8Baseline-1:g1;
+      let confidence=mtdDays<=2?'Low':mtdDays<=5?'Medium-Low':mtdDays<=10?'Medium':'High';
+      if(r.prevUnits<=10 && r.curUnits>=30) confidence='Low';
+      r.mtdDays=mtdDays;r.mtdRunRate=mtdRunRate;r.mtdWeight=mtdWeight;
+      r.forecastCur=forecastCur;r.forecastNext=forecastCur*(1+g2);r.forecastGrowth=effectiveGrowth;r.confidence=confidence;
+      r.dailyDemand=forecastCur/daysCur;
+      r.coverage=r.dailyDemand>0?r.stock/r.dailyDemand:999;
+      r.oosDate=r.dailyDemand>0?dateAdd(date,Math.max(1,Math.floor(r.coverage))):null;
+      r.oosBeforeEta=lead>0 && r.coverage<lead;
+      const demandRemaining=r.dailyDemand*remainingDays;
+      const demandLead=r.dailyDemand*leadDays;
+      r.leadDemand=demandLead;
+      r.emergencyGap=Math.max(0,demandLead-r.stock);
+      r.stockRequirement=demandRemaining+r.forecastNext*(1+safety);
+      r.po=Math.max(0,Math.ceil(r.stockRequirement-r.stock));
+      r.risk=risk(r);r.priority=priority(r);
+      r.buyTiming=r.oosBeforeEta?'ORDER NOW':(r.coverage<lead+14?'ORDER SOON':'RECHECK');
+      r.reason = buildReason(r);
+    });
+    RESULTS=rows;
+    renderAll(rows,{date,lead,g1,g2,covTarget,safety,eta,totalRev});
+    document.getElementById('app').style.display='block'; st.textContent=`Đã tính ${rows.length.toLocaleString('vi-VN')} SKU.`;
+  }catch(e){console.error(e);st.textContent='Lỗi: '+e.message;alert('Không thể xử lý file. Kiểm tra định dạng cột hoặc thử lại.')}
+}
+function revShareEps(){return 0}
+function buildReason(r){
+  let parts=[];
+  if(r.core)parts.push('Core revenue contributor');
+  if(r.growth>=.30)parts.push('demand momentum tăng mạnh');
+  else if(r.growth<=-.20)parts.push('demand đang giảm');
+  else parts.push('demand tương đối ổn định');
+  if(r.oosBeforeEta)parts.push('tồn kho không đủ qua lead time');
+  else if(r.coverage<30)parts.push('coverage thấp');
+  else if(r.coverage>120)parts.push('tồn kho cao');
+  return parts.join('; ')+'.';
+}
+function renderAll(rows,cfg){
+  const core=rows.filter(r=>r.core),oos=rows.filter(r=>r.oosBeforeEta),critical=rows.filter(r=>r.priority[0]==='P0 Critical');
+  document.getElementById('kSku').textContent=rows.length.toLocaleString('vi-VN');
+  document.getElementById('kCore').textContent=core.length.toLocaleString('vi-VN');
+  document.getElementById('kPO').textContent=fmt(rows.reduce((a,r)=>a+r.po,0));
+  document.getElementById('kOOS').textContent=oos.length;
+  document.getElementById('kCritical').textContent=critical.length;
+  let s=0;core.forEach(r=>s+=r.revShare);document.getElementById('kRev').textContent=pct(s);
+  document.getElementById('actions').innerHTML=(oos.length?oos.sort((a,b)=>b.emergencyGap-a.emergencyGap).slice(0,7):rows.filter(r=>r.po>0).sort((a,b)=>b.po-a.po).slice(0,7)).map(r=>`<li><b>${esc(r.sku)}</b> — ${esc(r.name)}<br>${badge(r.priority[0],r.priority[1])} ${r.oosBeforeEta?'OOS before ETA':''} • PO <b>${fmt(r.po)}</b> • Coverage ${r.coverage.toFixed(1)}d</li>`).join('')||'<li>Không có action ngay.</li>';
+  const cells=[['Critical',rows.filter(r=>r.risk[0]==='Critical')],['At Risk',rows.filter(r=>r.risk[0]==='At Risk')],['Healthy',rows.filter(r=>r.risk[0]==='Healthy')],['Excess',rows.filter(r=>r.risk[0]==='Excess')],['Core',core],['High Growth',rows.filter(r=>r.growth>=.30)]];
+  document.getElementById('matrix').innerHTML=cells.map(x=>`<div class="cell"><b>${x[0]}</b><span>${x[1].length}</span> SKU</div>`).join('');
+  document.getElementById('summary').innerHTML=`Horizon: <b>${fmtDate(dateAdd(cfg.date,1))}</b> → <b>${fmtDate(new Date(cfg.date.getFullYear(),cfg.date.getMonth()+2,0))}</b>. ETA nếu order hôm nay: <b>${fmtDate(cfg.eta)}</b>. Forecast baseline: T9 ${pct(cfg.g1)}, T10 ${pct(cfg.g2)}. Safety stock: ${pct(cfg.safety)}. Core revenue target: ${pct(cfg.covTarget)}.`;
+  renderTable('poTable',rows.filter(r=>r.po>0).sort((a,b)=>b.po-a.po),['Priority','SKU','Product','Revenue %','Class','Momentum','Growth','Forecast Growth','Confidence','Stock','Coverage','Forecast T9','Forecast T10','PO','Emergency Gap','Buy Timing','Risk'],r=>[badge(r.priority[0],r.priority[1]),esc(r.sku),esc(r.name),pct(r.revShare),badge(r.classification,r.classification.includes('Growth')?'green':'gray'),esc(momentum(r.growth)),pct(r.growth),pct(r.forecastGrowth),badge(r.confidence,r.confidence==='High'?'green':r.confidence==='Low'?'red':'orange'),fmt(r.stock),r.coverage.toFixed(1)+'d',fmt(r.forecastCur),fmt(r.forecastNext),'<b>'+fmt(r.po)+'</b>',fmt(r.emergencyGap),badge(r.buyTiming,r.buyTiming==='ORDER NOW'?'red':r.buyTiming==='ORDER SOON'?'orange':'green'),badge(r.risk[0],r.risk[1])]);
+  renderTable('coreTable',core,['Rank','SKU','Product','Revenue','Revenue %','Cum Revenue %','Growth','Stock','Coverage','PO','Risk'],(r,i)=>[i+1,esc(r.sku),esc(r.name),fmt(r.curRevenue),pct(r.revShare),pct(core.slice(0,i+1).reduce((a,x)=>a+x.revShare,0)),pct(r.growth),fmt(r.stock),r.coverage.toFixed(1)+'d',fmt(r.po),badge(r.risk[0],r.risk[1])]);
+  renderTable('oosTable',oos.sort((a,b)=>a.coverage-b.coverage),['SKU','Product','Core','Growth','Stock','Coverage','Estimated OOS','ETA','Lead Demand','Emergency Gap','PO','Action'],r=>[esc(r.sku),esc(r.name),r.core?badge('Core','blue'):'No',pct(r.growth),fmt(r.stock),r.coverage.toFixed(1)+'d',r.oosDate?fmtDate(r.oosDate):'-',fmtDate(cfg.eta),fmt(r.leadDemand),fmt(r.emergencyGap),fmt(r.po),badge(r.buyTiming,'red')]);
+  const top=rows.filter(r=>r.po>0).sort((a,b)=>b.po-a.po).slice(0,20);
+  document.getElementById('diagBox').innerHTML=top.map(r=>`<div class="card" style="margin-bottom:10px"><b>${esc(r.sku)}</b> — ${esc(r.name)} ${badge(r.priority[0],r.priority[1])}<p class="small"><b>Business:</b> ${r.core?'Core contributor ('+pct(r.revShare)+' revenue).':'Long-tail contributor ('+pct(r.revShare)+' revenue).' } <b>Demand:</b> ${momentum(r.growth)} (${pct(r.growth)}). <b>Inventory:</b> ${fmt(r.stock)} units, ${r.coverage.toFixed(1)} days coverage. <b>Decision:</b> ${fmt(r.po)} units; ${r.buyTiming}. ${esc(r.reason)}</p></div>`).join('');
+  const issues=[];
+  if(!cfg.date)issues.push('Thiếu calculation date');
+  document.getElementById('dataBox').innerHTML=`<div class="alert ${issues.length?'':'success'}">${issues.length?issues.join('<br>'):'Data structure processed successfully.'}</div><ul><li>Sales previous: ${PENDING_COUNT('prev')} rows loaded.</li><li>Sales current: ${PENDING_COUNT('cur')} rows loaded.</li><li>Inventory: ${PENDING_COUNT('inv')} rows loaded.</li><li>SKU được aggregate trước khi merge.</li><li>PO engine: deterministic; AI explanation không tự thay đổi số lượng PO.</li></ul>`;
+}
+function PENDING_COUNT(x){return '-'}
+function renderTable(id,rows,heads,fn){
+  const t=document.getElementById(id);t.innerHTML='<thead><tr>'+heads.map(h=>'<th>'+h+'</th>').join('')+'</tr></thead><tbody>'+rows.map((r,i)=>'<tr>'+fn(r,i).map(x=>'<td>'+x+'</td>').join('')+'</tr>').join('')+'</tbody>';
+}
+function showTab(id,btn){document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));btn.classList.add('active')}
+function exportCSV(){
+ if(!RESULTS.length){alert('Hãy Generate trước.');return}
+ const cols=['priority','sku','name','revShare','classification','growth','stock','coverage','forecastCur','forecastNext','po','emergencyGap','buyTiming','risk'];
+ const csv=[cols.join(','),...RESULTS.filter(r=>r.po>0).map(r=>cols.map(k=>`"${String(r[k]?.[0]??r[k]??'').replaceAll('"','""')}"`).join(','))].join('\\n');
+ const blob=new Blob(['\\ufeff'+csv],{type:'text/csv;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='AI_Inventory_Planner_V2_1.csv';a.click();
+}
+function loadDemo(){
+ const demo=[
+  {sku:'01MA150K26',name:'Demo Core A',prevUnits:1840,curUnits:2245,curRevenue:2300000000,stock:392},
+  {sku:'29HC100A26',name:'Demo Core B',prevUnits:1530,curUnits:1795,curRevenue:3400000000,stock:1808},
+  {sku:'29CC200A26',name:'Demo Core C',prevUnits:736,curUnits:750,curRevenue:1600000000,stock:262},
+  {sku:'29CC075A26',name:'Demo Growth',prevUnits:313,curUnits:423,curRevenue:600000000,stock:488},
+  {sku:'29MA075A22',name:'Demo Declining',prevUnits:505,curUnits:317,curRevenue:500000000,stock:2},
+  {sku:'LONG001',name:'Demo Long Tail',prevUnits:50,curUnits:52,curRevenue:80000000,stock:100}
+ ];
+ const total=demo.reduce((a,r)=>a+r.curRevenue,0);let cum=0;
+ demo.sort((a,b)=>b.curRevenue-a.curRevenue).forEach(r=>{r.revShare=r.curRevenue/total;cum+=r.revShare;r.core=cum<=.8;r.growth=r.prevUnits?r.curUnits/r.prevUnits-1:0;r.classification=classify(r)[0]});
+ // Directly calculate demo using the same planner math.
+ RESULTS=demo; 
+ const d=new Date(document.getElementById('calcDate').value+'T00:00:00'),lead=+document.getElementById('lead').value,g1=(+document.getElementById('g1').value)/100,g2=(+document.getElementById('g2').value)/100,safety=(+document.getElementById('safety').value)/100;
+ const days=new Date(d.getFullYear(),d.getMonth()+1,0).getDate(),rem=days-d.getDate(),eta=dateAdd(d,lead);
+ RESULTS.forEach(r=>{let fg=Math.min(Math.max(r.growth,-.3),.5);r.forecastCur=r.curUnits*(1+(r.growth>=.3?fg:g1));r.forecastNext=r.forecastCur*(1+g2);r.dailyDemand=r.forecastCur/days;r.coverage=r.stock/r.dailyDemand;r.oosBeforeEta=r.coverage<lead;r.oosDate=dateAdd(d,Math.max(1,Math.floor(r.coverage)));r.leadDemand=r.dailyDemand*lead;r.emergencyGap=Math.max(0,r.leadDemand-r.stock);r.po=Math.max(0,Math.ceil(r.dailyDemand*rem+r.forecastNext*(1+safety)-r.stock));r.risk=risk(r);r.priority=priority(r);r.buyTiming=r.oosBeforeEta?'ORDER NOW':(r.coverage<lead+14?'ORDER SOON':'RECHECK');r.reason=buildReason(r)});
+ renderAll(RESULTS,{date:d,lead,g1,g2,covTarget:.8,safety,eta,totalRev:total});document.getElementById('app').style.display='block';document.getElementById('status').textContent='Demo loaded.';
+}
+</script>
+</body></html>

@@ -35,14 +35,21 @@ export function personRows(viewer: User, month = currentMonth()) {
 }
 
 export function personSummary(person: User, month = currentMonth()) {
-  const items = assignmentsForUser(person.id).map((a) => {
-    const kpis = kpisFor(new Set([a.storeId]), month);
-    return { assignment: a, store: getStore(a.storeId)!, kpis, status: paceStatus(kpis.pace) };
-  });
+  const items = assignmentsForUser(person.id)
+    .map((a) => ({ a, store: getStore(a.storeId) }))
+    .filter((x) => x.store !== null && x.store.archivedAt === null)
+    .map(({ a, store }) => {
+      const kpis = kpisFor(new Set([a.storeId]), month);
+      return { assignment: a, store: store!, kpis, status: paceStatus(kpis.pace) };
+    });
   const storeIds = new Set(items.map((i) => i.store.id));
   const kpis = kpisFor(storeIds, month);
-  // Provisional: credit each store's GMV by the person's workload share.
-  const weightedGmv = items.reduce((acc, i) => acc + i.kpis.gmv * (i.assignment.workloadPct / 100), 0);
+  // Formula TBD: credit each store's GMV by the person's workload share.
+  // null when no assigned store has GMV data.
+  const withGmv = items.filter((i) => i.kpis.gmv !== null);
+  const weightedGmv = withGmv.length
+    ? withGmv.reduce((acc, i) => acc + (i.kpis.gmv as number) * (i.assignment.workloadPct / 100), 0)
+    : null;
   const workload = items.reduce((acc, i) => acc + i.assignment.workloadPct, 0);
   return {
     person,

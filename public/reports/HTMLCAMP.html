@@ -1,0 +1,1146 @@
+<title>Campaign Pulse</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --navy:#1E2761; --navy-ink:#161d4d; --blue:#4C6FCE; --blue-soft:#EAEFFC;
+  --ink:#1A1A2E; --muted:#6B7280; --panel:#F4F6FB; --surface:#FFFFFF; --ground:#F8F9FC;
+  --line:#E2E6F0; --good:#1B7A3D; --good-bg:#E5F3E8; --warn:#B8860B; --warn-bg:#FCEFD9;
+  --crit:#C0392B; --crit-bg:#FBE7E4; --star-bg:#FDEFD0; --new-bg:#E4ECFB;
+  --shadow: 0 1px 2px rgba(20,26,64,.06), 0 8px 24px -12px rgba(20,26,64,.18);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --navy:#7C93E8; --navy-ink:#c7d3f7; --blue:#8FA6F2; --blue-soft:#20264a;
+    --ink:#E7E9F5; --muted:#9AA3C2; --panel:#161B33; --surface:#10132A; --ground:#0B0E1F;
+    --line:#2A3155; --good:#4FCB80; --good-bg:#123321; --warn:#E0B24A; --warn-bg:#3a2e12;
+    --crit:#F0796A; --crit-bg:#3a1612; --star-bg:#3a2e12; --new-bg:#1c2650;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"]{
+  --navy:#7C93E8; --navy-ink:#c7d3f7; --blue:#8FA6F2; --blue-soft:#20264a;
+  --ink:#E7E9F5; --muted:#9AA3C2; --panel:#161B33; --surface:#10132A; --ground:#0B0E1F;
+  --line:#2A3155; --good:#4FCB80; --good-bg:#123321; --warn:#E0B24A; --warn-bg:#3a2e12;
+  --crit:#F0796A; --crit-bg:#3a1612; --star-bg:#3a2e12; --new-bg:#1c2650;
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+}
+*{box-sizing:border-box;}
+body{background:var(--ground); color:var(--ink); font-family:'IBM Plex Sans',system-ui,sans-serif; padding-inline:20px; padding-block:0;}
+h1,h2,h3{font-family:'Sora',system-ui,sans-serif; text-wrap:balance; margin:0;}
+.num{font-family:'IBM Plex Mono',ui-monospace,monospace; font-variant-numeric:tabular-nums;}
+.wrap{max-width:1320px; margin:0 auto;}
+a{color:var(--blue);}
+
+/* ---------- header ---------- */
+.topbar{position:sticky; top:env(safe-area-inset-top,0px); z-index:30; background:color-mix(in srgb, var(--ground) 88%, transparent); backdrop-filter:blur(10px); border-bottom:1px solid var(--line); margin-inline:-20px; padding-inline:20px;}
+.topbar-inner{max-width:1320px; margin:0 auto; display:flex; align-items:center; gap:18px; padding-block:14px; flex-wrap:wrap;}
+.brand{display:flex; align-items:center; gap:10px; margin-right:auto;}
+.brand-badge{width:34px; height:34px; border-radius:9px; background:linear-gradient(155deg,var(--navy),var(--blue)); display:flex; align-items:center; justify-content:center; color:#fff; font-family:'Sora'; font-weight:700; font-size:15px; flex-shrink:0;}
+.brand-text h1{font-size:17px; color:var(--navy); letter-spacing:-.01em;}
+.brand-text p{margin:1px 0 0; font-size:11.5px; color:var(--muted);}
+.date-field{display:flex; flex-direction:column; gap:3px;}
+.date-field label{font-size:10.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em;}
+.date-field input{font-family:'IBM Plex Mono'; font-size:13.5px; border:1px solid var(--line); background:var(--surface); color:var(--ink); border-radius:8px; padding:7px 10px;}
+.date-field input:focus-visible, button:focus-visible, input:focus-visible{outline:2px solid var(--blue); outline-offset:1px;}
+.teasing-chip{font-size:11.5px; color:var(--blue); background:var(--blue-soft); border-radius:999px; padding:6px 12px; white-space:nowrap;}
+
+/* ---------- hero / intro ---------- */
+.hero{padding-block:28px 6px;}
+.hero h2{font-size:26px; color:var(--navy); max-width:640px;}
+.hero p{margin:8px 0 0; color:var(--muted); font-size:14px; max-width:640px; line-height:1.55;}
+
+/* ---------- upload grid ---------- */
+.section-label{display:flex; align-items:baseline; gap:10px; margin:30px 0 14px;}
+.section-label .idx{font-family:'Sora'; font-weight:700; font-size:13px; color:var(--blue);}
+.section-label h3{font-size:15.5px; color:var(--ink);}
+.section-label .hint{font-size:12px; color:var(--muted); margin-left:auto;}
+
+.upload-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:12px;}
+.upload-card{background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:14px 16px; box-shadow:var(--shadow); display:flex; flex-direction:column; gap:8px; position:relative;}
+.upload-card .tag{font-size:10px; text-transform:uppercase; letter-spacing:.07em; color:var(--blue); font-weight:600;}
+.upload-card h4{font-size:13.5px; margin:0;}
+.upload-card .desc{font-size:11.5px; color:var(--muted); line-height:1.4; min-height:32px;}
+.dropzone{border:1.5px dashed var(--line); border-radius:9px; padding:12px; text-align:center; cursor:pointer; font-size:12px; color:var(--muted); transition:.15s; background:var(--panel);}
+.dropzone:hover, .dropzone.drag{border-color:var(--blue); color:var(--blue); background:var(--blue-soft);}
+.dropzone input{display:none;}
+.status-line{font-size:11.5px; display:flex; align-items:center; gap:6px; min-height:16px;}
+.status-line.ok{color:var(--good);}
+.status-line.err{color:var(--crit);}
+.status-line.idle{color:var(--muted);}
+.dot{width:6px; height:6px; border-radius:50%; background:currentColor; flex-shrink:0;}
+
+/* ---------- generic section card ---------- */
+.card{background:var(--surface); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow); padding:22px 24px; margin-bottom:22px;}
+.card-head{display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:4px;}
+.card-head h3{font-size:16.5px; color:var(--navy);}
+.card-sub{font-size:12px; color:var(--muted); max-width:720px; line-height:1.5; margin-top:4px;}
+.empty-state{border:1.5px dashed var(--line); border-radius:10px; padding:22px; text-align:center; color:var(--muted); font-size:13px; margin-top:14px;}
+
+.tbl-wrap{overflow-x:auto; margin-top:16px; border-radius:10px; border:1px solid var(--line);}
+table{border-collapse:collapse; width:100%; font-size:12.5px; min-width:640px;}
+thead th{background:var(--navy); color:#fff; font-family:'Sora'; font-weight:600; font-size:11.5px; text-align:left; padding:9px 12px; position:sticky; top:0; white-space:nowrap;}
+tbody td{padding:7px 12px; border-top:1px solid var(--line); white-space:nowrap;}
+tbody tr:nth-child(even){background:var(--panel);}
+tbody tr.block-row td{background:var(--blue); color:#fff; font-weight:600; font-family:'Sora'; font-size:11.5px;}
+td.num, th.num{text-align:right; font-family:'IBM Plex Mono';}
+td.name-cell{white-space:normal; max-width:260px;}
+.delta{font-family:'IBM Plex Mono'; font-weight:600; padding:2px 7px; border-radius:6px; font-size:11.5px; display:inline-block;}
+.delta.up{color:var(--good); background:var(--good-bg);}
+.delta.down{color:var(--crit); background:var(--crit-bg);}
+.delta.flat{color:var(--muted); background:var(--panel);}
+.badge{display:inline-block; padding:3px 9px; border-radius:999px; font-size:11px; font-weight:600; white-space:nowrap;}
+.badge.star{background:var(--star-bg); color:var(--warn);}
+.badge.risk{background:var(--crit-bg); color:var(--crit);}
+.badge.dep{background:var(--warn-bg); color:var(--warn);}
+.badge.new{background:var(--new-bg); color:var(--blue);}
+.badge.norm{background:var(--panel); color:var(--muted);}
+
+/* KPI tiles */
+.kpi-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin-top:16px;}
+.kpi-tile{border:1px solid var(--line); border-radius:12px; padding:14px 16px; background:var(--panel); display:flex; flex-direction:column; gap:6px;}
+.kpi-tile .label{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em;}
+.kpi-tile .value{font-family:'IBM Plex Mono'; font-size:20px; font-weight:600; color:var(--navy);}
+.kpi-tile .sub{font-size:11.5px;}
+
+/* threshold controls */
+.threshold-row{display:flex; flex-wrap:wrap; gap:14px; margin-top:14px; padding:14px; background:var(--panel); border-radius:10px;}
+.threshold-field{display:flex; flex-direction:column; gap:4px; min-width:150px;}
+.threshold-field label{font-size:10.5px; color:var(--muted); line-height:1.35;}
+.threshold-field input{font-family:'IBM Plex Mono'; font-size:13px; border:1px solid var(--line); border-radius:7px; padding:6px 8px; background:var(--surface); color:var(--ink); width:100%;}
+
+.tabs{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:2px;}
+.tab-btn{font-family:'IBM Plex Sans'; font-size:12.5px; font-weight:500; padding:8px 14px; border-radius:999px; border:1px solid var(--line); background:var(--surface); color:var(--muted); cursor:pointer;}
+.tab-btn[aria-selected="true"]{background:var(--navy); color:#fff; border-color:var(--navy);}
+.filter-row{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:10px;}
+.filter-row .filter-label{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em;}
+.subtable-title{font-size:12px; font-weight:600; color:var(--navy); margin:18px 0 4px;}
+
+/* ---------- platform switch ---------- */
+.platform-switch{display:flex; gap:4px; background:var(--panel); border-radius:999px; padding:3px; border:1px solid var(--line);}
+.platform-btn{font-family:'IBM Plex Sans'; font-size:12px; font-weight:600; padding:6px 12px; border-radius:999px; border:none; background:transparent; color:var(--muted); cursor:pointer; display:flex; align-items:center; gap:6px; white-space:nowrap;}
+.platform-btn[aria-selected="true"]{background:var(--surface); color:var(--navy); box-shadow:var(--shadow);}
+.platform-btn:disabled{cursor:not-allowed; opacity:.6;}
+.soon-badge{font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; background:var(--blue-soft); color:var(--blue); border-radius:999px; padding:2px 6px;}
+
+/* ---------- quick nav ---------- */
+.quicknav{display:flex; gap:6px; flex-wrap:wrap; padding-block:10px; margin-inline:-20px; padding-inline:20px; overflow-x:auto;}
+.quicknav a{font-size:11.5px; font-weight:500; color:var(--muted); background:var(--panel); border:1px solid var(--line); border-radius:999px; padding:5px 11px; text-decoration:none; white-space:nowrap; flex-shrink:0;}
+.quicknav a:hover{color:var(--navy); border-color:var(--blue);}
+
+/* ---------- select control (reuses threshold-field look) ---------- */
+select.mini-select{font-family:'IBM Plex Sans'; font-size:12.5px; font-weight:500; border:1px solid var(--line); border-radius:7px; padding:6px 10px; background:var(--surface); color:var(--ink); cursor:pointer;}
+
+.note{font-size:11.5px; color:var(--muted); background:var(--panel); border-radius:9px; padding:10px 14px; margin-top:14px; line-height:1.5;}
+.note b{color:var(--ink);}
+
+footer{color:var(--muted); font-size:11px; text-align:center; padding-block:34px 40px;}
+
+@media (max-width:640px){
+  thead th, tbody td{padding:6px 8px;}
+  .hero h2{font-size:21px;}
+}
+</style>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="brand-badge">CP</div>
+      <div class="brand-text">
+        <h1>Campaign Pulse</h1>
+        <p>So sánh xu hướng campaign từ data thô</p>
+      </div>
+    </div>
+    <div class="platform-switch" role="tablist" aria-label="Chọn sàn thương mại điện tử">
+      <button type="button" class="platform-btn" aria-selected="true">🛍️ Shopee</button>
+      <button type="button" class="platform-btn" disabled title="Đang phát triển — sẽ có template &amp; bộ đọc file riêng cho TikTok Shop">🎵 TikTok Shop <span class="soon-badge">Sắp có</span></button>
+    </div>
+    <div class="date-field">
+      <label for="campaignDate">Ngày campaign chính</label>
+      <input type="date" id="campaignDate">
+    </div>
+    <div class="teasing-chip" id="teasingChip">Teasing: —</div>
+  </div>
+  <nav class="quicknav" aria-label="Chuyển nhanh tới section">
+    <a href="#s01">01 Data thô</a><a href="#s02">02 KPI</a><a href="#s03">03 Theo ngày</a><a href="#s04">04 Theo giờ</a>
+    <a href="#s05">05 SP ưu tiên</a><a href="#s06">06 Hành vi</a><a href="#s07">07 Livestream</a><a href="#s08">08 Flash Sale</a><a href="#s09">09 Voucher</a>
+  </nav>
+</div>
+
+<div class="wrap">
+
+  <div class="hero">
+    <h2>Dán data thô, đọc ra xu hướng ngay.</h2>
+    <p>Tải 9 file export từ Shopee Seller Center: shop-stats, hiệu quả sản phẩm, hành vi khách (mỗi loại có bản theo cả kỳ và bản riêng ngày campaign), cộng thêm Livestream, Flash Sale và Voucher. Công cụ tự phân nhóm Ngày thường / Teasing (3 ngày trước) / Ngày campaign, tính lại CVR &amp; AOV theo trọng số, xếp loại sản phẩm ưu tiên, và tính thêm hiệu suất từng kênh kích hoạt campaign — y hệt logic trong file Excel mẫu. Mọi phép tính chạy ngay trong trình duyệt, không gửi data lên đâu cả.</p>
+  </div>
+
+  <div class="section-label" id="s01">
+    <span class="idx">01</span><h3>Tải data thô</h3>
+    <span class="hint" id="loadedCount">0 / 9 file đã tải</span>
+  </div>
+  <div class="upload-grid" id="uploadGrid"></div>
+
+  <div class="section-label" id="s02">
+    <span class="idx">02</span><h3>Tổng quan KPI</h3>
+  </div>
+  <div class="card" id="kpiCard"></div>
+
+  <div class="section-label" id="s03">
+    <span class="idx">03</span><h3>Xu hướng theo ngày</h3>
+  </div>
+  <div class="card" id="dayTrendCard"></div>
+
+  <div class="section-label" id="s04">
+    <span class="idx">04</span><h3>Xu hướng theo khung giờ — ngày campaign</h3>
+  </div>
+  <div class="card" id="hourTrendCard"></div>
+
+  <div class="section-label" id="s05">
+    <span class="idx">05</span><h3>Sản phẩm ưu tiên</h3>
+  </div>
+  <div class="card" id="skuCard"></div>
+
+  <div class="section-label" id="s06">
+    <span class="idx">06</span><h3>Hành vi khách</h3>
+  </div>
+  <div class="card" id="behaviorCard"></div>
+
+  <div class="section-label" id="s07">
+    <span class="idx">07</span><h3>Livestream</h3>
+  </div>
+  <div class="card" id="liveCard"></div>
+
+  <div class="section-label" id="s08">
+    <span class="idx">08</span><h3>Flash Sale (ngày campaign)</h3>
+  </div>
+  <div class="card" id="flashCard"></div>
+
+  <div class="section-label" id="s09">
+    <span class="idx">09</span><h3>Voucher &amp; trợ giá (ngày campaign)</h3>
+  </div>
+  <div class="card" id="voucherCard"></div>
+
+  <footer>Campaign Pulse · toàn bộ xử lý diễn ra cục bộ trong trình duyệt của bạn · dùng lại được cho mọi gian hàng &amp; mọi đợt campaign</footer>
+</div>
+
+<script>
+"use strict";
+/* ============================================================================
+   0. CONSTANTS — mirrors the validated Excel template logic
+   ============================================================================ */
+const FILE_SLOTS = [
+  {key:'shopRange', tag:'Shop-stats · cả kỳ', title:'Shop stats theo ngày (cả kỳ)', desc:'Export "Hiệu quả kênh bán" theo khoảng ngày dài (bao gồm cả 3 ngày teasing & ngày campaign).'},
+  {key:'shopDay',   tag:'Shop-stats · 1 ngày', title:'Shop stats theo giờ (ngày campaign)', desc:'Export cùng loại nhưng lọc đúng 1 ngày campaign — Shopee tự xuất theo giờ.'},
+  {key:'skuRange',  tag:'SKU detail · cả kỳ', title:'Hiệu quả sản phẩm (cả kỳ)', desc:'Export "Phân tích sản phẩm" (Sản Phẩm Hiệu Quả Tốt) theo khoảng ngày dài.'},
+  {key:'skuDay',    tag:'SKU detail · 1 ngày', title:'Hiệu quả sản phẩm (ngày campaign)', desc:'Cùng loại export, lọc đúng ngày campaign.'},
+  {key:'behRange',  tag:'Hành vi khách · cả kỳ', title:'Product overview (cả kỳ)', desc:'Export "Tổng quan sản phẩm" theo khoảng ngày dài.'},
+  {key:'behDay',    tag:'Hành vi khách · 1 ngày', title:'Product overview (ngày campaign)', desc:'Cùng loại export, lọc đúng ngày campaign — Shopee tự xuất theo giờ.'},
+  {key:'livestream',tag:'Livestream · cả kỳ', title:'Danh sách phiên Livestream (cả kỳ)', desc:'Export "Live List" — từng phiên có giờ bắt đầu riêng, tự phân nhóm Ngày thường/Teasing/Campaign.'},
+  {key:'flashsale', tag:'Flash Sale · ngày campaign', title:'Flash Sale theo giờ (ngày campaign)', desc:'Export "In Shop Flash Sale Metrics" đúng ngày campaign (2 sheet: Tổng quan &amp; Chỉ Số).'},
+  {key:'voucher',   tag:'Voucher · ngày campaign', title:'Hiệu suất Voucher (ngày campaign)', desc:'Export "Voucher" đúng ngày campaign (Tổng quan, xu hướng theo giờ, danh sách từng mã).'},
+];
+
+const SHOP_METRIC_HEADERS = ['Tổng doanh số (VND)','Doanh số không bao gồm trợ giá Shopee','Tổng số đơn hàng','Doanh số / đơn hàng','Lượt nhấp vào sản phẩm','Số lượt truy cập','Tỷ lệ chuyển đổi đơn hàng (báo cáo)','Đơn đã hủy','Doanh số đơn hủy','Đơn hoàn trả / hoàn tiền','Doanh số đơn hoàn trả','Số người mua','Số người mua mới','Số người mua hiện tại','Số người mua tiềm năng','Tỷ lệ quay lại của người mua'];
+const SHOP_METRIC_FMT = ['C','C','N','C','N','N','P','N','C','N','C','N','N','N','N','P'];
+const BLOCKS = [
+  {sheet:'Đơn hàng đã đặt', label:'ĐẶT', tabLabel:'Đơn đặt', key:'DAT'},
+  {sheet:'Đơn đã xác nhận', label:'XÁC NHẬN', tabLabel:'Đơn xác nhận', key:'XN'},
+  {sheet:'Đơn Đã Thanh Toán', label:'THANH TOÁN', tabLabel:'Đơn thanh toán', key:'TT'},
+];
+const HOUR_BUCKETS = [
+  {name:'Khuya (00h–06h)', lo:0, hi:5},
+  {name:'Sáng sớm (06h–09h)', lo:6, hi:8},
+  {name:'Trưa (09h–12h)', lo:9, hi:11},
+  {name:'Đầu chiều (12h–15h)', lo:12, hi:14},
+  {name:'Chiều (15h–18h)', lo:15, hi:17},
+  {name:'Giờ vàng tối (18h–21h)', lo:18, hi:20},
+  {name:'Tối muộn (21h–24h)', lo:21, hi:23},
+];
+
+const SKU_COL_IDX = [0,1,2,8,9,10,11,12,13,15,16,19,23,25,26,27,28,30,32,34,35];
+const SKU_COL_FMT = ['T','T','T','C','C','N','N','P','P','N','N','N','C','N','N','N','N','P','N','N','P'];
+const SKU_LABELS  = ['Mã SP','Tên sản phẩm','Tình trạng','Doanh số (Đặt) VND','Doanh số (Xác nhận) VND','Lượt xem SP','Lượt nhấp SP','CTR','CVR (Đặt)','Đơn đặt','Đơn xác nhận','Người mua (Đặt)','Doanh thu/đơn (Đặt)','Hiển thị SP duy nhất','Nhấp SP duy nhất','Lượt truy cập SP','Lượt xem trang SP','Tỷ lệ thoát trang','Lượt thích','SP thêm giỏ','CVR thêm giỏ'];
+// convenience indices into the 21-wide SKU row
+const SKU_I = {code:0, name:1, revOrdered:3, cvrOrdered:8, visitsSp:15};
+
+const BEH_HEADERS = ['Lượt truy cập sản phẩm','Lượt xem trang sản phẩm','Sản phẩm được truy cập','Khách thoát trang sản phẩm','Tỷ lệ thoát trang sản phẩm','Lượt click từ trang tìm kiếm','Lượt thích','Lượt truy cập (thêm giỏ hàng)','Sản phẩm (thêm giỏ hàng)','Tỷ lệ chuyển đổi (thêm giỏ hàng)','Người mua đã đặt hàng','Sản phẩm (Đơn đã đặt)','Số sản phẩm đã bán','Doanh số (Đơn đã đặt) VND','Tỷ lệ chuyển đổi (Đơn đã đặt)','Người mua có đơn đã xác nhận','Sản phẩm (Đơn đã xác nhận)','Sản phẩm được duyệt','Doanh số (Đơn đã xác nhận) VND','Tỷ lệ chuyển đổi (Đơn đã xác nhận)','Tỷ lệ CĐ Đặt→Xác nhận'];
+const BEH_FMT = ['N','N','N','N','P','N','N','N','N','P','N','N','N','C','P','N','N','N','C','P','P'];
+const BEH_I = {visits:0, bounce:3, atcVisits:7, buyerOrdered:10, revOrdered:13, buyerConfirmed:15};
+
+const GROUPS = ['Ngày thường','Teasing (T-3→T-1)','Ngày Campaign'];
+
+/* ============================================================================
+   1. PARSING HELPERS
+   ============================================================================ */
+function parseVN(s){
+  if (s === null || s === undefined) return null;
+  if (typeof s === 'number') return s;
+  s = String(s).trim();
+  if (s === '-' || s === '') return null;
+  const isPct = s.endsWith('%');
+  let s2 = s.replace('%','').replace(/\./g,'').replace(/,/g,'.');
+  const v = parseFloat(s2);
+  if (isNaN(v)) return s;
+  return isPct ? v/100 : v;
+}
+function sheetToAOA(ws){ return XLSX.utils.sheet_to_json(ws, {header:1, raw:true, defval:null}); }
+
+// Shop-stats sheets repeat the header row (summary block, blank, header again, then daily/hourly rows)
+function extractRepeatedTable(aoa){
+  const idxs = [];
+  aoa.forEach((r,i)=>{ if (r && r[0] === 'Ngày') idxs.push(i); });
+  if (idxs.length < 2) throw new Error('Không tìm thấy bảng chi tiết theo ngày/giờ trong sheet.');
+  const start = idxs[1] + 1;
+  const rows = [];
+  for (let i = start; i < aoa.length; i++){
+    const r = aoa[i];
+    if (!r || r[0] === null || r[0] === '') break;
+    rows.push(r);
+  }
+  return rows;
+}
+function ddmmyyyyToISO(s){ // '01-09-2026' -> '2026-09-01'
+  const [d,m,y] = s.split('-');
+  return `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
+}
+function parseVNCurrency(s){ // '₫45.139.865' -> 45139865
+  if (s === null || s === undefined) return null;
+  if (typeof s === 'number') return s;
+  const cleaned = String(s).replace(/[₫\s]/g,'');
+  return parseVN(cleaned);
+}
+function parseDurationToSec(s){ // 'HH:MM:SS' -> seconds
+  if (!s) return 0;
+  const parts = String(s).split(':').map(Number);
+  if (parts.some(isNaN)) return 0;
+  const [h,m,sec] = parts;
+  return (h*3600)+(m*60)+(sec||0);
+}
+function hourFromPrefixedTimestamp(s){ // '00:00 09-09-2026' -> 0
+  if (!s) return null;
+  const timePart = String(s).split(' ')[0];
+  const h = parseInt(timePart.slice(0,2),10);
+  return isNaN(h) ? null : h;
+}
+
+function readShopWorkbook(wb){
+  const out = {};
+  for (const b of BLOCKS){
+    const ws = wb.Sheets[b.sheet];
+    if (!ws) throw new Error(`Thiếu sheet "${b.sheet}"`);
+    const aoa = sheetToAOA(ws);
+    const rows = extractRepeatedTable(aoa);
+    out[b.key] = rows.map(r => ({ raw: r[0], vals: SHOP_METRIC_HEADERS.map((_,i)=>parseVN(r[i+1])) }));
+  }
+  return out;
+}
+
+function readSkuWorkbook(wb){
+  const ws = wb.Sheets['Sản Phẩm Hiệu Quả Tốt'];
+  if (!ws) throw new Error('Thiếu sheet "Sản Phẩm Hiệu Quả Tốt"');
+  const aoa = sheetToAOA(ws);
+  const rows = [];
+  for (let i = 1; i < aoa.length; i++){
+    const r = aoa[i];
+    if (!r) continue;
+    if (r[3] !== '-') continue; // parent-level rows only
+    rows.push(SKU_COL_IDX.map((ci, j) => {
+      const v = r[ci];
+      return SKU_COL_FMT[j] === 'T' ? v : parseVN(v);
+    }));
+  }
+  return rows;
+}
+
+function readBehWorkbook(wb){
+  const ws = wb.Sheets['overview'];
+  if (!ws) throw new Error('Thiếu sheet "overview"');
+  const aoa = sheetToAOA(ws);
+  const rows = [];
+  for (let i = 1; i < aoa.length; i++){
+    const r = aoa[i];
+    if (!r || r[0] === null) continue;
+    rows.push({ raw: r[0], vals: BEH_HEADERS.map((_,j)=>parseVN(r[j+1])) });
+  }
+  return rows;
+}
+
+function readLivestreamWorkbook(wb){
+  const ws = wb.Sheets['Live List'];
+  if (!ws) throw new Error('Thiếu sheet "Live List"');
+  const aoa = sheetToAOA(ws);
+  const rows = [];
+  for (let i = 1; i < aoa.length; i++){
+    const r = aoa[i];
+    if (!r || !r[4]) continue;
+    const [datePart, timePart] = String(r[4]).split(' ');
+    if (!datePart || !timePart) continue;
+    rows.push({
+      name: r[3], startISO: ddmmyyyyToISO(datePart), startHour: parseInt(timePart.slice(0,2),10),
+      durationSec: parseDurationToSec(r[5]), viewersEngaged: parseVN(r[6]), comments: parseVN(r[7]),
+      atc: parseVN(r[8]), viewers: parseVN(r[10]),
+      ordersOrdered: parseVN(r[11]), ordersConfirmed: parseVN(r[12]),
+      unitsOrdered: parseVN(r[13]), unitsConfirmed: parseVN(r[14]),
+      revOrdered: parseVNCurrency(r[15]), revConfirmed: parseVNCurrency(r[16]),
+    });
+  }
+  return rows;
+}
+
+function readFlashSaleWorkbook(wb){
+  const wsOverview = wb.Sheets['Tổng quan'], wsHourly = wb.Sheets['Chỉ Số'];
+  if (!wsOverview || !wsHourly) throw new Error('Thiếu sheet "Tổng quan" hoặc "Chỉ Số"');
+  const parseRow = r => ({
+    revOrdered: parseVN(r[1]), revConfirmed: parseVN(r[2]),
+    ordersOrdered: parseVN(r[3]), ordersConfirmed: parseVN(r[4]),
+    buyersOrdered: parseVN(r[5]), buyersConfirmed: parseVN(r[6]),
+    ctr: parseVN(r[7]), views: parseVN(r[8]), clicks: parseVN(r[9]),
+    aovOrdered: parseVN(r[10]), aovConfirmed: parseVN(r[11]),
+  });
+  const ovAoa = sheetToAOA(wsOverview);
+  const overview = parseRow(ovAoa[1] || []);
+  const hAoa = sheetToAOA(wsHourly);
+  const hourly = [];
+  for (let i = 1; i < hAoa.length; i++){
+    const r = hAoa[i];
+    if (!r || !r[0]) continue;
+    const hour = hourFromPrefixedTimestamp(r[0]);
+    if (hour === null) continue;
+    hourly.push({ hour, vals: parseRow(r) });
+  }
+  return { overview, hourly };
+}
+
+function readVoucherWorkbook(wb){
+  const wsOverview = wb.Sheets['Tổng quan'], wsTrend = wb.Sheets['Xu hướng số liệu'], wsList = wb.Sheets['Danh sách hiệu suất'];
+  if (!wsOverview || !wsTrend || !wsList) throw new Error('Thiếu sheet Tổng quan / Xu hướng số liệu / Danh sách hiệu suất');
+  const parseRow = r => ({
+    revOrdered: parseVN(r[1]), revConfirmed: parseVN(r[2]), claimed: parseVN(r[3]),
+    ordersOrdered: parseVN(r[4]), ordersConfirmed: parseVN(r[5]),
+    usageRateOrdered: parseVN(r[6]), usageRateConfirmed: parseVN(r[7]),
+    buyersOrdered: parseVN(r[8]), buyersConfirmed: parseVN(r[9]),
+    costOrdered: parseVN(r[10]), costConfirmed: parseVN(r[11]),
+  });
+  const ovAoa = sheetToAOA(wsOverview);
+  const overview = parseRow(ovAoa[1] || []);
+  const trAoa = sheetToAOA(wsTrend);
+  const hourly = [];
+  for (let i = 1; i < trAoa.length; i++){
+    const r = trAoa[i];
+    if (!r || !r[0]) continue;
+    const hour = hourFromPrefixedTimestamp(r[0]);
+    if (hour === null) continue;
+    hourly.push({ hour, vals: parseRow(r) });
+  }
+  const listAoa = sheetToAOA(wsList);
+  const list = [];
+  for (let i = 1; i < listAoa.length; i++){
+    const r = listAoa[i];
+    if (!r || !r[0]) continue;
+    list.push({
+      name: r[0], code: r[1], status: r[3], offerType: r[6],
+      claimed: parseVN(r[7]), ordersOrdered: parseVN(r[8]), ordersConfirmed: parseVN(r[9]),
+      usageRateOrdered: parseVN(r[10]), usageRateConfirmed: parseVN(r[11]),
+      revOrdered: parseVN(r[12]), revConfirmed: parseVN(r[13]),
+      costOrdered: parseVN(r[14]), costConfirmed: parseVN(r[15]),
+      buyersOrdered: parseVN(r[18]), buyersConfirmed: parseVN(r[19]),
+    });
+  }
+  return { overview, hourly, list };
+}
+
+const READERS = {
+  shopRange: readShopWorkbook, shopDay: readShopWorkbook,
+  skuRange: readSkuWorkbook,  skuDay: readSkuWorkbook,
+  behRange: readBehWorkbook,  behDay: readBehWorkbook,
+  livestream: readLivestreamWorkbook,
+  flashsale: readFlashSaleWorkbook,
+  voucher: readVoucherWorkbook,
+};
+
+/* ============================================================================
+   2. STATE + FILE UPLOAD UI
+   ============================================================================ */
+const STATE = { files:{}, campaignDate:null, ui:{
+  block03:'DAT', hourView04:'bucket', skuTopN:'20', behView06:'day',
+  flash08View:'top', voucher09HourView:'top', voucher09ListView:'top',
+} };
+function setUI(key, val){ STATE.ui[key] = val; recompute(); }
+
+function fmtVND(v){ return (v===null||v===undefined||isNaN(v)) ? '—' : Math.round(v).toLocaleString('vi-VN')+' đ'; }
+function fmtInt(v){ return (v===null||v===undefined||isNaN(v)) ? '—' : Math.round(v).toLocaleString('vi-VN'); }
+function fmtPct(v,d=2){ return (v===null||v===undefined||isNaN(v)) ? '—' : (v*100).toFixed(d)+'%'; }
+function fmtByType(v,t){ return t==='C'?fmtVND(v) : t==='P'?fmtPct(v) : t==='N'?fmtInt(v) : (v??'—'); }
+function fmtDelta(v){
+  if (v===null||v===undefined||isNaN(v)||!isFinite(v)) return '<span class="delta flat">n/a</span>';
+  const cls = v>0.001 ? 'up' : v<-0.001 ? 'down' : 'flat';
+  const sign = v>0 ? '+' : '';
+  return `<span class="delta ${cls}">${sign}${(v*100).toFixed(1)}%</span>`;
+}
+function safeDiv(a,b){ return (b===0||b===null||b===undefined||isNaN(b)) ? null : a/b; }
+
+function buildUploadGrid(){
+  const grid = document.getElementById('uploadGrid');
+  grid.innerHTML = FILE_SLOTS.map(slot => `
+    <div class="upload-card" data-slot="${slot.key}">
+      <span class="tag">${slot.tag}</span>
+      <h4>${slot.title}</h4>
+      <div class="desc">${slot.desc}</div>
+      <label class="dropzone" for="input-${slot.key}">Chọn file .xlsx hoặc kéo-thả vào đây
+        <input type="file" id="input-${slot.key}" accept=".xlsx,.xls">
+      </label>
+      <div class="status-line idle" id="status-${slot.key}"><span class="dot"></span>Chưa tải file</div>
+    </div>
+  `).join('');
+
+  FILE_SLOTS.forEach(slot => {
+    const card = grid.querySelector(`[data-slot="${slot.key}"]`);
+    const input = card.querySelector('input');
+    const zone = card.querySelector('.dropzone');
+    input.addEventListener('change', e => handleFile(slot.key, e.target.files[0]));
+    ['dragover','dragenter'].forEach(ev => zone.addEventListener(ev, e => { e.preventDefault(); zone.classList.add('drag'); }));
+    ['dragleave','drop'].forEach(ev => zone.addEventListener(ev, e => { e.preventDefault(); zone.classList.remove('drag'); }));
+    zone.addEventListener('drop', e => { const f = e.dataTransfer.files[0]; if (f) handleFile(slot.key, f); });
+  });
+}
+
+function setStatus(key, mode, text){
+  const el = document.getElementById(`status-${key}`);
+  el.className = `status-line ${mode}`;
+  el.innerHTML = `<span class="dot"></span>${text}`;
+}
+
+function handleFile(key, file){
+  if (!file) return;
+  setStatus(key, 'idle', `Đang đọc "${file.name}"…`);
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
+      const parsed = READERS[key](wb);
+      let count = 0;
+      if (Array.isArray(parsed)) count = parsed.length;
+      else if (parsed.DAT) count = parsed.DAT.length;
+      else if (parsed.hourly) count = parsed.hourly.length;
+      STATE.files[key] = parsed;
+      setStatus(key, 'ok', `✓ ${file.name} — ${count} dòng`);
+    } catch (err){
+      delete STATE.files[key];
+      setStatus(key, 'err', `✗ ${err.message || 'File không đúng định dạng'}`);
+    }
+    updateLoadedCount();
+    recompute();
+  };
+  reader.onerror = () => setStatus(key, 'err', '✗ Không đọc được file');
+  reader.readAsArrayBuffer(file);
+}
+
+function updateLoadedCount(){
+  const n = Object.keys(STATE.files).length;
+  document.getElementById('loadedCount').textContent = `${n} / 9 file đã tải`;
+}
+
+/* ============================================================================
+   3. DAY / HOUR CLASSIFICATION
+   ============================================================================ */
+function isoAddDays(iso, n){
+  const d = new Date(iso+'T00:00:00');
+  d.setDate(d.getDate()+n);
+  return d.toISOString().slice(0,10);
+}
+function classifyDate(iso){
+  if (!STATE.campaignDate) return null;
+  if (iso === STATE.campaignDate) return 'Ngày Campaign';
+  const t1 = isoAddDays(STATE.campaignDate,-1), t2 = isoAddDays(STATE.campaignDate,-2), t3 = isoAddDays(STATE.campaignDate,-3);
+  if (iso===t1||iso===t2||iso===t3) return 'Teasing (T-3→T-1)';
+  return 'Ngày thường';
+}
+function classifyHour(h){
+  const b = HOUR_BUCKETS.find(b => h>=b.lo && h<=b.hi);
+  return b ? b.name : null;
+}
+
+function withGroupsDaily(rows){
+  return rows.map(r => ({ iso: ddmmyyyyToISO(r.raw), group: classifyDate(ddmmyyyyToISO(r.raw)), vals: r.vals }))
+             .filter(r => r.group);
+}
+function withGroupsHourly(rows){
+  return rows.map(r => { const h = parseInt(r.raw.slice(0,2),10); return { hour:h, bucket:classifyHour(h), vals:r.vals }; })
+             .filter(r => r.bucket !== null);
+}
+
+/* ============================================================================
+   4. AGGREGATION HELPERS
+   ============================================================================ */
+function avgBy(rows, group, getter){
+  const f = rows.filter(r=>r.group===group).map(getter).filter(v=>typeof v==='number' && !isNaN(v));
+  return f.length ? f.reduce((a,b)=>a+b,0)/f.length : null;
+}
+function sumBy(rows, group, getter){
+  return rows.filter(r=>r.group===group).map(getter).filter(v=>typeof v==='number' && !isNaN(v)).reduce((a,b)=>a+b,0);
+}
+function sumByBucket(rows, bucket, getter){
+  return rows.filter(r=>r.bucket===bucket).map(getter).filter(v=>typeof v==='number' && !isNaN(v)).reduce((a,b)=>a+b,0);
+}
+
+/* ============================================================================
+   5. RENDER — 02 KPI OVERVIEW
+   ============================================================================ */
+function renderKPI(){
+  const el = document.getElementById('kpiCard');
+  const shop = STATE.files.shopRange;
+  if (!shop || !STATE.campaignDate){
+    el.innerHTML = emptyState('Cần tải "Shop stats theo ngày (cả kỳ)" và chọn Ngày campaign để xem KPI tổng quan.');
+    return;
+  }
+  const rows = withGroupsDaily(shop.DAT);
+  if (!rows.some(r=>r.group==='Ngày Campaign')){
+    el.innerHTML = emptyState('Ngày campaign đã chọn không có trong data đã tải — kiểm tra lại ngày hoặc file.');
+    return;
+  }
+  const rev = i => (g)=>avgBy(rows,g,r=>r.vals[0]);
+  const revenueByGroup = GROUPS.map(g=>avgBy(rows,g,r=>r.vals[0]));
+  const ordersByGroup = GROUPS.map(g=>avgBy(rows,g,r=>r.vals[2]));
+  const cvrByGroup = GROUPS.map(g=>safeDiv(sumBy(rows,g,r=>r.vals[2]), sumBy(rows,g,r=>r.vals[4])));
+  const cancelByGroup = GROUPS.map(g=>safeDiv(sumBy(rows,g,r=>r.vals[7]), sumBy(rows,g,r=>r.vals[2])));
+  const normal = revenueByGroup[0], camp = revenueByGroup[2];
+  const dRev = safeDiv(camp-normal, normal);
+
+  const tiles = [
+    {label:'Doanh số TB/ngày — Ngày thường', value:fmtVND(normal)},
+    {label:'Doanh số — Ngày Campaign', value:fmtVND(camp), sub:fmtDelta(dRev)},
+    {label:'Đơn hàng TB/ngày — Ngày thường', value:fmtInt(ordersByGroup[0])},
+    {label:'Đơn hàng — Ngày Campaign', value:fmtInt(ordersByGroup[2]), sub:fmtDelta(safeDiv(ordersByGroup[2]-ordersByGroup[0],ordersByGroup[0]))},
+    {label:'CVR (tính lại) — Ngày thường', value:fmtPct(cvrByGroup[0])},
+    {label:'CVR (tính lại) — Ngày Campaign', value:fmtPct(cvrByGroup[2]), sub:fmtDelta(safeDiv(cvrByGroup[2]-cvrByGroup[0],cvrByGroup[0]))},
+    {label:'Tỷ lệ hủy — Ngày thường', value:fmtPct(cancelByGroup[0])},
+    {label:'Tỷ lệ hủy — Ngày Campaign', value:fmtPct(cancelByGroup[2]), sub:'Δ dương = xấu'},
+  ];
+
+  // channel contribution overlay (Livestream / Flash Sale / Voucher), all vs total shop revenue on campaign-day (block ĐẶT)
+  const campaignShopRev = sumBy(rows,'Ngày Campaign', r=>r.vals[0]);
+  const channelTiles = [];
+  if (STATE.files.livestream){
+    const campLiveRev = STATE.files.livestream.filter(s=>s.startISO===STATE.campaignDate).reduce((a,s)=>a+(s.revOrdered||0),0);
+    channelTiles.push({label:'% doanh số qua Livestream', value: campaignShopRev ? fmtPct(safeDiv(campLiveRev,campaignShopRev),1) : '—'});
+  }
+  if (STATE.files.flashsale){
+    const fsRev = STATE.files.flashsale.overview.revOrdered || 0;
+    channelTiles.push({label:'% doanh số qua Flash Sale', value: campaignShopRev ? fmtPct(safeDiv(fsRev,campaignShopRev),1) : '—'});
+  }
+  if (STATE.files.voucher){
+    const vRev = STATE.files.voucher.overview.revOrdered || 0;
+    channelTiles.push({label:'% doanh số có dùng Voucher', value: campaignShopRev ? fmtPct(safeDiv(vRev,campaignShopRev),1) : '—'});
+  }
+
+  el.innerHTML = `
+    <div class="card-head"><h3>Bảng điểm nhanh</h3><div class="card-sub">Đọc từ block [ĐẶT], Ngày thường = trung bình mọi ngày ngoài Teasing &amp; Campaign.</div></div>
+    <div class="kpi-grid">${tiles.map(t=>`
+      <div class="kpi-tile"><div class="label">${t.label}</div><div class="value">${t.value}</div>${t.sub?`<div class="sub">${t.sub}</div>`:''}</div>
+    `).join('')}</div>
+    ${channelTiles.length ? `
+    <div class="subtable-title">Đóng góp theo kênh kích hoạt — Ngày Campaign</div>
+    <div class="kpi-grid">${channelTiles.map(t=>`
+      <div class="kpi-tile"><div class="label">${t.label}</div><div class="value">${t.value}</div></div>
+    `).join('')}</div>
+    <div class="note">Các % kênh có thể <b>trùng nhau</b> (1 đơn có thể vừa qua Livestream vừa dùng Voucher) — không cộng dồn thành 100%, chỉ đọc độc lập từng kênh.</div>` : ''}
+  `;
+}
+
+/* ============================================================================
+   6. RENDER — 03 DAY TREND (per block, all metrics) + funnel
+   ============================================================================ */
+function metricRow(label, rows, mi, fmt, reverse){
+  let vals;
+  if (mi === 'aov'){
+    vals = GROUPS.map(g=>safeDiv(sumBy(rows,g,r=>r.vals[0]), sumBy(rows,g,r=>r.vals[2])));
+  } else if (mi === 'cvr'){
+    vals = GROUPS.map(g=>safeDiv(sumBy(rows,g,r=>r.vals[2]), sumBy(rows,g,r=>r.vals[4])));
+  } else {
+    vals = GROUPS.map(g=>avgBy(rows,g,r=>r.vals[mi]));
+  }
+  const d1 = safeDiv(vals[1]-vals[0], vals[0]);
+  const d2 = safeDiv(vals[2]-vals[0], vals[0]);
+  const d3 = safeDiv(vals[2]-vals[1], vals[1]);
+  const sign = reverse ? -1 : 1;
+  return `<tr><td class="name-cell">${label}</td>
+    <td class="num">${fmtByType(vals[0],fmt)}</td><td class="num">${fmtByType(vals[1],fmt)}</td><td class="num">${fmtByType(vals[2],fmt)}</td>
+    <td class="num">${fmtDelta(d1===null?null:d1*sign)}</td><td class="num">${fmtDelta(d2===null?null:d2*sign)}</td><td class="num">${fmtDelta(d3===null?null:d3*sign)}</td>
+  </tr>`;
+}
+
+function renderDayTrend(){
+  const el = document.getElementById('dayTrendCard');
+  const shop = STATE.files.shopRange;
+  if (!shop || !STATE.campaignDate){ el.innerHTML = emptyState('Cần tải "Shop stats theo ngày (cả kỳ)" và chọn Ngày campaign.'); return; }
+
+  const headRow = `<tr><th>Chỉ số</th><th class="num">Ngày thường</th><th class="num">Teasing (T-3→T-1)</th><th class="num">Ngày Campaign</th><th class="num">Δ Teasing/Thường</th><th class="num">Δ Campaign/Thường</th><th class="num">Δ Campaign/Teasing</th></tr>`;
+
+  const activeBlock = BLOCKS.find(b=>b.key===STATE.ui.block03) || BLOCKS[0];
+  const tabsHtml = `<div class="tabs" role="tablist" aria-label="Chọn loại đơn">${BLOCKS.map(b=>
+    `<button type="button" class="tab-btn" aria-selected="${b.key===activeBlock.key}" onclick="setUI('block03','${b.key}')">${b.tabLabel}</button>`
+  ).join('')}</div>`;
+
+  let body = '';
+  const rows = withGroupsDaily(shop[activeBlock.key]);
+  SHOP_METRIC_HEADERS.forEach((label, mi) => {
+    if (mi === 3) body += metricRow(label+' (tính lại: doanh số ÷ đơn hàng)', rows, 'aov', 'C', false);
+    else if (mi === 6) body += metricRow(label+' (tính lại: đơn ÷ lượt nhấp)', rows, 'cvr', 'P', false);
+    else body += metricRow(label, rows, mi, SHOP_METRIC_FMT[mi], mi===7||mi===8);
+  });
+
+  // funnel
+  const rDAT = withGroupsDaily(shop.DAT), rXN = withGroupsDaily(shop.XN), rTT = withGroupsDaily(shop.TT);
+  const funnelRows = [
+    ['Đơn đã đặt (SL/ngày)', GROUPS.map(g=>avgBy(rDAT,g,r=>r.vals[2])), null],
+    ['Đơn đã xác nhận (SL/ngày)', GROUPS.map(g=>avgBy(rXN,g,r=>r.vals[2])), null],
+    ['Đơn đã thanh toán (SL/ngày)', GROUPS.map(g=>avgBy(rTT,g,r=>r.vals[2])), null],
+    ['Tỷ lệ Đặt → Xác nhận', GROUPS.map((g,i)=>safeDiv(avgBy(rXN,g,r=>r.vals[2]),avgBy(rDAT,g,r=>r.vals[2]))), 'P'],
+    ['Tỷ lệ Xác nhận → Thanh toán', GROUPS.map((g,i)=>safeDiv(avgBy(rTT,g,r=>r.vals[2]),avgBy(rXN,g,r=>r.vals[2]))), 'P'],
+  ];
+  let funnelBody = '';
+  funnelRows.forEach(([label, vals, fmt])=>{
+    const d1=safeDiv(vals[1]-vals[0],vals[0]), d2=safeDiv(vals[2]-vals[0],vals[0]), d3=safeDiv(vals[2]-vals[1],vals[1]);
+    funnelBody += `<tr><td class="name-cell">${label}</td>
+      <td class="num">${fmt?fmtPct(vals[0]):fmtInt(vals[0])}</td><td class="num">${fmt?fmtPct(vals[1]):fmtInt(vals[1])}</td><td class="num">${fmt?fmtPct(vals[2]):fmtInt(vals[2])}</td>
+      <td class="num">${fmtDelta(d1)}</td><td class="num">${fmtDelta(d2)}</td><td class="num">${fmtDelta(d3)}</td></tr>`;
+  });
+
+  el.innerHTML = `
+    <div class="card-head"><h3>So sánh Ngày thường vs Teasing vs Ngày Campaign — ${activeBlock.tabLabel}</h3>
+      <div class="card-sub">CVR &amp; AOV tính lại theo trọng số (tổng tử số ÷ tổng mẫu số) thay vì trung bình cộng % từng ngày. Dòng "Đơn đã hủy"/"Doanh số đơn hủy" đọc ngược dấu (Δ dương = xấu).</div></div>
+    ${tabsHtml}
+    <div class="tbl-wrap"><table><thead>${headRow}</thead><tbody>${body}</tbody></table></div>
+    <div class="subtable-title">Phễu đơn hàng &amp; tỷ lệ chuyển tiếp (cả 3 loại đơn)</div>
+    <div class="tbl-wrap"><table><thead>${headRow}</thead><tbody>${funnelBody}</tbody></table></div>
+    <div class="note">Lưu ý: "Tỷ lệ Xác nhận → Thanh toán" so theo NGÀY nên có độ trễ thanh toán giữa các ngày — Ngày thường có thể vượt 100%. Chỉ nên đọc <b>chiều hướng</b> (Campaign thấp hơn hẳn = nghẽn vận hành thanh toán khi đơn tăng đột biến), không lấy đúng số % làm KPI tuyệt đối.</div>
+  `;
+}
+
+/* ============================================================================
+   7. RENDER — 04 HOUR TREND (bucket compare + top/bottom hours)
+   ============================================================================ */
+function renderHourTrend(){
+  const el = document.getElementById('hourTrendCard');
+  const shop = STATE.files.shopDay;
+  if (!shop){ el.innerHTML = emptyState('Cần tải "Shop stats theo giờ (ngày campaign)".'); return; }
+  const rows = withGroupsHourly(shop.DAT);
+  if (!rows.length){ el.innerHTML = emptyState('Không đọc được dữ liệu theo giờ từ file này.'); return; }
+
+  const totalRev = rows.reduce((a,r)=>a+(r.vals[0]||0),0);
+  const isAll = STATE.ui.hourView04 === 'all';
+  const tabsHtml = `<div class="tabs" role="tablist" aria-label="Chọn kiểu xem khung giờ">
+    <button type="button" class="tab-btn" aria-selected="${!isAll}" onclick="setUI('hourView04','bucket')">Khung giờ gộp (7 khung)</button>
+    <button type="button" class="tab-btn" aria-selected="${isAll}" onclick="setUI('hourView04','all')">Tất cả 24 khung giờ</button>
+  </div>`;
+
+  let mainTableHtml;
+  if (isAll){
+    const hh0 = h => String(h).padStart(2,'0')+':00';
+    const allBody = [...rows].sort((a,b)=>a.hour-b.hour).map(r=>{
+      const share = safeDiv(r.vals[0], totalRev);
+      const cvr = safeDiv(r.vals[2], r.vals[4]);
+      return `<tr><td class="name-cell">${hh0(r.hour)}</td><td class="num">${fmtVND(r.vals[0])}</td><td class="num">${fmtPct(share,1)}</td><td class="num">${fmtInt(r.vals[2])}</td><td class="num">${fmtInt(r.vals[5])}</td><td class="num">${fmtPct(cvr)}</td></tr>`;
+    }).join('');
+    mainTableHtml = `<div class="tbl-wrap"><table><thead><tr><th>Giờ</th><th class="num">Doanh số</th><th class="num">% đóng góp ngày</th><th class="num">Số đơn</th><th class="num">Lượt truy cập</th><th class="num">CVR</th></tr></thead>
+      <tbody>${allBody}</tbody></table></div>`;
+  } else {
+    let bucketBody = '';
+    HOUR_BUCKETS.forEach(b=>{
+      const rev = sumByBucket(rows,b.name,r=>r.vals[0]);
+      const orders = sumByBucket(rows,b.name,r=>r.vals[2]);
+      const visits = sumByBucket(rows,b.name,r=>r.vals[5]);
+      const clicks = sumByBucket(rows,b.name,r=>r.vals[4]);
+      const cvr = safeDiv(orders,clicks);
+      const share = safeDiv(rev,totalRev);
+      bucketBody += `<tr><td class="name-cell">${b.name}</td><td class="num">${fmtVND(rev)}</td><td class="num">${fmtPct(share,1)}</td><td class="num">${fmtInt(orders)}</td><td class="num">${fmtInt(visits)}</td><td class="num">${fmtPct(cvr)}</td></tr>`;
+    });
+    mainTableHtml = `<div class="tbl-wrap"><table><thead><tr><th>Khung giờ</th><th class="num">Doanh số</th><th class="num">% đóng góp ngày</th><th class="num">Số đơn</th><th class="num">Lượt truy cập</th><th class="num">CVR</th></tr></thead>
+      <tbody>${bucketBody}</tbody></table></div>`;
+  }
+
+  const byRev = [...rows].sort((a,b)=>b.vals[0]-a.vals[0]);
+  const withCvr = rows.map(r=>({hour:r.hour, cvr:safeDiv(r.vals[2],r.vals[4])||0}));
+  const byCvr = [...withCvr].sort((a,b)=>b.cvr-a.cvr);
+  const hh = h => String(h).padStart(2,'0')+':00';
+  let rankRows = '';
+  for (let i=0;i<5;i++){
+    const top = byRev[i], topC = byCvr[i];
+    const bot = byRev[byRev.length-1-i], botC = byCvr[byCvr.length-1-i];
+    rankRows += `<tr><td>${i+1}</td><td class="num">${hh(top.hour)}</td><td class="num">${fmtVND(top.vals[0])}</td><td class="num">${hh(topC.hour)}</td><td class="num">${fmtPct(topC.cvr)}</td>
+      <td class="num">${hh(bot.hour)}</td><td class="num">${fmtVND(bot.vals[0])}</td><td class="num">${hh(botC.hour)}</td><td class="num">${fmtPct(botC.cvr)}</td></tr>`;
+  }
+
+  el.innerHTML = `
+    <div class="card-head"><h3>Theo khung giờ (block ĐẶT)</h3><div class="card-sub">CVR tính lại = Đơn hàng ÷ Lượt nhấp.</div></div>
+    ${tabsHtml}
+    ${mainTableHtml}
+    <div class="subtable-title">Top 5 &amp; Bottom 5 giờ cụ thể</div>
+    <div class="tbl-wrap"><table><thead><tr><th>Hạng</th><th class="num">Giờ (Top DS)</th><th class="num">Doanh số</th><th class="num">Giờ (Top CVR)</th><th class="num">CVR</th>
+      <th class="num">Giờ (Bottom DS)</th><th class="num">Doanh số</th><th class="num">Giờ (Bottom CVR)</th><th class="num">CVR</th></tr></thead>
+      <tbody>${rankRows}</tbody></table></div>
+  `;
+}
+
+/* ============================================================================
+   8. RENDER — 05 SKU PRIORITY
+   ============================================================================ */
+function skuThresholds(){
+  return {
+    topN: Number(document.getElementById('thTopN').value) || 10,
+    trafficN: Number(document.getElementById('thTrafficN').value) || 20,
+    cvrDrop: (Number(document.getElementById('thCvrDrop').value) || -2)/100,
+    concentration: (Number(document.getElementById('thConcentration').value) || 35)/100,
+  };
+}
+
+function renderSkuHeadOnly(){
+  const el = document.getElementById('skuCard');
+  el.innerHTML = `
+    <div class="card-head"><h3>Sản phẩm cần ưu tiên</h3><div class="card-sub">Ghép data ngày campaign với cả kỳ theo Mã SP, xếp loại tự động.</div></div>
+    <div class="threshold-row">
+      <div class="threshold-field"><label>Top N doanh số = "Ngôi sao"</label><input type="number" id="thTopN" value="10" min="1"></div>
+      <div class="threshold-field"><label>Top N traffic = "traffic cao"</label><input type="number" id="thTrafficN" value="20" min="1"></div>
+      <div class="threshold-field"><label>CVR campaign thấp hơn CVR kỳ (điểm %) = "kém"</label><input type="number" id="thCvrDrop" value="-2" step="0.5"></div>
+      <div class="threshold-field"><label>% doanh số kỳ dồn vào 1 ngày = "phụ thuộc ngày Sale"</label><input type="number" id="thConcentration" value="35" min="1" max="100"></div>
+      <div class="threshold-field"><label>Hiển thị bao nhiêu sản phẩm trong bảng</label>
+        <select class="mini-select" id="skuTopNSelect">
+          <option value="5">Top 5</option><option value="10">Top 10</option><option value="20" selected>Top 20</option>
+          <option value="50">Top 50</option><option value="100">Top 100</option><option value="all">Tất cả</option>
+        </select>
+      </div>
+    </div>
+    <div class="empty-state" id="skuBody">Cần tải cả 2 file SKU (cả kỳ &amp; ngày campaign) để xem bảng này.</div>
+  `;
+  ['thTopN','thTrafficN','thCvrDrop','thConcentration'].forEach(id=>{
+    document.getElementById(id).addEventListener('change', renderSkuBody);
+  });
+  document.getElementById('skuTopNSelect').addEventListener('change', e=>{ STATE.ui.skuTopN = e.target.value; renderSkuBody(); });
+}
+
+function renderSkuBody(){
+  const target = document.getElementById('skuBody');
+  if (!target) return;
+  const period = STATE.files.skuRange, day = STATE.files.skuDay;
+  if (!period || !day){ target.outerHTML = `<div class="empty-state" id="skuBody">Cần tải cả 2 file SKU (cả kỳ &amp; ngày campaign) để xem bảng này.</div>`; return; }
+
+  const periodMap = new Map();
+  period.forEach(r => periodMap.set(r[SKU_I.code], r));
+  const th = skuThresholds();
+
+  const merged = day.map(r => {
+    const p = periodMap.get(r[SKU_I.code]);
+    const revDay = r[SKU_I.revOrdered]||0;
+    const revPeriod = p ? (p[SKU_I.revOrdered]||0) : 0;
+    const share = revPeriod>0 ? revDay/revPeriod : null;
+    const cvrDay = r[SKU_I.cvrOrdered];
+    const cvrPeriod = p ? p[SKU_I.cvrOrdered] : null;
+    const cvrDelta = (typeof cvrDay==='number' && typeof cvrPeriod==='number') ? cvrDay-cvrPeriod : null;
+    return { name:r[SKU_I.name], code:r[SKU_I.code], revDay, revPeriod, share, cvrDay, cvrPeriod, cvrDelta, visits: r[SKU_I.visitsSp]||0 };
+  });
+  const byRevRank = [...merged].sort((a,b)=>b.revDay-a.revDay);
+  const byTrafficRank = [...merged].sort((a,b)=>b.visits-a.visits);
+  const revRank = new Map(byRevRank.map((m,i)=>[m.code,i+1]));
+  const trafficRank = new Map(byTrafficRank.map((m,i)=>[m.code,i+1]));
+
+  const counts = {star:0, risk:0, dep:0, neu:0};
+  const rows = merged.map(m=>{
+    const rr = revRank.get(m.code), tr = trafficRank.get(m.code);
+    let cls='norm', label='Bình thường';
+    if (rr<=th.topN && (m.cvrDelta===null || m.cvrDelta>=0)){ cls='star'; label='🔥 Ngôi sao'; counts.star++; }
+    else if (tr<=th.trafficN && m.cvrDelta!==null && m.cvrDelta<=th.cvrDrop){ cls='risk'; label='⚠ Traffic tốt, CVR kém'; counts.risk++; }
+    else if (m.revPeriod===0){ cls='new'; label='🆕 SP mới'; counts.dep++; }
+    else if (m.share!==null && m.share>=th.concentration){ cls='dep'; label='📈 Phụ thuộc ngày Sale'; counts.dep++; }
+    return {...m, rr, tr, cls, label};
+  }).sort((a,b)=>b.revDay-a.revDay);
+
+  const topN = STATE.ui.skuTopN;
+  const displayRows = topN==='all' ? rows : rows.slice(0, Number(topN));
+
+  const body = displayRows.map(m=>`<tr>
+    <td class="name-cell"><b>${m.name||m.code}</b></td>
+    <td class="num">${fmtVND(m.revDay)}</td>
+    <td class="num">${fmtVND(m.revPeriod)}</td>
+    <td class="num">${m.share===null?'—':fmtPct(m.share,1)}</td>
+    <td class="num">${fmtPct(m.cvrDay)}</td>
+    <td class="num">${fmtPct(m.cvrPeriod)}</td>
+    <td class="num">${fmtInt(m.visits)}</td>
+    <td><span class="badge ${m.cls}">${m.label}</span></td>
+  </tr>`).join('');
+
+  target.outerHTML = `
+    <div id="skuBody">
+      <div class="kpi-grid" style="margin-bottom:6px;">
+        <div class="kpi-tile"><div class="label">🔥 Ngôi sao</div><div class="value">${counts.star}</div></div>
+        <div class="kpi-tile"><div class="label">⚠ Cần rà soát</div><div class="value">${counts.risk}</div></div>
+        <div class="kpi-tile"><div class="label">📈🆕 Phụ thuộc / SP mới</div><div class="value">${counts.dep}</div></div>
+        <div class="kpi-tile"><div class="label">Tổng SP bán trong ngày</div><div class="value">${rows.length}</div></div>
+      </div>
+      <div class="tbl-wrap"><table><thead><tr><th>Sản phẩm</th><th class="num">Doanh số ngày Campaign</th><th class="num">Doanh số cả kỳ</th><th class="num">% dồn vào ngày Campaign</th><th class="num">CVR ngày Campaign</th><th class="num">CVR cả kỳ</th><th class="num">Lượt truy cập SP</th><th>Phân loại</th></tr></thead>
+      <tbody>${body}</tbody></table></div>
+      <div class="note">Đang hiển thị <b>${displayRows.length}/${rows.length}</b> sản phẩm (xếp theo doanh số ngày Campaign) — đổi "Hiển thị bao nhiêu sản phẩm" ở trên để xem nhiều/ít hơn. Số liệu 4 ô tổng hợp phía trên tính trên toàn bộ ${rows.length} sản phẩm, không phụ thuộc bộ lọc hiển thị.<br><b>🔥 Ngôi sao</b>: top doanh số ngày campaign &amp; CVR không kém kỳ → dồn ngân sách. <b>⚠ Traffic tốt, CVR kém</b>: nhiều người vào nhưng chốt đơn kém hơn hẳn kỳ → rà soát giá/trang SP. <b>📈 Phụ thuộc ngày Sale</b>: phần lớn doanh số cả kỳ dồn vào đúng ngày campaign → rủi ro nếu ngày đó trục trặc. <b>🆕 SP mới</b>: không có doanh số trong cả kỳ trước đó.</div>
+    </div>`;
+}
+
+/* ============================================================================
+   9. RENDER — 06 BEHAVIOR
+   ============================================================================ */
+function behMetricRow(label, rows, idx, kind, fmt){
+  let vals;
+  if (kind==='ratio'){
+    vals = GROUPS.map(g=>safeDiv(sumBy(rows,g,r=>r.vals[idx[0]]), sumBy(rows,g,r=>r.vals[idx[1]])));
+  } else {
+    vals = GROUPS.map(g=>avgBy(rows,g,r=>r.vals[idx]));
+  }
+  const d1=safeDiv(vals[1]-vals[0],vals[0]), d2=safeDiv(vals[2]-vals[0],vals[0]), d3=safeDiv(vals[2]-vals[1],vals[1]);
+  return `<tr><td class="name-cell">${label}</td><td class="num">${fmtByType(vals[0],fmt)}</td><td class="num">${fmtByType(vals[1],fmt)}</td><td class="num">${fmtByType(vals[2],fmt)}</td>
+    <td class="num">${fmtDelta(d1)}</td><td class="num">${fmtDelta(d2)}</td><td class="num">${fmtDelta(d3)}</td></tr>`;
+}
+
+function renderBehavior(){
+  const el = document.getElementById('behaviorCard');
+  const range = STATE.files.behRange, day = STATE.files.behDay;
+  if (!range && !day){ el.innerHTML = emptyState('Cần tải file Product overview (cả kỳ và/hoặc ngày campaign).'); return; }
+
+  const showDay = range && day ? STATE.ui.behView06==='day' : !!range;
+  const showHour = range && day ? STATE.ui.behView06==='hour' : !!day;
+  const tabsHtml = (range && day) ? `<div class="tabs" role="tablist" aria-label="Chọn kiểu xem hành vi khách">
+    <button type="button" class="tab-btn" aria-selected="${STATE.ui.behView06==='day'}" onclick="setUI('behView06','day')">Theo nhóm ngày</button>
+    <button type="button" class="tab-btn" aria-selected="${STATE.ui.behView06==='hour'}" onclick="setUI('behView06','hour')">Theo khung giờ (ngày campaign)</button>
+  </div>` : '';
+
+  let dayPart = '';
+  if (showDay && range && STATE.campaignDate){
+    const rows = range.map(r=>({iso:ddmmyyyyToISO(r.raw), group:classifyDate(ddmmyyyyToISO(r.raw)), vals:r.vals})).filter(r=>r.group);
+    const head = `<tr><th>Chỉ số</th><th class="num">Ngày thường</th><th class="num">Teasing</th><th class="num">Ngày Campaign</th><th class="num">Δ Teasing/Thường</th><th class="num">Δ Campaign/Thường</th><th class="num">Δ Campaign/Teasing</th></tr>`;
+    const body = [
+      behMetricRow('Lượt truy cập sản phẩm', rows, BEH_I.visits, 'avg', 'N'),
+      behMetricRow('Tỷ lệ thoát trang (tính lại)', rows, [BEH_I.bounce, BEH_I.visits], 'ratio', 'P'),
+      behMetricRow('Tỷ lệ thêm giỏ hàng (tính lại)', rows, [BEH_I.atcVisits, BEH_I.visits], 'ratio', 'P'),
+      behMetricRow('Doanh số (Đơn đã đặt)', rows, BEH_I.revOrdered, 'avg', 'C'),
+      behMetricRow('CVR Đặt (tính lại)', rows, [BEH_I.buyerOrdered, BEH_I.visits], 'ratio', 'P'),
+      behMetricRow('Tỷ lệ CĐ Đặt→Xác nhận (tính lại)', rows, [BEH_I.buyerConfirmed, BEH_I.buyerOrdered], 'ratio', 'P'),
+    ].join('');
+    dayPart = `<div class="subtable-title">Theo nhóm ngày</div><div class="tbl-wrap"><table><thead>${head}</thead><tbody>${body}</tbody></table></div>`;
+  }
+
+  let hourPart = '';
+  if (showHour && day){
+    const rows = day.map(r=>{ const h=parseInt(r.raw.slice(0,2),10); return {hour:h, bucket:classifyHour(h), vals:r.vals}; }).filter(r=>r.bucket);
+    let body = '';
+    HOUR_BUCKETS.forEach(b=>{
+      const visits = sumByBucket(rows,b.name,r=>r.vals[BEH_I.visits]);
+      const bounce = safeDiv(sumByBucket(rows,b.name,r=>r.vals[BEH_I.bounce]), visits);
+      const atc = sumByBucket(rows,b.name,r=>r.vals[BEH_I.atcVisits]);
+      const buyers = sumByBucket(rows,b.name,r=>r.vals[BEH_I.buyerOrdered]);
+      const cvr = safeDiv(buyers, visits);
+      body += `<tr><td class="name-cell">${b.name}</td><td class="num">${fmtInt(visits)}</td><td class="num">${fmtPct(bounce)}</td><td class="num">${fmtInt(atc)}</td><td class="num">${fmtInt(buyers)}</td><td class="num">${fmtPct(cvr)}</td></tr>`;
+    });
+    hourPart = `<div class="subtable-title">Theo khung giờ — ngày campaign</div><div class="tbl-wrap"><table><thead><tr><th>Khung giờ</th><th class="num">Lượt truy cập SP</th><th class="num">Tỷ lệ thoát</th><th class="num">Lượt thêm giỏ</th><th class="num">Người mua đặt</th><th class="num">CVR</th></tr></thead><tbody>${body}</tbody></table></div>`;
+  }
+
+  el.innerHTML = `<div class="card-head"><h3>Hành vi khách</h3><div class="card-sub">Các tỷ lệ được tính lại theo trọng số (SUMIFS tử số ÷ mẫu số) khi đủ dữ liệu gốc.</div></div>${tabsHtml}${dayPart}${hourPart}`;
+}
+
+/* ============================================================================
+   10. RENDER — 07 LIVESTREAM
+   ============================================================================ */
+function cmpRowGeneric(label, vals, fmtFn, reverse){
+  const d1=safeDiv(vals[1]-vals[0],vals[0]), d2=safeDiv(vals[2]-vals[0],vals[0]), d3=safeDiv(vals[2]-vals[1],vals[1]);
+  const sign = reverse ? -1 : 1;
+  return `<tr><td class="name-cell">${label}</td><td class="num">${fmtFn(vals[0])}</td><td class="num">${fmtFn(vals[1])}</td><td class="num">${fmtFn(vals[2])}</td>
+    <td class="num">${fmtDelta(d1===null?null:d1*sign)}</td><td class="num">${fmtDelta(d2===null?null:d2*sign)}</td><td class="num">${fmtDelta(d3===null?null:d3*sign)}</td></tr>`;
+}
+
+function renderLivestream(){
+  const el = document.getElementById('liveCard');
+  const sessions = STATE.files.livestream;
+  if (!sessions){ el.innerHTML = emptyState('Cần tải "Danh sách phiên Livestream (cả kỳ)".'); return; }
+  if (!STATE.campaignDate){ el.innerHTML = emptyState('Chọn Ngày campaign chính để xem so sánh theo nhóm ngày.'); return; }
+
+  const bySession = sessions.map(s=>({...s, group: classifyDate(s.startISO)})).filter(s=>s.group);
+  if (!bySession.length){ el.innerHTML = emptyState('Không có phiên live nào rơi vào Ngày thường/Teasing/Campaign đã chọn — kiểm tra lại Ngày campaign.'); return; }
+
+  const totalHours = sessions.reduce((a,s)=>a+(s.durationSec||0),0)/3600;
+  const sessionsByGroup = GROUPS.map(g=>bySession.filter(r=>r.group===g).length);
+
+  const tiles = [
+    {label:'Tổng số phiên live (cả kỳ)', value: fmtInt(sessions.length)},
+    {label:'Tổng giờ live (cả kỳ)', value: totalHours.toFixed(1)+' giờ'},
+    {label:'Số phiên live — Ngày Campaign', value: fmtInt(sessionsByGroup[2])},
+  ];
+
+  const head = `<tr><th>Chỉ số trung bình / phiên</th><th class="num">Ngày thường</th><th class="num">Teasing (T-3→T-1)</th><th class="num">Ngày Campaign</th><th class="num">Δ Teasing/Thường</th><th class="num">Δ Campaign/Thường</th><th class="num">Δ Campaign/Teasing</th></tr>`;
+  const gmvVals = GROUPS.map(g=>avgBy(bySession,g,r=>r.revOrdered));
+  const durVals = GROUPS.map(g=>avgBy(bySession,g,r=>r.durationSec));
+  const viewersVals = GROUPS.map(g=>avgBy(bySession,g,r=>r.viewers));
+  const atcVals = GROUPS.map(g=>avgBy(bySession,g,r=>r.atc));
+  const ordersVals = GROUPS.map(g=>avgBy(bySession,g,r=>r.ordersOrdered));
+  const cvrVals = GROUPS.map(g=>safeDiv(sumBy(bySession,g,r=>r.ordersOrdered), sumBy(bySession,g,r=>r.viewers)));
+  const cmpBody = [
+    cmpRowGeneric('GMV / phiên (Đặt)', gmvVals, fmtVND),
+    cmpRowGeneric('Thời lượng TB / phiên', durVals, v=>v===null?'—':(v/60).toFixed(0)+' phút'),
+    cmpRowGeneric('Người xem TB / phiên', viewersVals, fmtInt),
+    cmpRowGeneric('ATC TB / phiên', atcVals, fmtInt),
+    cmpRowGeneric('Đơn (Đặt) TB / phiên', ordersVals, fmtInt),
+    cmpRowGeneric('CVR xem→đơn (tính lại)', cvrVals, fmtPct),
+  ].join('');
+
+  const campSessions = sessions.filter(s=>s.startISO===STATE.campaignDate).sort((a,b)=>(b.revOrdered||0)-(a.revOrdered||0));
+  const rankBody = campSessions.map(s=>{
+    const cvr = safeDiv(s.ordersOrdered, s.viewers);
+    return `<tr><td class="name-cell">${s.name||'—'}</td><td class="num">${String(s.startHour).padStart(2,'0')}:00</td><td class="num">${(s.durationSec/60).toFixed(0)} phút</td>
+      <td class="num">${fmtInt(s.viewers)}</td><td class="num">${fmtInt(s.atc)}</td><td class="num">${fmtInt(s.ordersOrdered)}</td><td class="num">${fmtVND(s.revOrdered)}</td><td class="num">${fmtPct(cvr)}</td></tr>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="card-head"><h3>Livestream</h3><div class="card-sub">Nhóm ngày xác định theo giờ bắt đầu từng phiên — dùng đúng logic Ngày thường/Teasing/Campaign như các phần trên.</div></div>
+    <div class="kpi-grid">${tiles.map(t=>`<div class="kpi-tile"><div class="label">${t.label}</div><div class="value">${t.value}</div></div>`).join('')}</div>
+    <div class="subtable-title">So sánh chỉ số trung bình mỗi phiên live</div>
+    <div class="tbl-wrap"><table><thead>${head}</thead><tbody>${cmpBody}</tbody></table></div>
+    ${campSessions.length ? `
+    <div class="subtable-title">Các phiên live trong Ngày Campaign (xếp theo doanh thu)</div>
+    <div class="tbl-wrap"><table><thead><tr><th>Tên buổi live</th><th class="num">Giờ bắt đầu</th><th class="num">Thời lượng</th><th class="num">Người xem</th><th class="num">ATC</th><th class="num">Đơn (Đặt)</th><th class="num">Doanh thu (Đặt)</th><th class="num">CVR xem→đơn</th></tr></thead>
+      <tbody>${rankBody}</tbody></table></div>` : `<div class="note">Không có phiên live nào diễn ra đúng Ngày campaign đã chọn.</div>`}
+  `;
+}
+
+/* ============================================================================
+   11. RENDER — 08 FLASH SALE
+   ============================================================================ */
+function renderFlashSale(){
+  const el = document.getElementById('flashCard');
+  const fs = STATE.files.flashsale;
+  if (!fs){ el.innerHTML = emptyState('Cần tải "Flash Sale theo giờ (ngày campaign)".'); return; }
+  const ov = fs.overview;
+  const tiles = [
+    {label:'Doanh số (Đặt)', value: fmtVND(ov.revOrdered)},
+    {label:'Doanh số (Xác nhận)', value: fmtVND(ov.revConfirmed)},
+    {label:'Số đơn (Đặt)', value: fmtInt(ov.ordersOrdered)},
+    {label:'CTR', value: fmtPct(ov.ctr)},
+    {label:'Lượt xem sản phẩm', value: fmtInt(ov.views)},
+    {label:'Doanh số / người mua (Đặt)', value: fmtVND(ov.aovOrdered)},
+  ];
+  const totalRev = fs.hourly.reduce((a,h)=>a+(h.vals.revOrdered||0),0);
+  const isTop = STATE.ui.flash08View !== 'bottom';
+  const sorted = [...fs.hourly].sort((a,b)=> isTop ? (b.vals.revOrdered||0)-(a.vals.revOrdered||0) : (a.vals.revOrdered||0)-(b.vals.revOrdered||0));
+  const picked = sorted.slice(0,5);
+  const body = picked.map(h=>{
+    const share = safeDiv(h.vals.revOrdered, totalRev);
+    const cvr = safeDiv(h.vals.ordersOrdered, h.vals.clicks);
+    return `<tr><td>${String(h.hour).padStart(2,'0')}:00</td><td class="num">${fmtVND(h.vals.revOrdered)}</td><td class="num">${fmtPct(share,1)}</td><td class="num">${fmtInt(h.vals.ordersOrdered)}</td><td class="num">${fmtPct(h.vals.ctr)}</td><td class="num">${fmtInt(h.vals.views)}</td><td class="num">${fmtPct(cvr)}</td></tr>`;
+  }).join('');
+  const tabsHtml = `<div class="tabs" role="tablist" aria-label="Chọn kiểu xem khung giờ Flash Sale">
+    <button type="button" class="tab-btn" aria-selected="${isTop}" onclick="setUI('flash08View','top')">Top khung giờ hiệu quả nhất</button>
+    <button type="button" class="tab-btn" aria-selected="${!isTop}" onclick="setUI('flash08View','bottom')">Top khung giờ cần cải thiện</button>
+  </div>`;
+  el.innerHTML = `
+    <div class="card-head"><h3>Flash Sale (ngày campaign)</h3><div class="card-sub">Chỉ có dữ liệu đúng ngày campaign — không so sánh được với Ngày thường/Teasing.</div></div>
+    <div class="kpi-grid">${tiles.map(t=>`<div class="kpi-tile"><div class="label">${t.label}</div><div class="value">${t.value}</div></div>`).join('')}</div>
+    ${tabsHtml}
+    <div class="tbl-wrap"><table><thead><tr><th>Giờ</th><th class="num">Doanh số (Đặt)</th><th class="num">% đóng góp</th><th class="num">Số đơn</th><th class="num">CTR</th><th class="num">Lượt xem SP</th><th class="num">CVR đơn/nhấp</th></tr></thead>
+      <tbody>${body}</tbody></table></div>
+    <div class="note">Xếp theo doanh số (Đặt) — ${isTop ? 'top 5 giờ cao nhất' : 'top 5 giờ thấp nhất trong khung Flash Sale, cân nhắc đẩy thêm ưu đãi/nhắc lịch vào các giờ này ở đợt sau'}.</div>
+  `;
+}
+
+/* ============================================================================
+   12. RENDER — 09 VOUCHER
+   ============================================================================ */
+function renderVoucher(){
+  const el = document.getElementById('voucherCard');
+  const v = STATE.files.voucher;
+  if (!v){ el.innerHTML = emptyState('Cần tải "Hiệu suất Voucher (ngày campaign)".'); return; }
+  const ov = v.overview;
+  const roiOverview = safeDiv(ov.revConfirmed, ov.costConfirmed);
+  const tiles = [
+    {label:'Doanh số nhờ Voucher (Xác nhận)', value: fmtVND(ov.revConfirmed)},
+    {label:'Chi phí trợ giá (Xác nhận)', value: fmtVND(ov.costConfirmed)},
+    {label:'ROI (Doanh số ÷ Chi phí)', value: roiOverview===null ? '—' : roiOverview.toFixed(1)+'x'},
+    {label:'Lượt nhận mã', value: fmtInt(ov.claimed)},
+    {label:'Tỷ lệ sử dụng (Xác nhận)', value: fmtPct(ov.usageRateConfirmed)},
+    {label:'Người mua dùng voucher (Xác nhận)', value: fmtInt(ov.buyersConfirmed)},
+  ];
+  const totalRev = v.hourly.reduce((a,h)=>a+(h.vals.revOrdered||0),0);
+  const hourIsTop = STATE.ui.voucher09HourView !== 'bottom';
+  const hourSorted = [...v.hourly].sort((a,b)=> hourIsTop ? (b.vals.revOrdered||0)-(a.vals.revOrdered||0) : (a.vals.revOrdered||0)-(b.vals.revOrdered||0));
+  const hourBody = hourSorted.slice(0,5).map(h=>{
+    const share = safeDiv(h.vals.revOrdered, totalRev);
+    return `<tr><td>${String(h.hour).padStart(2,'0')}:00</td><td class="num">${fmtVND(h.vals.revOrdered)}</td><td class="num">${fmtPct(share,1)}</td><td class="num">${fmtInt(h.vals.ordersOrdered)}</td><td class="num">${fmtPct(h.vals.usageRateOrdered)}</td><td class="num">${fmtVND(h.vals.costOrdered)}</td></tr>`;
+  }).join('');
+  const hourTabsHtml = `<div class="tabs" role="tablist" aria-label="Chọn kiểu xem khung giờ voucher">
+    <button type="button" class="tab-btn" aria-selected="${hourIsTop}" onclick="setUI('voucher09HourView','top')">Top khung giờ phát sinh voucher tốt</button>
+    <button type="button" class="tab-btn" aria-selected="${!hourIsTop}" onclick="setUI('voucher09HourView','bottom')">Top khung giờ cần cải thiện</button>
+  </div>`;
+
+  const withRoi = v.list.map(m=>{
+    const cost = m.costConfirmed||0, rev = m.revConfirmed||0;
+    const roi = cost>0 ? rev/cost : (rev>0 ? Infinity : null);
+    return {...m, roi};
+  });
+  const rankable = withRoi.filter(m=>m.roi!==null);
+  const listIsTop = STATE.ui.voucher09ListView !== 'bottom';
+  const listSorted = [...rankable].sort((a,b)=> listIsTop ? b.roi-a.roi : a.roi-b.roi);
+  const listPicked = listSorted.slice(0,5);
+  const listBody = listPicked.map(m=>{
+    return `<tr><td class="name-cell"><b>${m.name}</b>${m.code && m.code!=='-' ? `<br><span style="color:var(--muted);font-size:11px;">${m.code}</span>` : ''}</td>
+      <td>${m.offerType||'—'}</td>
+      <td class="num">${fmtInt(m.claimed)}</td>
+      <td class="num">${fmtPct(m.usageRateConfirmed)}</td>
+      <td class="num">${fmtVND(m.revConfirmed)}</td>
+      <td class="num">${fmtVND(m.costConfirmed)}</td>
+      <td class="num">${m.roi===Infinity ? '∞ (miễn phí)' : m.roi.toFixed(1)+'x'}</td></tr>`;
+  }).join('');
+  const listTabsHtml = `<div class="tabs" role="tablist" aria-label="Chọn kiểu xem mã voucher">
+    <button type="button" class="tab-btn" aria-selected="${listIsTop}" onclick="setUI('voucher09ListView','top')">Top mã voucher hiệu quả</button>
+    <button type="button" class="tab-btn" aria-selected="${!listIsTop}" onclick="setUI('voucher09ListView','bottom')">Top mã voucher cần cải thiện</button>
+  </div>`;
+
+  el.innerHTML = `
+    <div class="card-head"><h3>Voucher &amp; trợ giá (ngày campaign)</h3><div class="card-sub">ROI = Doanh số (Xác nhận) ÷ Chi phí trợ giá (Xác nhận) — chỉ có dữ liệu đúng ngày campaign.</div></div>
+    <div class="kpi-grid">${tiles.map(t=>`<div class="kpi-tile"><div class="label">${t.label}</div><div class="value">${t.value}</div></div>`).join('')}</div>
+    <div class="subtable-title">Theo giờ trong ngày</div>
+    ${hourTabsHtml}
+    <div class="tbl-wrap"><table><thead><tr><th>Giờ</th><th class="num">Doanh số (Đặt)</th><th class="num">% đóng góp</th><th class="num">Số đơn</th><th class="num">Tỷ lệ SD</th><th class="num">Chi phí</th></tr></thead>
+      <tbody>${hourBody}</tbody></table></div>
+    <div class="subtable-title">Xếp hạng hiệu suất từng mã voucher</div>
+    ${listTabsHtml}
+    <div class="tbl-wrap"><table><thead><tr><th>Mã giảm giá</th><th>Loại ưu đãi</th><th class="num">Lượt nhận</th><th class="num">Tỷ lệ SD (Xác nhận)</th><th class="num">Doanh số (Xác nhận)</th><th class="num">Chi phí (Xác nhận)</th><th class="num">ROI</th></tr></thead>
+      <tbody>${listBody}</tbody></table></div>
+    <div class="note">ROI càng cao càng hiệu quả — mã có chi phí trợ giá bằng 0 không tính được ROI nên không nằm trong 2 bảng xếp hạng trên. Mã ROI thấp hoặc doanh số/chi phí gần 1x nên cân nhắc bỏ ở đợt sau.</div>
+  `;
+}
+
+/* ============================================================================
+   13. GLUE
+   ============================================================================ */
+function emptyState(msg){ return `<div class="empty-state">${msg}</div>`; }
+
+function recompute(){
+  renderKPI();
+  renderDayTrend();
+  renderHourTrend();
+  if (!document.getElementById('skuBody')) renderSkuHeadOnly();
+  renderSkuBody();
+  renderBehavior();
+  renderLivestream();
+  renderFlashSale();
+  renderVoucher();
+}
+
+document.getElementById('campaignDate').addEventListener('change', (e)=>{
+  STATE.campaignDate = e.target.value || null;
+  const chip = document.getElementById('teasingChip');
+  if (STATE.campaignDate){
+    const t3 = isoAddDays(STATE.campaignDate,-3), t1 = isoAddDays(STATE.campaignDate,-1);
+    chip.textContent = `Teasing: ${t3.split('-').reverse().join('/')} → ${t1.split('-').reverse().join('/')}`;
+  } else {
+    chip.textContent = 'Teasing: —';
+  }
+  recompute();
+});
+
+buildUploadGrid();
+renderSkuHeadOnly();
+recompute();
+</script>

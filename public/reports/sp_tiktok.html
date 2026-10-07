@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nguồn Hoạt Động — Phân tích TikTok Shop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F7F7F2;
+  --surface:#FFFFFF;
+  --surface-2:#F1F1EA;
+  --ink:#16211A;
+  --ink-soft:#5B6B60;
+  --ink-faint:#8B978C;
+  --border:#E2E3DA;
+  --brand:#2F5233;
+  --brand-soft:#E8EEE4;
+  --c-selfLive:#BE4B2E;
+  --c-selfVideo:#C7891C;
+  --c-liveAff:#1F6F72;
+  --c-videoAff:#6B4C7A;
+  --c-card:#3E5C87;
+  --c-showcase:#83833C;
+  --good:#2F7A4F;
+  --bad:#B23B3B;
+  --shadow: 0 1px 2px rgba(20,30,20,0.04), 0 6px 20px rgba(20,30,20,0.05);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#12160F; --surface:#1A2018; --surface-2:#20261D;
+    --ink:#ECEEE8; --ink-soft:#A9B2A2; --ink-faint:#78826F; --border:#2C3327;
+    --brand:#7FAE83; --brand-soft:#233026;
+    --c-selfLive:#E07352; --c-selfVideo:#E0A83F; --c-liveAff:#4FB3B6;
+    --c-videoAff:#B08BC2; --c-card:#7C9BCB; --c-showcase:#C3C368;
+    --good:#63C285; --bad:#E0716B;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#12160F; --surface:#1A2018; --surface-2:#20261D;
+  --ink:#ECEEE8; --ink-soft:#A9B2A2; --ink-faint:#78826F; --border:#2C3327;
+  --brand:#7FAE83; --brand-soft:#233026;
+  --c-selfLive:#E07352; --c-selfVideo:#E0A83F; --c-liveAff:#4FB3B6;
+  --c-videoAff:#B08BC2; --c-card:#7C9BCB; --c-showcase:#C3C368;
+  --good:#63C285; --bad:#E0716B;
+  --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:'Inter',-apple-system,sans-serif;
+  font-feature-settings:'tnum' 1; font-variant-numeric: tabular-nums;
+  min-height:100vh; line-height:1.5;
+}
+.app{max-width:1220px;margin:0 auto;padding:28px 20px 80px;}
+
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+  padding-bottom:22px;border-bottom:1px solid var(--border);margin-bottom:32px;}
+.brand{display:flex;align-items:center;gap:10px;font-family:'Fraunces',serif;font-weight:600;font-size:20px;letter-spacing:-0.01em;}
+.brand-mark{width:26px;height:26px;border-radius:7px;background:var(--brand);display:inline-flex;align-items:center;justify-content:center;
+  color:var(--bg);font-size:14px;font-weight:700;flex-shrink:0;}
+.mode-switch{display:inline-flex;background:var(--surface-2);border-radius:10px;padding:3px;border:1px solid var(--border);}
+.mode-switch button{border:none;background:transparent;color:var(--ink-soft);font-family:inherit;font-size:13.5px;font-weight:600;
+  padding:8px 16px;border-radius:8px;cursor:pointer;transition:background .15s,color .15s;}
+.mode-switch button.active{background:var(--surface);color:var(--ink);box-shadow:var(--shadow);}
+
+.upload-panel{margin-bottom:8px;}
+.upload-copy h1{font-family:'Fraunces',serif;font-weight:600;font-size:clamp(24px,4vw,32px);margin:0 0 10px;letter-spacing:-0.01em;line-height:1.15;}
+.upload-copy p{color:var(--ink-soft);font-size:15px;max-width:660px;margin:0 0 26px;}
+.upload-copy code{background:var(--surface-2);padding:1px 6px;border-radius:5px;font-size:0.93em;}
+
+.dropzone{display:block;border:1.5px dashed var(--border);border-radius:16px;background:var(--surface);
+  padding:36px 24px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s;}
+.dropzone:hover,.dropzone.drag{border-color:var(--brand);background:var(--brand-soft);}
+.dz-inner{display:flex;flex-direction:column;align-items:center;gap:8px;}
+.dz-icon{width:44px;height:44px;border-radius:50%;background:var(--surface-2);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--brand);margin-bottom:4px;}
+.dz-title{font-weight:600;font-size:15px;}
+.dz-sub{color:var(--ink-faint);font-size:13px;}
+
+.file-list{margin-top:14px;display:flex;flex-direction:column;gap:8px;}
+.file-row{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:13.5px;}
+.file-row .fname{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.file-row .fmeta{color:var(--ink-faint);font-size:12.5px;flex-shrink:0;}
+.file-row .fstatus{flex-shrink:0;font-size:12px;font-weight:600;}
+.file-row .fstatus.ok{color:var(--good);}
+.file-row .fstatus.err{color:var(--bad);}
+.file-row .fremove{border:none;background:none;color:var(--ink-faint);cursor:pointer;font-size:15px;padding:2px 4px;flex-shrink:0;}
+.error-msg{margin-top:14px;background:rgba(178,59,59,0.08);border:1px solid var(--bad);color:var(--bad);
+  border-radius:10px;padding:12px 14px;font-size:13.5px;}
+
+.toolbar-row{display:flex;justify-content:flex-end;gap:10px;margin:14px 0 0;}
+.btn{font-family:inherit;font-size:13px;font-weight:600;border-radius:9px;padding:9px 15px;cursor:pointer;
+  border:1px solid var(--border);background:var(--surface);color:var(--ink);transition:background .15s;}
+.btn:hover{background:var(--surface-2);}
+.btn.primary{background:var(--brand);color:var(--bg);border-color:var(--brand);}
+
+.dashboard{margin-top:36px;display:flex;flex-direction:column;gap:32px;}
+
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;}
+.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;box-shadow:var(--shadow);}
+.kpi-label{font-size:12.5px;color:var(--ink-faint);font-weight:600;margin-bottom:8px;}
+.kpi-value{font-family:'Fraunces',serif;font-size:25px;font-weight:600;letter-spacing:-0.01em;}
+.kpi-sub{font-size:12.5px;color:var(--ink-soft);margin-top:6px;}
+.kpi-sub.good{color:var(--good);} .kpi-sub.bad{color:var(--bad);}
+
+.section{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;box-shadow:var(--shadow);}
+.section-head{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:18px;}
+.section-title-row{display:flex;align-items:center;gap:10px;}
+.section-letter{width:24px;height:24px;border-radius:7px;background:var(--brand-soft);color:var(--brand);font-weight:700;
+  font-size:12px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
+.section-title{font-family:'Fraunces',serif;font-weight:600;font-size:19px;}
+.section-hint{font-size:12.5px;color:var(--ink-faint);max-width:440px;text-align:right;}
+
+.chart-wrap{position:relative;width:100%;}
+
+.channel-rank{display:flex;flex-direction:column;gap:10px;margin-top:4px;}
+.channel-rank-row{display:grid;grid-template-columns:170px 1fr 90px;align-items:center;gap:12px;font-size:13.5px;}
+.channel-rank-name{font-weight:600;display:flex;align-items:center;gap:8px;}
+.dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.channel-rank-bar-bg{background:var(--surface-2);border-radius:6px;height:10px;overflow:hidden;}
+.channel-rank-bar-fill{height:100%;border-radius:6px;}
+.channel-rank-val{text-align:right;font-weight:600;}
+
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead th{text-align:right;font-weight:600;color:var(--ink-faint);font-size:11.5px;padding:8px 10px;
+  border-bottom:1px solid var(--border);white-space:nowrap;}
+thead th:first-child,thead th.left{text-align:left;}
+thead th.sortable{cursor:pointer;user-select:none;}
+thead th.sortable:hover{color:var(--ink);}
+tbody td{padding:9px 10px;border-bottom:1px solid var(--border);text-align:right;white-space:nowrap;}
+tbody td:first-child,tbody td.left{text-align:left;white-space:normal;}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr:hover{background:var(--surface-2);}
+.table-scroll{overflow-x:auto;}
+.name-cell{max-width:280px;overflow:hidden;text-overflow:ellipsis;}
+.rank-badge{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:6px;
+  background:var(--surface-2);font-size:11px;font-weight:700;color:var(--ink-soft);margin-right:8px;}
+
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;}
+.tab-btn{border:1px solid var(--border);background:var(--surface);color:var(--ink-soft);font-family:inherit;
+  font-size:12.5px;font-weight:600;padding:7px 13px;border-radius:20px;cursor:pointer;display:flex;align-items:center;gap:6px;}
+.tab-btn.active{background:var(--ink);color:var(--bg);border-color:var(--ink);}
+
+.search-row{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+.search-input{flex:1;min-width:200px;font-family:inherit;font-size:13.5px;padding:9px 13px;border-radius:9px;
+  border:1px solid var(--border);background:var(--surface-2);color:var(--ink);}
+.search-input:focus{outline:2px solid var(--brand);outline-offset:1px;}
+
+.delta{font-weight:600;font-size:12px;}
+.delta.up{color:var(--good);} .delta.down{color:var(--bad);} .delta.flat{color:var(--ink-faint);}
+
+.empty-note{color:var(--ink-faint);font-size:13px;padding:20px 0;text-align:center;}
+
+.product-card{border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:14px;background:var(--surface-2);}
+.product-card:last-child{margin-bottom:0;}
+.product-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap;}
+.product-card-title{display:flex;align-items:center;gap:10px;}
+.product-card-name{font-weight:700;font-size:14.5px;max-width:480px;}
+.product-card-meta{font-size:12px;color:var(--ink-faint);margin-top:3px;}
+.product-card-gmv{text-align:right;}
+.product-card-gmv .v{font-family:'Fraunces',serif;font-size:19px;font-weight:600;}
+.product-card-gmv .l{font-size:11px;color:var(--ink-faint);}
+.big-rank{width:30px;height:30px;border-radius:9px;background:var(--brand);color:var(--bg);font-weight:700;font-size:14px;
+  display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
+
+.badge{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:20px;background:var(--brand-soft);color:var(--brand);margin-left:6px;}
+
+footer.note{color:var(--ink-faint);font-size:12px;text-align:center;margin-top:40px;}
+
+@media (max-width:640px){
+  .channel-rank-row{grid-template-columns:120px 1fr 74px;font-size:12.5px;}
+  .section{padding:18px;}
+  .kpi-value{font-size:21px;}
+  .section-hint{text-align:left;max-width:100%;}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="topbar">
+    <div class="brand"><span class="brand-mark">N</span>Nguồn Hoạt Động</div>
+    <div class="mode-switch" id="modeSwitch">
+      <button data-mode="single" class="active">Theo tháng</button>
+      <button data-mode="trend">Theo giai đoạn</button>
+    </div>
+  </div>
+
+  <section class="upload-panel">
+    <div class="upload-copy">
+      <h1 id="uploadTitle">Phân tích nguồn hoạt động gian hàng</h1>
+      <p id="modeDesc">Tải lên 1 file <code>product_list</code> (.xlsx) để phân tích GMV và hiệu suất phễu theo 6 nguồn hoạt động: Livestream Self-Channel, Video Self-Channel, Livestream Affiliate, Video Affiliate, Thẻ Sản phẩm, Showcase Affiliate.</p>
+    </div>
+    <label class="dropzone" id="dropzone">
+      <input type="file" id="fileInput" accept=".xlsx" hidden />
+      <div class="dz-inner">
+        <div class="dz-icon">↑</div>
+        <div class="dz-title" id="dzTitle">Kéo thả file .xlsx vào đây, hoặc bấm để chọn</div>
+        <div class="dz-sub" id="dzSub">Chấp nhận 1 file product_list_YYYYMMDD.xlsx</div>
+      </div>
+    </label>
+    <div id="fileList" class="file-list"></div>
+    <div id="uploadError" class="error-msg" hidden></div>
+    <div class="toolbar-row" id="toolbarRow" hidden>
+      <button class="btn" id="resetBtn">Tải dữ liệu khác</button>
+    </div>
+  </section>
+
+  <section id="dashboard" class="dashboard" hidden></section>
+
+  <footer class="note">Số liệu tính toán trực tiếp từ file bạn tải lên trong trình duyệt — không gửi dữ liệu ra bên ngoài.</footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
+<script>
+(function(){
+"use strict";
+
+/* ---------------- Column map (0-based indices, relative to header row) ---------------- */
+const NAME_IDX = 0, ID_IDX = 1, GMV_TOTAL_IDX = 3, ORDERS_IDX = 18;
+
+const CHANNELS = [
+  { id:"selfLive",  label:"Livestream Self-Channel", short:"Live Self-Channel",  color:"var(--c-selfLive)",  gmvIdx:4,  imprIdx:63,  clickIdx:64,  atcIdx:66  },
+  { id:"selfVideo", label:"Video Self-Channel",       short:"Video Self-Channel", color:"var(--c-selfVideo)", gmvIdx:7,  imprIdx:88,  clickIdx:89,  atcIdx:91  },
+  { id:"liveAff",   label:"Livestream Affiliate",     short:"Live Affiliate",     color:"var(--c-liveAff)",   gmvIdx:11, imprIdx:127, clickIdx:128, atcIdx:130 },
+  { id:"videoAff",  label:"Video Affiliate",          short:"Video Affiliate",    color:"var(--c-videoAff)",  gmvIdx:14, imprIdx:139, clickIdx:140, atcIdx:142 },
+  { id:"card",      label:"Thẻ Sản phẩm",             short:"Thẻ Sản phẩm",       color:"var(--c-card)",      gmvIdx:17, imprIdx:163, clickIdx:164, atcIdx:166 },
+  { id:"showcase",  label:"Showcase Affiliate",       short:"Showcase Affiliate", color:"var(--c-showcase)",  derived:true },
+];
+// columns used only to derive Showcase Affiliate = AffiliateTotal - LiveAffiliate - VideoAffiliate
+const AFF_TOTAL = { gmvIdx:10, imprIdx:115, clickIdx:116, atcIdx:118 };
+
+/* ---------------- Number / text parsing ---------------- */
+function parseNum(v){
+  if(v===null||v===undefined) return 0;
+  let s=String(v).trim();
+  if(s===""||s==="-"||s==="—") return 0;
+  if(s.indexOf("%")!==-1){
+    const n=parseFloat(s.replace("%","").replace(",","."));
+    return isNaN(n)?0:n;
+  }
+  let cleaned=s.replace(/[₫đ\s]/gi,"").replace(/\./g,"").replace(",",".");
+  const n=parseFloat(cleaned);
+  return isNaN(n)?0:n;
+}
+function fmtCurrency(n){ if(!isFinite(n)) n=0; return Math.round(n).toLocaleString("vi-VN")+"₫"; }
+function fmtNum(n,decimals){ if(!isFinite(n)) n=0; return n.toLocaleString("vi-VN",{maximumFractionDigits:decimals||0, minimumFractionDigits:decimals||0}); }
+function fmtPercent(n,decimals){ if(!isFinite(n)) n=0; const d=decimals!==undefined?decimals:2; return n.toLocaleString("vi-VN",{maximumFractionDigits:d, minimumFractionDigits:d})+"%"; }
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function fmtCompact(v){
+  const n = Number(v); const sign = n<0?"-":"";
+  const a = Math.abs(n);
+  if(a>=1e9) return sign+(a/1e9).toFixed(1).replace(/\.0$/,"")+"tỷ";
+  if(a>=1e6) return sign+(a/1e6).toFixed(1).replace(/\.0$/,"")+"tr";
+  if(a>=1e3) return sign+(a/1e3).toFixed(0)+"k";
+  return String(n);
+}
+function resolveColor(varExpr){
+  if(!varExpr.startsWith("var(")) return varExpr;
+  const name = varExpr.slice(4,-1).trim();
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || "#888";
+}
+
+/* ---------------- File parsing ---------------- */
+function findHeaderRow(rows){
+  for(let i=0;i<Math.min(rows.length,15);i++){
+    const row=rows[i]; if(!row) continue;
+    const a = row[0]!=null ? String(row[0]).trim() : "";
+    const b = row[1]!=null ? String(row[1]).trim() : "";
+    if(a==="Tên" && b.indexOf("ID sản phẩm")!==-1) return i;
+  }
+  return -1;
+}
+function extractPeriod(rows, filename){
+  for(let i=0;i<3;i++){
+    const cell = rows[i] && rows[i][0];
+    if(cell){
+      const m = String(cell).match(/(\d{2})\/(\d{2})\/(\d{4})\s*~\s*(\d{2})\/(\d{2})\/(\d{4})/);
+      if(m){
+        const start = new Date(+m[3], +m[2]-1, +m[1]);
+        const end = new Date(+m[6], +m[5]-1, +m[4]);
+        return { start, end, label: m[2]+"/"+m[3], rangeLabel: m[1]+"/"+m[2]+"/"+m[3]+" – "+m[4]+"/"+m[5]+"/"+m[6] };
+      }
+    }
+  }
+  const fm = filename.match(/(\d{4})(\d{2})(\d{2})/);
+  if(fm){
+    const start = new Date(+fm[1], +fm[2]-1, +fm[3]);
+    return { start, end:start, label: fm[2]+"/"+fm[1], rangeLabel: filename };
+  }
+  return { start:new Date(0), end:new Date(0), label:filename, rangeLabel:filename };
+}
+function readChannelBlock(row, def){
+  return { gmv: parseNum(row[def.gmvIdx]), impr: parseNum(row[def.imprIdx]), clicks: parseNum(row[def.clickIdx]), atc: parseNum(row[def.atcIdx]) };
+}
+function parseWorkbookRows(rows, filename){
+  const headerIdx = findHeaderRow(rows);
+  if(headerIdx===-1){
+    throw new Error('Không tìm thấy dòng tiêu đề ("Tên" / "ID sản phẩm") trong file "'+filename+'". Vui lòng kiểm tra đây có đúng file product_list xuất từ TikTok Shop Seller Center không.');
+  }
+  const period = extractPeriod(rows, filename);
+  const products = [];
+  for(let r=headerIdx+1; r<rows.length; r++){
+    const row = rows[r];
+    if(!row || row[0]==null) continue;
+    const name = String(row[0]).trim();
+    if(!name) continue;
+    const channels = {};
+    CHANNELS.forEach(ch=>{
+      if(!ch.derived) channels[ch.id] = readChannelBlock(row, ch);
+    });
+    const affTotal = readChannelBlock(row, AFF_TOTAL);
+    channels.showcase = {
+      gmv: Math.max(0, affTotal.gmv - channels.liveAff.gmv - channels.videoAff.gmv),
+      impr: Math.max(0, affTotal.impr - channels.liveAff.impr - channels.videoAff.impr),
+      clicks: Math.max(0, affTotal.clicks - channels.liveAff.clicks - channels.videoAff.clicks),
+      atc: Math.max(0, affTotal.atc - channels.liveAff.atc - channels.videoAff.atc),
+    };
+    products.push({
+      name, id: row[ID_IDX]!=null?String(row[ID_IDX]):"",
+      gmvTotal: parseNum(row[GMV_TOTAL_IDX]), orders: parseNum(row[ORDERS_IDX]),
+      channels
+    });
+  }
+  if(products.length===0) throw new Error('File "'+filename+'" không có dòng sản phẩm nào sau dòng tiêu đề.');
+  return { fileName: filename, period, products };
+}
+function parseFile(file){
+  return new Promise((resolve,reject)=>{
+    const reader = new FileReader();
+    reader.onerror = ()=> reject(new Error('Không đọc được file "'+file.name+'".'));
+    reader.onload = (e)=>{
+      try{
+        const data = new Uint8Array(e.target.result);
+        const wb = XLSX.read(data, {type:"array"});
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null, raw:false});
+        resolve(parseWorkbookRows(rows, file.name));
+      }catch(err){ reject(err); }
+    };
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+/* ---------------- Aggregation ---------------- */
+function summarize(products){
+  const totalGMV = products.reduce((s,p)=>s+p.gmvTotal,0);
+  const totalOrders = products.reduce((s,p)=>s+p.orders,0);
+  const channels = CHANNELS.map(ch=>{
+    let gmv=0, impr=0, clicks=0, atc=0;
+    products.forEach(p=>{ const c=p.channels[ch.id]; gmv+=c.gmv; impr+=c.impr; clicks+=c.clicks; atc+=c.atc; });
+    const ctr = impr>0 ? clicks/impr*100 : 0;
+    const atcRate = clicks>0 ? atc/clicks*100 : 0;
+    const gpm = impr>0 ? gmv/impr*1000 : 0;
+    const share = totalGMV>0 ? gmv/totalGMV*100 : 0;
+    return Object.assign({}, ch, { gmv, impr, clicks, atc, ctr, atcRate, gpm, share });
+  });
+  return { totalGMV, totalOrders, productCount: products.length, channels };
+}
+function metricsFor(c){
+  const ctr = c.impr>0 ? c.clicks/c.impr*100 : 0;
+  const atcRate = c.clicks>0 ? c.atc/c.clicks*100 : 0;
+  const gpm = c.impr>0 ? c.gmv/c.impr*1000 : 0;
+  return { ctr, atcRate, gpm };
+}
+function topNByTotalGmv(products, n){ return [...products].filter(p=>p.gmvTotal>0).sort((a,b)=>b.gmvTotal-a.gmvTotal).slice(0,n); }
+function bestProductForChannel(products, chId){
+  let best=null;
+  products.forEach(p=>{ const g=p.channels[chId].gmv; if(g>0 && (!best || g>best.channels[chId].gmv)) best=p; });
+  return best;
+}
+/* Benchmark per channel = simple average of Hiển thị/Traffic/CTR/ATC/Tỷ lệ ATC/GPM across
+   the top N products of that channel, ranked by that channel's Traffic. */
+const BENCHMARK_TOP_N = 40;
+function computeChannelBenchmarks(products){
+  const out = {};
+  CHANNELS.forEach(ch=>{
+    const ranked = [...products].filter(p=>p.channels[ch.id].clicks>0).sort((a,b)=>b.channels[ch.id].clicks-a.channels[ch.id].clicks);
+    const top = ranked.slice(0,BENCHMARK_TOP_N);
+    const n = top.length;
+    if(n===0){ out[ch.id] = null; return; }
+    let sumImpr=0,sumTraffic=0,sumCtr=0,sumAtc=0,sumAtcRate=0,sumGpm=0;
+    top.forEach(p=>{
+      const c = p.channels[ch.id]; const m = metricsFor(c);
+      sumImpr+=c.impr; sumTraffic+=c.clicks; sumCtr+=m.ctr; sumAtc+=c.atc; sumAtcRate+=m.atcRate; sumGpm+=m.gpm;
+    });
+    out[ch.id] = { n, impr:sumImpr/n, traffic:sumTraffic/n, ctr:sumCtr/n, atc:sumAtc/n, atcRate:sumAtcRate/n, gpm:sumGpm/n };
+  });
+  return out;
+}
+/* Classify every product (with impressions>0 in that channel) against the channel benchmark:
+   trafficGood  = traffic>=bench.traffic AND ctr>=bench.ctr
+   trafficPoor  = traffic<bench.traffic  AND ctr<bench.ctr
+   convGood     = atc>=bench.atc         AND atcRate>=bench.atcRate
+   convPoor     = atc<bench.atc          AND atcRate<bench.atcRate
+   Opportunity 1: trafficGood && convPoor  -> "Traffic tốt, chuyển đổi kém"
+   Opportunity 2: convGood && trafficPoor  -> "Chuyển đổi tốt, traffic kém" */
+function findPotentialProducts(products, benchmarks){
+  const result = {};
+  CHANNELS.forEach(ch=>{
+    const bench = benchmarks[ch.id];
+    const lowConvHighTraffic = [], lowTrafficHighConv = [];
+    if(bench){
+      products.forEach(p=>{
+        const c = p.channels[ch.id];
+        if(c.impr<=0) return;
+        const m = metricsFor(c);
+        const trafficGood = c.clicks>=bench.traffic && m.ctr>=bench.ctr;
+        const trafficPoor = c.clicks<bench.traffic && m.ctr<bench.ctr;
+        const convGood = c.atc>=bench.atc && m.atcRate>=bench.atcRate;
+        const convPoor = c.atc<bench.atc && m.atcRate<bench.atcRate;
+        if(trafficGood && convPoor) lowConvHighTraffic.push({p,c,m});
+        else if(convGood && trafficPoor) lowTrafficHighConv.push({p,c,m});
+      });
+    }
+    lowConvHighTraffic.sort((a,b)=>b.c.clicks-a.c.clicks);
+    lowTrafficHighConv.sort((a,b)=>b.m.atcRate-a.m.atcRate);
+    result[ch.id] = { lowConvHighTraffic, lowTrafficHighConv };
+  });
+  return result;
+}
+
+
+/* ---------------- State ---------------- */
+const state = { mode:"single", parsedFiles:[], charts:{} };
+
+/* ---------------- DOM refs ---------------- */
+const $ = (sel)=>document.querySelector(sel);
+const modeSwitch = $("#modeSwitch");
+const dropzone = $("#dropzone");
+const fileInput = $("#fileInput");
+const fileListEl = $("#fileList");
+const uploadError = $("#uploadError");
+const toolbarRow = $("#toolbarRow");
+const resetBtn = $("#resetBtn");
+const dashboard = $("#dashboard");
+
+/* ---------------- Library availability guard ---------------- */
+function checkLibraries(){
+  const missing = [];
+  if(typeof XLSX==="undefined") missing.push("XLSX (đọc file Excel)");
+  if(typeof Chart==="undefined") missing.push("Chart.js (biểu đồ)");
+  if(missing.length){
+    showError("Không tải được thư viện: "+missing.join(", ")+". Kiểm tra kết nối mạng rồi tải lại trang — nếu vẫn lỗi, các bảng số liệu vẫn hoạt động nhưng biểu đồ sẽ trống.");
+  }
+}
+checkLibraries();
+const dzTitle = $("#dzTitle");
+const dzSub = $("#dzSub");
+const modeDesc = $("#modeDesc");
+const uploadTitle = $("#uploadTitle");
+
+const MODE_TEXT = {
+  single: {
+    title: "Phân tích nguồn hoạt động gian hàng",
+    desc: 'Tải lên 1 file <code>product_list</code> (.xlsx) để phân tích GMV và hiệu suất phễu theo 6 nguồn hoạt động: Livestream Self-Channel, Video Self-Channel, Livestream Affiliate, Video Affiliate, Thẻ Sản phẩm, Showcase Affiliate.',
+    dzTitle: "Kéo thả file .xlsx vào đây, hoặc bấm để chọn",
+    dzSub: "Chấp nhận 1 file product_list_YYYYMMDD.xlsx",
+    multiple: false
+  },
+  trend: {
+    title: "Xu hướng nguồn hoạt động theo giai đoạn",
+    desc: "Tải lên 2–6 file <code>product_list</code> của các tháng gần nhất để xem xu hướng GMV, hiệu suất từng nguồn và từng sản phẩm biến động ra sao theo thời gian.",
+    dzTitle: "Kéo thả 2–6 file .xlsx vào đây, hoặc bấm để chọn",
+    dzSub: "Mỗi file là dữ liệu 1 tháng — công cụ tự sắp xếp theo thời gian",
+    multiple: true
+  }
+};
+
+/* ---------------- Mode switching ---------------- */
+modeSwitch.addEventListener("click",(e)=>{
+  const btn = e.target.closest("button[data-mode]"); if(!btn) return;
+  const mode = btn.dataset.mode; if(mode===state.mode) return;
+  state.mode = mode;
+  [...modeSwitch.querySelectorAll("button")].forEach(b=>b.classList.toggle("active", b===btn));
+  fileInput.toggleAttribute("multiple", MODE_TEXT[mode].multiple);
+  uploadTitle.textContent = MODE_TEXT[mode].title;
+  modeDesc.innerHTML = MODE_TEXT[mode].desc;
+  dzTitle.textContent = MODE_TEXT[mode].dzTitle;
+  dzSub.textContent = MODE_TEXT[mode].dzSub;
+  resetAll();
+});
+
+/* ---------------- Upload handling ---------------- */
+dropzone.addEventListener("click",(e)=>{ if(e.target.id!=="fileInput") fileInput.click(); });
+dropzone.addEventListener("dragover",(e)=>{ e.preventDefault(); dropzone.classList.add("drag"); });
+dropzone.addEventListener("dragleave",()=> dropzone.classList.remove("drag"));
+dropzone.addEventListener("drop",(e)=>{ e.preventDefault(); dropzone.classList.remove("drag"); handleFiles(e.dataTransfer.files); });
+fileInput.addEventListener("change",(e)=> handleFiles(e.target.files));
+resetBtn.addEventListener("click", resetAll);
+
+function resetAll(){
+  state.parsedFiles = [];
+  fileListEl.innerHTML = "";
+  uploadError.hidden = true;
+  toolbarRow.hidden = true;
+  dashboard.hidden = true;
+  dashboard.innerHTML = "";
+  fileInput.value = "";
+  Object.values(state.charts).forEach(c=>c && c.destroy && c.destroy());
+  state.charts = {};
+}
+async function handleFiles(fileListRaw){
+  const files = Array.from(fileListRaw || []).filter(f=>/\.xlsx$/i.test(f.name));
+  if(files.length===0) return;
+  uploadError.hidden = true;
+  if(state.mode==="single"){
+    state.parsedFiles = []; fileListEl.innerHTML = "";
+    await ingestFile(files[0]);
+  }else{
+    let toAdd = files;
+    if(state.parsedFiles.length + toAdd.length > 6){
+      toAdd = toAdd.slice(0, Math.max(0, 6 - state.parsedFiles.length));
+      showError("Chỉ hỗ trợ tối đa 6 kỳ — đã bỏ qua các file vượt quá giới hạn.");
+    }
+    for(const f of toAdd){ await ingestFile(f); }
+  }
+  renderAll();
+}
+async function ingestFile(file){
+  const row = document.createElement("div");
+  row.className = "file-row";
+  row.innerHTML = '<span class="fname">'+esc(file.name)+'</span><span class="fstatus">Đang xử lý…</span>';
+  fileListEl.appendChild(row);
+  try{
+    const parsed = await parseFile(file);
+    state.parsedFiles.push(parsed);
+    row.querySelector(".fstatus").outerHTML =
+      '<span class="fmeta">'+esc(parsed.period.rangeLabel)+' · '+parsed.products.length+' SP</span>' +
+      '<span class="fstatus ok">✓ Đã xử lý</span>' +
+      '<button class="fremove" aria-label="Xóa file" data-file="'+esc(file.name)+'">✕</button>';
+    row.querySelector(".fremove").addEventListener("click",()=>{
+      state.parsedFiles = state.parsedFiles.filter(p=>p!==parsed);
+      row.remove(); renderAll();
+    });
+  }catch(err){
+    row.querySelector(".fstatus").outerHTML = '<span class="fstatus err">✕ Lỗi</span>';
+    showError(err.message || String(err));
+  }
+}
+function showError(msg){ uploadError.hidden = false; uploadError.textContent = msg; }
+
+/* ---------------- Rendering ---------------- */
+function renderAll(){
+  toolbarRow.hidden = state.parsedFiles.length===0;
+  if(state.parsedFiles.length===0){ dashboard.hidden = true; dashboard.innerHTML=""; return; }
+  Object.values(state.charts).forEach(c=>c && c.destroy && c.destroy());
+  state.charts = {};
+  dashboard.hidden = false;
+  if(state.mode==="single"){
+    renderSingle(state.parsedFiles[0]);
+  }else{
+    if(state.parsedFiles.length<2){
+      dashboard.innerHTML = '<div class="section"><div class="empty-note">Tải thêm ít nhất 2 file để xem xu hướng theo giai đoạn.</div></div>';
+      return;
+    }
+    renderTrend(state.parsedFiles);
+  }
+}
+function dot(color){ return '<span class="dot" style="background:'+color+'"></span>'; }
+function sectionHead(letter,title,hint){
+  return '<div class="section-head"><div class="section-title-row"><span class="section-letter">'+letter+'</span><span class="section-title">'+title+'</span></div>'+
+    (hint?'<div class="section-hint">'+hint+'</div>':'')+'</div>';
+}
+function kpiCard(label,value,sub,subClass){
+  return '<div class="kpi-card"><div class="kpi-label">'+esc(label)+'</div><div class="kpi-value">'+value+'</div>'+
+    (sub?'<div class="kpi-sub'+(subClass?" "+subClass:"")+'">'+sub+'</div>':'')+'</div>';
+}
+function deltaHtml(d){
+  const cls = d>0.5?"up":d<-0.5?"down":"flat";
+  const arrow = d>0.5?"▲":d<-0.5?"▼":"→";
+  return '<span class="delta '+cls+'">'+arrow+' '+(d>=0?"+":"")+fmtPercent(d,1)+'</span>';
+}
+
+/* ======================================================================
+   MODE: THEO THÁNG (single period)
+   ====================================================================== */
+function potentialSubtable(title, hint, items){
+  let t = '<div style="margin-bottom:20px;"><div style="font-weight:700;font-size:13.5px;margin-bottom:2px;">'+title+'</div>';
+  t += '<div style="font-size:12px;color:var(--ink-faint);margin-bottom:10px;">'+hint+' · '+items.length+' sản phẩm</div>';
+  if(items.length===0){ t += '<div class="empty-note">Không có sản phẩm nào khớp điều kiện này.</div></div>'; return t; }
+  t += '<div class="table-scroll"><table><thead><tr><th class="left">Sản phẩm</th><th>Hiển thị</th><th>Traffic</th><th>CTR</th><th>ATC</th><th>Tỷ lệ ATC</th><th>GPM</th></tr></thead><tbody>';
+  items.forEach(({p,c,m})=>{
+    t += '<tr><td class="left name-cell">'+esc(p.name)+'</td><td>'+fmtNum(c.impr)+'</td><td>'+fmtNum(c.clicks)+'</td><td>'+fmtPercent(m.ctr)+'</td><td>'+fmtNum(c.atc)+'</td><td>'+fmtPercent(m.atcRate)+'</td><td>'+fmtNum(m.gpm,0)+'₫</td></tr>';
+  });
+  t += '</tbody></table></div></div>';
+  return t;
+}
+/* wires a channel-tab widget for the F/potential section; letterRef is the section letter shown in the hint text */
+function wirePotentialTabs(tabsElId, contentElId, benchmarks, potentials){
+  const contentEl = document.getElementById(contentElId);
+  function renderPotential(chId){
+    const bench = benchmarks[chId];
+    const data = potentials[chId];
+    if(!bench){ contentEl.innerHTML = '<div class="empty-note">Chưa đủ dữ liệu để tính benchmark cho cổng này.</div>'; return; }
+    let t = potentialSubtable(
+      '🔥 Traffic tốt, chuyển đổi kém — cần tối ưu trang/nội dung sản phẩm',
+      'Traffic & CTR ≥ benchmark ('+fmtNum(bench.traffic,0)+' · '+fmtPercent(bench.ctr)+') nhưng ATC & Tỷ lệ ATC < benchmark ('+fmtNum(bench.atc,0)+' · '+fmtPercent(bench.atcRate)+')',
+      data.lowConvHighTraffic
+    );
+    t += potentialSubtable(
+      '💡 Chuyển đổi tốt, traffic kém — tiềm năng nếu đẩy thêm traffic',
+      'ATC & Tỷ lệ ATC ≥ benchmark ('+fmtNum(bench.atc,0)+' · '+fmtPercent(bench.atcRate)+') nhưng Traffic & CTR < benchmark ('+fmtNum(bench.traffic,0)+' · '+fmtPercent(bench.ctr)+')',
+      data.lowTrafficHighConv
+    );
+    contentEl.innerHTML = t;
+  }
+  document.getElementById(tabsElId).addEventListener("click",(e)=>{
+    const btn = e.target.closest(".tab-btn"); if(!btn) return;
+    document.querySelectorAll("#"+tabsElId+" .tab-btn").forEach(b=>b.classList.toggle("active", b===btn));
+    renderPotential(btn.dataset.ch);
+  });
+  renderPotential(CHANNELS[0].id);
+}
+
+function renderSingle(parsed){
+  const summary = summarize(parsed.products);
+  const sortedChannels = [...summary.channels].sort((a,b)=>b.gmv-a.gmv);
+  const maxGmv = Math.max(...sortedChannels.map(c=>c.gmv), 1);
+  const weightedGpm = (()=>{
+    const impr = summary.channels.reduce((s,c)=>s+c.impr,0);
+    const gmv = summary.channels.reduce((s,c)=>s+c.gmv,0);
+    return impr>0 ? gmv/impr*1000 : 0;
+  })();
+
+  let html = "";
+
+  /* ---- A. Tổng quan ---- */
+  html += '<div class="kpi-grid">';
+  html += kpiCard("Tổng GMV kỳ này", fmtCurrency(summary.totalGMV), esc(parsed.period.rangeLabel));
+  html += kpiCard("Tổng đơn hàng", fmtNum(summary.totalOrders), summary.productCount+" sản phẩm trong danh mục");
+  const topCh = sortedChannels[0];
+  html += kpiCard("Nguồn dẫn GMV nhiều nhất", topCh.short, fmtPercent(topCh.share,1)+" tổng GMV");
+  html += kpiCard("GPM trung bình (6 nguồn)", fmtNum(weightedGpm,0)+"₫", "GMV / 1.000 lượt hiển thị");
+  html += '</div>';
+
+  /* ---- B. Bảng hiệu suất 6 nguồn ---- */
+  html += '<div class="section">';
+  html += sectionHead("B","Hiệu suất 6 nguồn hoạt động","GMV tổng (bao gồm gián tiếp) và phễu traffic của mỗi nguồn, tính trên "+summary.productCount+" sản phẩm.");
+  html += '<div class="chart-wrap" style="height:280px;"><canvas id="chGmvBar"></canvas></div>';
+  html += '<div class="channel-rank">';
+  sortedChannels.forEach(c=>{
+    html += '<div class="channel-rank-row">';
+    html += '<div class="channel-rank-name">'+dot(c.color)+esc(c.short)+'</div>';
+    html += '<div class="channel-rank-bar-bg"><div class="channel-rank-bar-fill" style="width:'+(c.gmv/maxGmv*100).toFixed(1)+'%;background:'+c.color+'"></div></div>';
+    html += '<div class="channel-rank-val">'+fmtPercent(c.share,1)+'</div>';
+    html += '</div>';
+  });
+  html += '</div>';
+  html += '<div class="table-scroll" style="margin-top:18px;"><table><thead><tr>';
+  html += '<th class="left">Nguồn</th><th>GMV</th><th>% GMV</th><th>Hiển thị</th><th>Traffic</th><th>CTR</th><th>ATC</th><th>Tỷ lệ ATC</th><th>GPM</th>';
+  html += '</tr></thead><tbody>';
+  sortedChannels.forEach(c=>{
+    html += '<tr><td class="left">'+dot(c.color)+esc(c.label)+'</td>';
+    html += '<td>'+fmtCurrency(c.gmv)+'</td><td>'+fmtPercent(c.share,1)+'</td><td>'+fmtNum(c.impr)+'</td><td>'+fmtNum(c.clicks)+'</td>';
+    html += '<td>'+fmtPercent(c.ctr)+'</td><td>'+fmtNum(c.atc)+'</td><td>'+fmtPercent(c.atcRate)+'</td><td>'+fmtNum(c.gpm,0)+'₫</td></tr>';
+  });
+  html += '</tbody></table></div></div>';
+
+  /* ---- C. Top 5 SP theo GMV tổng — breakdown đa cổng ---- */
+  const top5 = topNByTotalGmv(parsed.products,5);
+  html += '<div class="section">';
+  html += sectionHead("C","Top 5 sản phẩm theo GMV tổng","Với mỗi sản phẩm: hiệu quả đầy đủ qua cả 6 cổng để biết cổng nào đang gánh doanh thu, cổng nào có traffic nhưng chuyển đổi kém.");
+  html += '<div id="top5Blocks">';
+  top5.forEach((p,i)=>{
+    html += '<div class="product-card">';
+    html += '<div class="product-card-head"><div class="product-card-title"><span class="big-rank">'+(i+1)+'</span>';
+    html += '<div><div class="product-card-name">'+esc(p.name)+'</div><div class="product-card-meta">ID: '+esc(p.id)+' · '+fmtNum(p.orders)+' đơn hàng</div></div></div>';
+    html += '<div class="product-card-gmv"><div class="v">'+fmtCurrency(p.gmvTotal)+'</div><div class="l">GMV tổng</div></div></div>';
+    html += '<div class="table-scroll"><table><thead><tr><th class="left">Cổng</th><th>GMV</th><th>% trong SP này</th><th>Hiển thị</th><th>Traffic</th><th>CTR</th><th>ATC</th><th>Tỷ lệ ATC</th><th>GPM</th></tr></thead><tbody>';
+    CHANNELS.forEach(ch=>{
+      const c = p.channels[ch.id]; const m = metricsFor(c);
+      const shareInSp = p.gmvTotal>0 ? c.gmv/p.gmvTotal*100 : 0;
+      html += '<tr><td class="left">'+dot(ch.color)+esc(ch.short)+'</td><td>'+fmtCurrency(c.gmv)+'</td><td>'+fmtPercent(shareInSp,1)+'</td>';
+      html += '<td>'+fmtNum(c.impr)+'</td><td>'+fmtNum(c.clicks)+'</td><td>'+fmtPercent(m.ctr)+'</td><td>'+fmtNum(c.atc)+'</td><td>'+fmtPercent(m.atcRate)+'</td><td>'+fmtNum(m.gpm,0)+'₫</td></tr>';
+    });
+    html += '</tbody></table></div></div>';
+  });
+  if(top5.length===0) html += '<div class="empty-note">Không có sản phẩm nào phát sinh GMV trong kỳ.</div>';
+  html += '</div></div>';
+
+  /* ---- D. SP dẫn đầu GMV mỗi cổng ---- */
+  html += '<div class="section">';
+  html += sectionHead("D","Sản phẩm dẫn đầu GMV mỗi cổng","Sản phẩm đóng góp GMV cao nhất riêng ở từng cổng — không phải GMV tổng của sản phẩm.");
+  html += '<div class="table-scroll"><table><thead><tr><th class="left">Cổng</th><th class="left">Sản phẩm dẫn đầu</th><th>GMV từ cổng này</th><th>CTR</th><th>Tỷ lệ ATC</th><th>GPM</th><th>% GMV cổng đến từ SP này</th></tr></thead><tbody>';
+  CHANNELS.forEach(ch=>{
+    const best = bestProductForChannel(parsed.products, ch.id);
+    const chSummary = summary.channels.find(c=>c.id===ch.id);
+    if(!best){ html += '<tr><td class="left">'+dot(ch.color)+esc(ch.label)+'</td><td colspan="6" class="left">— chưa có sản phẩm phát sinh GMV —</td></tr>'; return; }
+    const c = best.channels[ch.id]; const m = metricsFor(c);
+    const shareOfChannel = chSummary.gmv>0 ? c.gmv/chSummary.gmv*100 : 0;
+    html += '<tr><td class="left">'+dot(ch.color)+esc(ch.label)+'</td><td class="left name-cell">'+esc(best.name)+'</td>';
+    html += '<td>'+fmtCurrency(c.gmv)+'</td><td>'+fmtPercent(m.ctr)+'</td><td>'+fmtPercent(m.atcRate)+'</td><td>'+fmtNum(m.gpm,0)+'₫</td><td>'+fmtPercent(shareOfChannel,1)+'</td></tr>';
+  });
+  html += '</tbody></table></div></div>';
+
+  /* ---- E. Benchmark theo cổng (Top N SP theo Traffic) ---- */
+  const benchmarks = computeChannelBenchmarks(parsed.products);
+  html += '<div class="section">';
+  html += sectionHead("E","Benchmark hiệu suất theo cổng","Trung bình cộng Hiển thị/Traffic/CTR/ATC/Tỷ lệ ATC/GPM của Top "+BENCHMARK_TOP_N+" sản phẩm (xếp theo Traffic) trong từng cổng — dùng làm chuẩn so sánh ở phần F.");
+  html += '<div class="table-scroll"><table><thead><tr><th class="left">Cổng</th><th>Hiển thị TB</th><th>Traffic TB</th><th>CTR TB</th><th>ATC TB</th><th>Tỷ lệ ATC TB</th><th>GPM TB</th><th>Số SP dùng tính benchmark</th></tr></thead><tbody>';
+  CHANNELS.forEach(ch=>{
+    const b = benchmarks[ch.id];
+    if(!b){ html += '<tr><td class="left">'+dot(ch.color)+esc(ch.label)+'</td><td colspan="7" class="left">— chưa có sản phẩm phát sinh GMV ở cổng này —</td></tr>'; return; }
+    html += '<tr><td class="left">'+dot(ch.color)+esc(ch.label)+'</td><td>'+fmtNum(b.impr,0)+'</td><td>'+fmtNum(b.traffic,0)+'</td><td>'+fmtPercent(b.ctr)+'</td><td>'+fmtNum(b.atc,0)+'</td><td>'+fmtPercent(b.atcRate)+'</td><td>'+fmtNum(b.gpm,0)+'₫</td><td>'+b.n+' SP</td></tr>';
+  });
+  html += '</tbody></table></div></div>';
+
+  /* ---- F. Sản phẩm tiềm năng theo benchmark ---- */
+  const potentials = findPotentialProducts(parsed.products, benchmarks);
+  html += '<div class="section">';
+  html += sectionHead("F","Sản phẩm tiềm năng theo benchmark","So từng sản phẩm với benchmark cổng (E). Cần vượt/kém benchmark ở cả 2 chỉ số của mỗi nhóm mới được xếp loại.");
+  html += '<div class="tabs" id="potentialTabs">';
+  CHANNELS.forEach((ch,i)=>{
+    html += '<button class="tab-btn'+(i===0?" active":"")+'" data-ch="'+ch.id+'">'+dot(ch.color)+esc(ch.short)+'</button>';
+  });
+  html += '</div><div id="potentialContent"></div></div>';
+
+  /* ---- G. Bảng toàn bộ SP (đã chuyển xuống cuối) ---- */
+  html += '<div class="section">';
+  html += sectionHead("G","Toàn bộ sản phẩm","Tìm theo ID sản phẩm · bấm tiêu đề cột để sắp xếp.");
+  html += '<div class="search-row"><input class="search-input" id="productSearch" placeholder="Tìm theo ID sản phẩm…"/></div>';
+  html += '<div class="table-scroll" id="fullTableWrap"></div>';
+  html += '</div>';
+
+  dashboard.innerHTML = html;
+
+  /* chart B */
+  const ctx = document.getElementById("chGmvBar").getContext("2d");
+  const resolvedColors = sortedChannels.map(c=>resolveColor(c.color));
+  try{
+  state.charts.gmvBar = new Chart(ctx, {
+    type:"bar",
+    data:{ labels: sortedChannels.map(c=>c.short), datasets:[{ data: sortedChannels.map(c=>c.gmv), backgroundColor: resolvedColors, borderRadius:6, maxBarThickness:40 }] },
+    options:{ indexAxis:"y", responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:(ctx)=> fmtCurrency(ctx.parsed.x) } } },
+      scales:{ x:{ ticks:{ callback:(v)=> fmtCompact(v), color: resolveColor("var(--ink-faint)") }, grid:{ color: resolveColor("var(--border)") } },
+                y:{ ticks:{ color: resolveColor("var(--ink)") }, grid:{ display:false } } } }
+  });
+  }catch(err){ console.error("Chart B (single) failed:", err); const cv=document.getElementById("chGmvBar"); if(cv&&cv.parentElement) cv.parentElement.innerHTML = "<div class='empty-note'>Không tải được biểu đồ (thư viện Chart.js lỗi hoặc chưa load kịp) — dữ liệu bảng bên dưới vẫn chính xác.</div>"; }
+
+  /* full table E — search by ID, sortable */
+  let sortKey = "gmvTotal", sortDir = -1;
+  const fullTableWrap = document.getElementById("fullTableWrap");
+  function renderFullTable(){
+    const q = (document.getElementById("productSearch").value||"").trim().toLowerCase();
+    let rows = parsed.products.filter(p=> !q || p.id.toLowerCase().indexOf(q)!==-1 );
+    rows = [...rows].sort((a,b)=>{
+      const va = sortKey==="gmvTotal"?a.gmvTotal: sortKey==="orders"?a.orders : a.channels[sortKey].gmv;
+      const vb = sortKey==="gmvTotal"?b.gmvTotal: sortKey==="orders"?b.orders : b.channels[sortKey].gmv;
+      return (va-vb)*sortDir;
+    });
+    let t = '<table><thead><tr><th class="left">ID sản phẩm</th><th class="left">Sản phẩm</th>';
+    t += '<th class="sortable" data-key="gmvTotal">GMV tổng</th><th class="sortable" data-key="orders">Đơn hàng</th>';
+    CHANNELS.forEach(ch=> t += '<th class="sortable" data-key="'+ch.id+'">'+esc(ch.short)+'</th>');
+    t += '</tr></thead><tbody>';
+    rows.slice(0,300).forEach(p=>{
+      t += '<tr><td class="left">'+esc(p.id)+'</td><td class="left name-cell">'+esc(p.name)+'</td>';
+      t += '<td>'+fmtCurrency(p.gmvTotal)+'</td><td>'+fmtNum(p.orders)+'</td>';
+      CHANNELS.forEach(ch=> t += '<td>'+fmtCurrency(p.channels[ch.id].gmv)+'</td>');
+      t += '</tr>';
+    });
+    t += '</tbody></table>';
+    if(rows.length===0) t = '<div class="empty-note">Không tìm thấy ID sản phẩm phù hợp.</div>';
+    fullTableWrap.innerHTML = t;
+    fullTableWrap.querySelectorAll("th.sortable").forEach(th=>{
+      th.addEventListener("click",()=>{
+        const key = th.dataset.key;
+        if(sortKey===key) sortDir*=-1; else { sortKey=key; sortDir=-1; }
+        renderFullTable();
+      });
+    });
+  }
+  document.getElementById("productSearch").addEventListener("input", renderFullTable);
+  renderFullTable();
+
+  /* tabs F — potential products */
+  wirePotentialTabs("potentialTabs", "potentialContent", benchmarks, potentials);
+}
+
+/* ======================================================================
+   MODE: THEO GIAI ĐOẠN (trend, 2–6 periods)
+   ====================================================================== */
+function renderTrend(parsedFiles){
+  const sorted = [...parsedFiles].sort((a,b)=> a.period.start - b.period.start).slice(-6);
+  const periods = sorted.map(p=>({ period:p.period, fileName:p.fileName, products:p.products, summary: summarize(p.products) }));
+  const latest = periods[periods.length-1];
+  const prev = periods.length>1 ? periods[periods.length-2] : null;
+  const first = periods[0];
+
+  let html = "";
+
+  /* ---- A. Xu hướng tổng quan ---- */
+  const totalDelta = prev && prev.summary.totalGMV>0 ? (latest.summary.totalGMV-prev.summary.totalGMV)/prev.summary.totalGMV*100 : null;
+  let bestIdx=0, worstIdx=0;
+  periods.forEach((p,i)=>{
+    if(i===0) return;
+    const prevP = periods[i-1];
+    if(prevP.summary.totalGMV<=0) return;
+    const d = (p.summary.totalGMV-prevP.summary.totalGMV)/prevP.summary.totalGMV*100;
+    if(bestIdx===0 || d > ((periods[bestIdx].summary.totalGMV-periods[bestIdx-1].summary.totalGMV)/periods[bestIdx-1].summary.totalGMV*100)) bestIdx=i;
+    if(worstIdx===0 || d < ((periods[worstIdx].summary.totalGMV-periods[worstIdx-1].summary.totalGMV)/periods[worstIdx-1].summary.totalGMV*100)) worstIdx=i;
+  });
+
+  html += '<div class="kpi-grid">';
+  html += kpiCard("GMV kỳ gần nhất", fmtCurrency(latest.summary.totalGMV), esc(latest.period.rangeLabel));
+  html += kpiCard("Số kỳ đang so sánh", periods.length+" kỳ", esc(first.period.label)+" → "+esc(latest.period.label));
+  if(totalDelta!==null){
+    html += kpiCard("Tăng trưởng GMV so với kỳ trước", (totalDelta>=0?"+":"")+fmtPercent(totalDelta,1), "so với "+esc(prev.period.label), totalDelta>0.5?"good":totalDelta<-0.5?"bad":"");
+  }else{
+    html += kpiCard("Tăng trưởng GMV so với kỳ trước", "—", "cần thêm dữ liệu kỳ trước");
+  }
+  html += kpiCard("Tổng đơn hàng kỳ gần nhất", fmtNum(latest.summary.totalOrders), latest.summary.productCount+" sản phẩm");
+  html += '</div>';
+
+  html += '<div class="section">';
+  html += sectionHead("A","Xu hướng GMV & đơn hàng theo tháng","Cột: GMV mỗi kỳ. Đường: tổng đơn hàng mỗi kỳ.");
+  html += '<div class="chart-wrap" style="height:280px;"><canvas id="chOverview"></canvas></div>';
+  html += '</div>';
+
+  /* ---- B. Xu hướng 6 nguồn qua các kỳ ---- */
+  html += '<div class="section">';
+  html += sectionHead("B","Xu hướng hiệu suất 6 nguồn qua các kỳ","GMV mỗi nguồn theo từng tháng, và % thị phần đóng góp của mỗi nguồn qua thời gian.");
+  html += '<div class="chart-wrap" style="height:300px;"><canvas id="chChannelTrend"></canvas></div>';
+  html += '<div class="table-scroll" style="margin-top:20px;"><table><thead><tr><th class="left">Nguồn</th>';
+  periods.forEach(p=> html += '<th>'+esc(p.period.label)+'</th>');
+  html += '<th>Xu hướng (kỳ đầu → kỳ cuối)</th></tr></thead><tbody>';
+  CHANNELS.forEach(ch=>{
+    html += '<tr><td class="left">'+dot(ch.color)+esc(ch.short)+'</td>';
+    periods.forEach(p=>{ const c = p.summary.channels.find(x=>x.id===ch.id); html += '<td>'+fmtCurrency(c.gmv)+'</td>'; });
+    const firstGmv = first.summary.channels.find(x=>x.id===ch.id).gmv;
+    const lastGmv = latest.summary.channels.find(x=>x.id===ch.id).gmv;
+    const d = firstGmv>0 ? (lastGmv-firstGmv)/firstGmv*100 : null;
+    html += '<td>'+(d===null?'—':deltaHtml(d))+'</td></tr>';
+  });
+  html += '</tbody></table></div>';
+  html += '<div class="table-scroll" style="margin-top:14px;"><table><thead><tr><th class="left">% thị phần GMV</th>';
+  periods.forEach(p=> html += '<th>'+esc(p.period.label)+'</th>');
+  html += '</tr></thead><tbody>';
+  CHANNELS.forEach(ch=>{
+    html += '<tr><td class="left">'+dot(ch.color)+esc(ch.short)+'</td>';
+    periods.forEach(p=>{ const c = p.summary.channels.find(x=>x.id===ch.id); html += '<td>'+fmtPercent(c.share,1)+'</td>'; });
+    html += '</tr>';
+  });
+  html += '</tbody></table></div></div>';
+
+  /* ---- C. Top 5 SP theo GMV cộng dồn — dữ liệu theo từng tháng ---- */
+  const cumulative = {};
+  periods.forEach(p=> p.products.forEach(prod=>{ cumulative[prod.id] = (cumulative[prod.id]||0) + prod.gmvTotal; }));
+  const idToName = {};
+  periods.forEach(p=> p.products.forEach(prod=>{ if(!idToName[prod.id]) idToName[prod.id]=prod.name; }));
+  const top5Ids = Object.entries(cumulative).sort((a,b)=>b[1]-a[1]).slice(0,5).map(e=>e[0]);
+
+  html += '<div class="section">';
+  html += sectionHead("C","Top 5 sản phẩm theo GMV cộng dồn cả giai đoạn","5 sản phẩm được chọn theo tổng GMV cộng dồn toàn giai đoạn — dữ liệu bên dưới tách riêng theo từng tháng (không gộp) để thấy xu hướng thật.");
+  html += '<div class="tabs" id="top5TrendTabs">';
+  top5Ids.forEach((id,i)=>{
+    html += '<button class="tab-btn'+(i===0?" active":"")+'" data-id="'+esc(id)+'">#'+(i+1)+' '+esc((idToName[id]||"").slice(0,28))+((idToName[id]||"").length>28?"…":"")+'</button>';
+  });
+  html += '</div><div id="top5TrendContent"></div></div>';
+
+  /* ---- D. SP dẫn đầu mỗi cổng — kỳ gần nhất + xu hướng ---- */
+  html += '<div class="section">';
+  html += sectionHead("D","Sản phẩm dẫn đầu GMV mỗi cổng — kỳ gần nhất","GMV của sản phẩm dẫn đầu qua các tháng gần đây, và có đổi \"ngôi vương\" so với kỳ trước không.");
+  html += '<div class="table-scroll"><table><thead><tr><th class="left">Cổng</th><th class="left">Sản phẩm dẫn đầu ('+esc(latest.period.label)+')</th><th>GMV kỳ này</th><th class="left">Xu hướng GMV qua các kỳ</th><th>Đổi ngôi?</th></tr></thead><tbody>';
+  CHANNELS.forEach(ch=>{
+    const bestNow = bestProductForChannel(latest.products, ch.id);
+    if(!bestNow){ html += '<tr><td class="left">'+dot(ch.color)+esc(ch.label)+'</td><td colspan="4" class="left">— chưa có sản phẩm phát sinh GMV —</td></tr>'; return; }
+    const bestPrev = prev ? bestProductForChannel(prev.products, ch.id) : null;
+    const changed = bestPrev && bestPrev.id !== bestNow.id;
+    const trail = periods.map(p=>{
+      const prod = p.products.find(x=>x.id===bestNow.id);
+      return prod ? prod.channels[ch.id].gmv : 0;
+    });
+    const trailStr = trail.map(v=>fmtCompact(v)).join(" → ");
+    html += '<tr><td class="left">'+dot(ch.color)+esc(ch.label)+'</td><td class="left name-cell">'+esc(bestNow.name)+'</td>';
+    html += '<td>'+fmtCurrency(bestNow.channels[ch.id].gmv)+'</td><td class="left">'+esc(trailStr)+'</td>';
+    html += '<td>'+(bestPrev ? (changed?'<span class="badge">Đổi ngôi</span>':'<span class="delta flat">Giữ vững</span>') : '<span class="delta flat">Kỳ đầu</span>')+'</td></tr>';
+  });
+  html += '</tbody></table></div></div>';
+
+  /* ---- E. Benchmark theo cổng (kỳ gần nhất, Top N theo Traffic) ---- */
+  const benchmarksLatest = computeChannelBenchmarks(latest.products);
+  html += '<div class="section">';
+  html += sectionHead("E","Benchmark hiệu suất theo cổng — kỳ gần nhất ("+esc(latest.period.label)+")","Trung bình cộng Hiển thị/Traffic/CTR/ATC/Tỷ lệ ATC/GPM của Top "+BENCHMARK_TOP_N+" sản phẩm (xếp theo Traffic) trong từng cổng ở kỳ gần nhất — dùng làm chuẩn so sánh ở phần F.");
+  html += '<div class="table-scroll"><table><thead><tr><th class="left">Cổng</th><th>Hiển thị TB</th><th>Traffic TB</th><th>CTR TB</th><th>ATC TB</th><th>Tỷ lệ ATC TB</th><th>GPM TB</th><th>Số SP dùng tính benchmark</th></tr></thead><tbody>';
+  CHANNELS.forEach(ch=>{
+    const b = benchmarksLatest[ch.id];
+    if(!b){ html += '<tr><td class="left">'+dot(ch.color)+esc(ch.label)+'</td><td colspan="7" class="left">— chưa có sản phẩm phát sinh GMV ở cổng này —</td></tr>'; return; }
+    html += '<tr><td class="left">'+dot(ch.color)+esc(ch.label)+'</td><td>'+fmtNum(b.impr,0)+'</td><td>'+fmtNum(b.traffic,0)+'</td><td>'+fmtPercent(b.ctr)+'</td><td>'+fmtNum(b.atc,0)+'</td><td>'+fmtPercent(b.atcRate)+'</td><td>'+fmtNum(b.gpm,0)+'₫</td><td>'+b.n+' SP</td></tr>';
+  });
+  html += '</tbody></table></div></div>';
+
+  /* ---- F. Sản phẩm tiềm năng theo benchmark — kỳ gần nhất ---- */
+  const potentialsLatest = findPotentialProducts(latest.products, benchmarksLatest);
+  html += '<div class="section">';
+  html += sectionHead("F","Sản phẩm tiềm năng theo benchmark — kỳ gần nhất","So từng sản phẩm với benchmark cổng (E) của kỳ gần nhất. Cần vượt/kém benchmark ở cả 2 chỉ số của mỗi nhóm mới được xếp loại.");
+  html += '<div class="tabs" id="potentialTabsTrend">';
+  CHANNELS.forEach((ch,i)=>{
+    html += '<button class="tab-btn'+(i===0?" active":"")+'" data-ch="'+ch.id+'">'+dot(ch.color)+esc(ch.short)+'</button>';
+  });
+  html += '</div><div id="potentialContentTrend"></div></div>';
+
+  /* ---- G. Bảng pivot SP x tháng ---- */
+  const allIds = Object.keys(cumulative);
+  html += '<div class="section">';
+  html += sectionHead("G","Bảng GMV sản phẩm theo từng tháng","Tìm theo ID sản phẩm · % thay đổi tính từ kỳ đầu ("+esc(first.period.label)+") đến kỳ cuối ("+esc(latest.period.label)+").");
+  html += '<div class="search-row"><input class="search-input" id="pivotSearch" placeholder="Tìm theo ID sản phẩm…"/></div>';
+  html += '<div class="table-scroll" id="pivotTableWrap"></div>';
+  html += '</div>';
+
+  dashboard.innerHTML = html;
+
+  /* chart A: bar GMV + line orders */
+  const ctxA = document.getElementById("chOverview").getContext("2d");
+  try{
+  state.charts.overview = new Chart(ctxA, {
+    type:"bar",
+    data:{
+      labels: periods.map(p=>p.period.label),
+      datasets:[
+        { type:"bar", label:"Tổng GMV", data: periods.map(p=>p.summary.totalGMV), backgroundColor: resolveColor("var(--brand)"), borderRadius:5, yAxisID:"y" },
+        { type:"line", label:"Đơn hàng", data: periods.map(p=>p.summary.totalOrders), borderColor: resolveColor("var(--c-videoAff)"), backgroundColor: resolveColor("var(--c-videoAff)"), yAxisID:"y1", tension:.3, pointRadius:3 }
+      ]
+    },
+    options:{ responsive:true, maintainAspectRatio:false, interaction:{ mode:"index", intersect:false },
+      plugins:{ legend:{ position:"bottom", labels:{ color: resolveColor("var(--ink-soft)"), boxWidth:10, font:{size:11.5} } },
+        tooltip:{ callbacks:{ label:(c)=> c.dataset.label+": "+(c.dataset.label==="Đơn hàng"?fmtNum(c.parsed.y):fmtCurrency(c.parsed.y)) } } },
+      scales:{ x:{ ticks:{ color: resolveColor("var(--ink-faint)") }, grid:{ display:false } },
+        y:{ position:"left", ticks:{ callback:(v)=>fmtCompact(v), color: resolveColor("var(--ink-faint)") }, grid:{ color: resolveColor("var(--border)") } },
+        y1:{ position:"right", ticks:{ callback:(v)=>fmtCompact(v), color: resolveColor("var(--ink-faint)") }, grid:{ display:false } } } }
+  });
+  }catch(err){ console.error("Chart A (trend overview) failed:", err); const cv=document.getElementById("chOverview"); if(cv&&cv.parentElement) cv.parentElement.innerHTML = "<div class='empty-note'>Không tải được biểu đồ (thư viện Chart.js lỗi hoặc chưa load kịp) — dữ liệu bảng bên dưới vẫn chính xác.</div>"; }
+
+  /* chart B: line per channel */
+  const ctxB = document.getElementById("chChannelTrend").getContext("2d");
+  const datasetsB = CHANNELS.map(ch=>({
+    label: ch.short, data: periods.map(p=> p.summary.channels.find(c=>c.id===ch.id).gmv),
+    borderColor: resolveColor(ch.color), backgroundColor: resolveColor(ch.color), tension:.3, pointRadius:3, borderWidth:2, fill:false
+  }));
+  try{
+  state.charts.channelTrend = new Chart(ctxB, {
+    type:"line",
+    data:{ labels: periods.map(p=>p.period.label), datasets: datasetsB },
+    options:{ responsive:true, maintainAspectRatio:false, interaction:{ mode:"index", intersect:false },
+      plugins:{ legend:{ position:"bottom", labels:{ color: resolveColor("var(--ink-soft)"), boxWidth:10, font:{size:11.5} } },
+        tooltip:{ callbacks:{ label:(c)=> c.dataset.label+": "+fmtCurrency(c.parsed.y) } } },
+      scales:{ x:{ ticks:{ color: resolveColor("var(--ink-faint)") }, grid:{ color: resolveColor("var(--border)") } },
+        y:{ ticks:{ callback:(v)=>fmtCompact(v), color: resolveColor("var(--ink-faint)") }, grid:{ color: resolveColor("var(--border)") } } } }
+  });
+  }catch(err){ console.error("Chart B (trend channel) failed:", err); const cv=document.getElementById("chChannelTrend"); if(cv&&cv.parentElement) cv.parentElement.innerHTML = "<div class='empty-note'>Không tải được biểu đồ (thư viện Chart.js lỗi hoặc chưa load kịp) — dữ liệu bảng bên dưới vẫn chính xác.</div>"; }
+
+
+  /* top5 trend tabs (section C) */
+  const top5Content = document.getElementById("top5TrendContent");
+  let top5Chart = null;
+  function renderTop5TrendProduct(id){
+    if(top5Chart){ top5Chart.destroy(); top5Chart=null; }
+    const monthRows = periods.map(p=>{
+      const prod = p.products.find(x=>x.id===id);
+      const channelsData = {};
+      CHANNELS.forEach(ch=> channelsData[ch.id] = prod ? prod.channels[ch.id].gmv : 0);
+      const totalGmv = prod ? prod.gmvTotal : 0;
+      const totalImpr = CHANNELS.reduce((s,ch)=> s + (prod?prod.channels[ch.id].impr:0), 0);
+      const gpm = totalImpr>0 ? Object.values(channelsData).reduce((a,b)=>a+b,0)/totalImpr*1000 : 0;
+      return { label:p.period.label, channelsData, totalGmv, gpm };
+    });
+    let t = '<div class="chart-wrap" style="height:240px;margin-bottom:18px;"><canvas id="chTop5Product"></canvas></div>';
+    t += '<div class="table-scroll"><table><thead><tr><th class="left">Tháng</th>';
+    CHANNELS.forEach(ch=> t += '<th>'+esc(ch.short)+'</th>');
+    t += '<th>Tổng GMV tháng</th><th>GPM tổng</th></tr></thead><tbody>';
+    monthRows.forEach(mr=>{
+      t += '<tr><td class="left">'+esc(mr.label)+'</td>';
+      CHANNELS.forEach(ch=> t += '<td>'+fmtCurrency(mr.channelsData[ch.id])+'</td>');
+      t += '<td>'+fmtCurrency(mr.totalGmv)+'</td><td>'+fmtNum(mr.gpm,0)+'₫</td></tr>';
+    });
+    t += '</tbody></table></div>';
+    top5Content.innerHTML = t;
+
+    const ctx = document.getElementById("chTop5Product").getContext("2d");
+    const datasets = CHANNELS.map(ch=>({
+      label: ch.short, data: monthRows.map(mr=>mr.channelsData[ch.id]),
+      borderColor: resolveColor(ch.color), backgroundColor: resolveColor(ch.color), tension:.3, pointRadius:2, borderWidth:2, fill:false
+    }));
+    try{
+    top5Chart = new Chart(ctx, {
+      type:"line",
+      data:{ labels: monthRows.map(mr=>mr.label), datasets },
+      options:{ responsive:true, maintainAspectRatio:false, interaction:{ mode:"index", intersect:false },
+        plugins:{ legend:{ position:"bottom", labels:{ color: resolveColor("var(--ink-soft)"), boxWidth:9, font:{size:10.5} } },
+          tooltip:{ callbacks:{ label:(c)=> c.dataset.label+": "+fmtCurrency(c.parsed.y) } } },
+        scales:{ x:{ ticks:{ color: resolveColor("var(--ink-faint)") }, grid:{ display:false } },
+          y:{ ticks:{ callback:(v)=>fmtCompact(v), color: resolveColor("var(--ink-faint)") }, grid:{ color: resolveColor("var(--border)") } } } }
+    });
+    }catch(err){ console.error("Chart C (top5 product) failed:", err); const cv=document.getElementById("chTop5Product"); if(cv&&cv.parentElement) cv.parentElement.innerHTML = "<div class='empty-note'>Không tải được biểu đồ (thư viện Chart.js lỗi hoặc chưa load kịp) — dữ liệu bảng bên dưới vẫn chính xác.</div>"; }
+  }
+  document.getElementById("top5TrendTabs").addEventListener("click",(e)=>{
+    const btn = e.target.closest(".tab-btn"); if(!btn) return;
+    document.querySelectorAll("#top5TrendTabs .tab-btn").forEach(b=>b.classList.toggle("active", b===btn));
+    renderTop5TrendProduct(btn.dataset.id);
+  });
+  if(top5Ids.length>0) renderTop5TrendProduct(top5Ids[0]);
+  else top5Content.innerHTML = '<div class="empty-note">Không có sản phẩm nào phát sinh GMV trong giai đoạn này.</div>';
+
+  /* pivot table (section E) */
+  const pivotWrap = document.getElementById("pivotTableWrap");
+  function renderPivot(){
+    const q = (document.getElementById("pivotSearch").value||"").trim().toLowerCase();
+    let ids = allIds.filter(id=> !q || id.toLowerCase().indexOf(q)!==-1 );
+    ids.sort((a,b)=>cumulative[b]-cumulative[a]);
+    let t = '<table><thead><tr><th class="left">ID sản phẩm</th><th class="left">Sản phẩm</th>';
+    periods.forEach(p=> t += '<th>'+esc(p.period.label)+'</th>');
+    t += '<th>% thay đổi</th></tr></thead><tbody>';
+    ids.slice(0,300).forEach(id=>{
+      const vals = periods.map(p=>{ const prod = p.products.find(x=>x.id===id); return prod?prod.gmvTotal:0; });
+      const f = vals[0], l = vals[vals.length-1];
+      const d = f>0 ? (l-f)/f*100 : (l>0? null : 0);
+      t += '<tr><td class="left">'+esc(id)+'</td><td class="left name-cell">'+esc(idToName[id]||"")+'</td>';
+      vals.forEach(v=> t += '<td>'+fmtCurrency(v)+'</td>');
+      t += '<td>'+(d===null?'<span class="delta up">Mới</span>':deltaHtml(d))+'</td></tr>';
+    });
+    t += '</tbody></table>';
+    if(ids.length===0) t = '<div class="empty-note">Không tìm thấy ID sản phẩm phù hợp.</div>';
+    pivotWrap.innerHTML = t;
+  }
+  document.getElementById("pivotSearch").addEventListener("input", renderPivot);
+  renderPivot();
+
+  /* tabs F — potential products (latest period) */
+  wirePotentialTabs("potentialTabsTrend", "potentialContentTrend", benchmarksLatest, potentialsLatest);
+}
+
+})();
+
+</script>
+</body>
+</html>

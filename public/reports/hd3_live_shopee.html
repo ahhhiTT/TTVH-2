@@ -1,0 +1,2260 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shopee Livestream Channel — Bảng phân tích</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#EEF0EE; --surface:#FFFFFF; --surface-2:#F5F6F4; --border:#D7DBD6;
+  --ink:#171A18; --ink-muted:#5B635E; --ink-faint:#8B928C;
+  --accent:#C8501E; --accent-ink:#FFFFFF; --accent-soft:#FBE9DF;
+  --derived:#146356; --derived-soft:#E3F0EC;
+  --alert:#A63A2E; --alert-soft:#F8E6E2;
+  --good:#2E7D4F; --good-soft:#E4F2E8;
+  --sans:'IBM Plex Sans',system-ui,sans-serif; --mono:'IBM Plex Mono',monospace;
+}
+:root:not([data-theme="light"]) {
+  @media (prefers-color-scheme: dark){
+    --bg:#141715; --surface:#1C201D; --surface-2:#222623;
+    --border:#333833; --ink:#E7EAE6; --ink-muted:#9BA39C; --ink-faint:#6E756E;
+    --accent:#FF7A45; --accent-ink:#14100C; --accent-soft:#3A2A1E;
+    --derived:#5FD6BC; --derived-soft:#1B302C;
+    --alert:#FF8A75; --alert-soft:#3A2320;
+    --good:#7CD69B; --good-soft:#1D3325;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141715; --surface:#1C201D; --surface-2:#222623;
+  --border:#333833; --ink:#E7EAE6; --ink-muted:#9BA39C; --ink-faint:#6E756E;
+  --accent:#FF7A45; --accent-ink:#14100C; --accent-soft:#3A2A1E;
+  --derived:#5FD6BC; --derived-soft:#1B302C;
+  --alert:#FF8A75; --alert-soft:#3A2320;
+  --good:#7CD69B; --good-soft:#1D3325;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:var(--sans);}
+body{min-height:100vh;}
+::selection{background:var(--accent-soft);}
+button{font-family:var(--sans);}
+.app{display:flex;min-height:100vh;}
+.rail{width:230px;flex:none;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;}
+.rail-head{padding:20px 18px 14px;border-bottom:1px solid var(--border);}
+.rail-head .mark{font-family:var(--mono);font-size:11px;letter-spacing:.04em;color:var(--ink-faint);}
+.rail-head h1{font-size:16px;line-height:1.3;margin:6px 0 0;font-weight:600;}
+.rail-nav{padding:10px 10px;flex:1;}
+.rail-btn{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:none;color:var(--ink-muted);padding:9px 10px;border-radius:6px;font-size:13.5px;cursor:pointer;margin-bottom:2px;}
+.rail-btn .n{font-family:var(--mono);font-size:11px;color:var(--ink-faint);width:16px;flex:none;}
+.rail-btn:hover{background:var(--surface-2);color:var(--ink);}
+.rail-btn.active{background:var(--accent-soft);color:var(--accent);font-weight:600;}
+.rail-btn.active .n{color:var(--accent);}
+.rail-btn[disabled]{opacity:.35;cursor:not-allowed;}
+.rail-btn[disabled]:hover{background:none;color:var(--ink-muted);}
+.rail-foot{padding:14px 18px;border-top:1px solid var(--border);font-size:11.5px;color:var(--ink-faint);line-height:1.5;}
+.main{flex:1;min-width:0;padding:26px 34px 60px;max-width:1180px;}
+.view{display:none;}
+.view.active{display:block;}
+h2.pagetitle{font-size:20px;margin:0 0 4px;font-weight:600;}
+.sub{color:var(--ink-muted);font-size:13.5px;margin:0 0 22px;max-width:640px;line-height:1.5;}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:18px 20px;margin-bottom:18px;}
+.panel h3{font-size:13px;text-transform:none;letter-spacing:0;margin:0 0 14px;font-weight:600;color:var(--ink);border-bottom:1px solid var(--border);padding-bottom:10px;}
+.grid{display:grid;gap:14px;}
+.g4{grid-template-columns:repeat(4,1fr);}
+.g3{grid-template-columns:repeat(3,1fr);}
+.g2{grid-template-columns:repeat(2,1fr);}
+@media(max-width:900px){.g4{grid-template-columns:repeat(2,1fr);}.g3{grid-template-columns:repeat(2,1fr);}}
+.kpi{border:1px solid var(--border);border-radius:4px;padding:12px 14px;background:var(--surface-2);}
+.kpi .lbl{font-size:11.5px;color:var(--ink-muted);margin-bottom:6px;}
+.kpi .val{font-family:var(--mono);font-size:19px;font-weight:600;}
+.kpi .val.na{color:var(--ink-faint);font-weight:400;font-size:15px;}
+.tag{display:inline-block;font-size:10px;font-family:var(--mono);padding:1px 6px;border-radius:3px;margin-left:6px;vertical-align:middle;}
+.tag.derived{background:var(--derived-soft);color:var(--derived);}
+.tag.raw{background:var(--surface-2);color:var(--ink-faint);border:1px solid var(--border);}
+.infodot{display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border-radius:50%;background:var(--surface-2);border:1px solid var(--border);color:var(--ink-faint);font-size:9px;line-height:1;margin-left:4px;cursor:help;position:relative;vertical-align:middle;font-family:var(--mono);font-weight:600;}
+.infodot::before{content:'i';}
+.infodot:hover, .infodot:focus{outline:none;border-color:var(--accent);color:var(--accent);}
+th .infodot{margin-left:3px;}
+.gtooltip{display:none;position:fixed;z-index:500;background:var(--ink);color:var(--bg);padding:8px 10px;border-radius:5px;font-size:11.5px;line-height:1.55;max-width:240px;white-space:normal;text-align:left;font-family:var(--sans);font-weight:400;box-shadow:0 4px 14px rgba(0,0,0,.3);pointer-events:none;}
+.tag.alert{background:var(--alert-soft);color:var(--alert);}
+.tag.good{background:var(--good-soft);color:var(--good);}
+table{width:100%;border-collapse:collapse;font-size:12.8px;}
+th{text-align:left;font-weight:600;color:var(--ink-muted);font-size:11.3px;padding:6px 10px;border-bottom:2px solid var(--border);white-space:nowrap;position:sticky;top:0;background:var(--surface);}
+td{padding:6px 10px;border-bottom:1px solid var(--border);white-space:nowrap;font-family:var(--mono);}
+td.text{font-family:var(--sans);white-space:normal;max-width:260px;}
+tr:hover td{background:var(--surface-2);}
+.tablewrap{overflow:auto;max-height:520px;border:1px solid var(--border);border-radius:4px;}
+.num{text-align:right;}
+.pos{color:var(--good);}
+.neg{color:var(--alert);}
+.upload-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+@media(max-width:900px){.upload-row{grid-template-columns:1fr;}}
+.dropzone{border:1.5px dashed var(--border);border-radius:5px;padding:16px 14px;text-align:center;cursor:pointer;background:var(--surface-2);transition:border-color .15s;}
+.dropzone:hover, .dropzone.drag{border-color:var(--accent);}
+.dropzone .ic{font-size:20px;margin-bottom:6px;}
+.dropzone .t1{font-size:12.5px;font-weight:600;}
+.dropzone .t2{font-size:11px;color:var(--ink-faint);margin-top:3px;}
+.dropzone.filled{border-style:solid;border-color:var(--derived);background:var(--derived-soft);}
+.dropzone.filled .t1{color:var(--derived);}
+.filelist{margin-top:14px;font-size:12.5px;}
+.filerow{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);}
+.filerow:last-child{border-bottom:none;}
+.filerow .name{color:var(--ink-muted);font-family:var(--mono);font-size:11.5px;}
+.btn{background:var(--ink);color:var(--bg);border:none;padding:9px 16px;border-radius:4px;font-size:13px;font-weight:600;cursor:pointer;}
+.btn:hover{opacity:.88;}
+.btn.accent{background:var(--accent);color:var(--accent-ink);}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.btn.ghost{background:none;border:1px solid var(--border);color:var(--ink);}
+.callout{border:1px solid var(--border);border-left:3px solid var(--accent);background:var(--surface-2);padding:10px 14px;font-size:12.5px;line-height:1.55;border-radius:0 4px 4px 0;margin-bottom:16px;color:var(--ink-muted);}
+.callout b{color:var(--ink);}
+.empty{padding:50px 20px;text-align:center;color:var(--ink-faint);font-size:13.5px;}
+.badgebar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+.badge{font-size:11.5px;padding:4px 10px;border-radius:20px;border:1px solid var(--border);color:var(--ink-muted);font-family:var(--mono);}
+.badge.on{border-color:var(--derived);color:var(--derived);background:var(--derived-soft);}
+.qtybox{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-muted);}
+.qtybox input{width:60px;font-family:var(--mono);border:1px solid var(--border);border-radius:4px;padding:4px 6px;background:var(--surface);color:var(--ink);}
+.insight-card{border:1px solid var(--border);border-radius:4px;margin-bottom:14px;overflow:hidden;}
+.insight-head{padding:10px 14px;background:var(--surface-2);font-weight:600;font-size:13.5px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);}
+.insight-body{padding:4px 0;}
+.ins-row{display:grid;grid-template-columns:110px 1fr;gap:10px;padding:8px 14px;border-bottom:1px solid var(--border);font-size:12.8px;}
+.ins-row:last-child{border-bottom:none;}
+.ins-row .k{font-family:var(--mono);font-size:11px;color:var(--ink-faint);padding-top:2px;}
+.ins-row .v{line-height:1.55;}
+.ins-row .v.inconclusive{color:var(--ink-faint);font-style:italic;}
+.aiwrap{border:1px solid var(--border);border-radius:4px;padding:20px 22px;background:var(--surface-2);min-height:120px;font-size:13.5px;line-height:1.7;}
+.aiwrap h4{font-size:14px;margin:16px 0 6px;}
+.aiwrap h4:first-child{margin-top:0;}
+.aiwrap ul{margin:4px 0;padding-left:20px;}
+.aiwrap strong{color:var(--ink);}
+.aiwrap.placeholder{color:var(--ink-faint);display:flex;align-items:center;justify-content:center;font-style:italic;}
+.chip-row{display:flex;gap:8px;margin-bottom:14px;}
+.svgchart{width:100%;height:auto;display:block;}
+.legend{display:flex;gap:16px;font-size:11.5px;color:var(--ink-muted);margin-top:8px;}
+.legend span{display:inline-flex;align-items:center;gap:5px;}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;}
+.two-col{display:grid;grid-template-columns:1.3fr 1fr;gap:18px;}
+@media(max-width:1000px){.two-col{grid-template-columns:1fr;}}
+.dq-issue{padding:8px 12px;border-radius:4px;font-size:12.5px;margin-bottom:6px;display:flex;justify-content:space-between;gap:10px;}
+.dq-issue.warn{background:var(--alert-soft);color:var(--alert);}
+.dq-issue.ok{background:var(--good-soft);color:var(--good);}
+.dq-issue.info{background:var(--surface-2);color:var(--ink-muted);border:1px solid var(--border);}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="rail">
+    <div class="rail-head">
+      <div class="mark">LIVESTREAM CHANNEL / V1</div>
+      <h1>Shopee Livestream Analytics</h1>
+    </div>
+    <div class="rail-nav" id="nav"></div>
+    <div class="rail-foot">Raw First: mọi số liệu bám 100% Shopee export.<br>N/A khi thiếu dữ liệu, không suy diễn.</div>
+  </div>
+  <div class="main">
+    <div id="view-upload" class="view active"></div>
+    <div id="view-overview" class="view"></div>
+    <div id="view-session" class="view"></div>
+    <div id="view-product" class="view"></div>
+    <div id="view-segment" class="view"></div>
+    <div id="view-benchmark" class="view"></div>
+    <div id="view-export" class="view"></div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   0. STATE
+============================================================ */
+const STATE = {
+  files: { session:null, product:null, overview:null },
+  session: null,   // {headers, rows[]}
+  product: null,
+  overview: null,  // {rows[], blocks[]}
+  benchmark: null,
+  driver: null,
+  insights: null,
+  dq: null,
+  streamerIds: new Set(),
+  aiText: '',
+  aiSections: {},
+  _aiGenerated: false,
+  materialityPct: 15,
+  timeSlotEdges: [7, 10, 13, 16, 19, 22],
+  dayStageConfig: { enableDDay: true, memberDay: 15, miniSpike: 25 },
+  comboKeywords: ['combo', 'set', 'bộ'],
+  productTopFilter: 'all',
+  reportManual: {},
+  segmentDim: 'weekday'
+};
+
+const TABS = [
+  {id:'upload', label:'Tải dữ liệu', requires:null},
+  {id:'overview', label:'Tổng quan Kênh', requires:'overview'},
+  {id:'session', label:'Buổi Livestream', requires:'session'},
+  {id:'product', label:'Sản phẩm', requires:'product'},
+  {id:'segment', label:'Phân tích Nhóm & Xu hướng', requires:'session'},
+  {id:'benchmark', label:'Benchmark & Driver', requires:'any2'},
+  {id:'export', label:'Xuất Excel', requires:'any1'},
+];
+
+/* ============================================================
+   1. RAW PARSER — parse VN-formatted Shopee values
+============================================================ */
+const RawParser = {
+  stripBOM(s){ return typeof s==='string' ? s.replace(/^\uFEFF/,'') : s; },
+  toNum(raw){
+    if(raw===null||raw===undefined) return null;
+    let s = String(raw).trim();
+    if(s===''||s==='-'||s.toUpperCase()==='N/A') return null;
+    const isPercent = s.includes('%');
+    s = s.replace(/[₫%\s]/g,'');
+    s = s.replace(/\./g,'').replace(',', '.');
+    const n = parseFloat(s);
+    if(isNaN(n)) return null;
+    return isPercent ? n/100 : n;
+  },
+  isBlankButNotNumeric(raw){
+    // detect "garbage" values: non-empty, not '-', but unparseable
+    if(raw===null||raw===undefined) return false;
+    const s = String(raw).trim();
+    if(s===''||s==='-') return false;
+    return this.toNum(s) === null;
+  },
+  parseHMS(s){
+    if(!s) return null;
+    const m = String(s).trim().match(/^(\d+):(\d+):(\d+)$/);
+    if(!m) return null;
+    return (+m[1])*3600 + (+m[2])*60 + (+m[3]);
+  },
+  parseVNDuration(s){
+    if(!s) return null;
+    s = String(s).trim();
+    let h=0,m=0,sec=0,found=false;
+    let mh = s.match(/(\d+)\s*giờ/); if(mh){h=+mh[1];found=true;}
+    let mm = s.match(/(\d+)\s*phút/); if(mm){m=+mm[1];found=true;}
+    let ms = s.match(/(\d+)\s*giây/); if(ms){sec=+ms[1];found=true;}
+    if(!found) return this.parseHMS(s);
+    return h*3600+m*60+sec;
+  },
+  parseVNDateTime(s){
+    if(!s) return null;
+    const m = String(s).trim().match(/^(\d{2})-(\d{2})-(\d{4})\s+(\d{2}):(\d{2})$/);
+    if(!m) return null;
+    return new Date(+m[3], +m[2]-1, +m[1], +m[4], +m[5]);
+  },
+  parseVNDate(s){
+    if(!s) return null;
+    const m = String(s).trim().match(/^(\d{2})-(\d{2})-(\d{4})$/);
+    if(!m) return null;
+    return new Date(+m[3], +m[2]-1, +m[1]);
+  },
+  parseVNDateRange(s){
+    if(!s) return {start:null,end:null};
+    const parts = String(s).split(' - ');
+    if(parts.length!==2) return {start:null,end:null};
+    return { start:this.parseVNDate(parts[0].trim()), end:this.parseVNDate(parts[1].trim()) };
+  },
+  fmtSec(sec){
+    if(sec===null||sec===undefined||isNaN(sec)) return 'N/A';
+    const h=Math.floor(sec/3600), m=Math.floor((sec%3600)/60), s=Math.floor(sec%60);
+    if(h>0) return h+'g'+String(m).padStart(2,'0')+'p'+String(s).padStart(2,'0')+'s';
+    if(m>0) return m+'p'+String(s).padStart(2,'0')+'s';
+    return s+'s';
+  },
+  fmtInt(n){ if(n===null||n===undefined||isNaN(n)) return 'N/A'; return Math.round(n).toLocaleString('vi-VN'); },
+  fmtMoney(n){ if(n===null||n===undefined||isNaN(n)) return 'N/A'; return Math.round(n).toLocaleString('vi-VN')+'₫'; },
+  fmtPct(n,d){ if(n===null||n===undefined||isNaN(n)) return 'N/A'; return (n*100).toFixed(d===undefined?1:d)+'%'; },
+  fmtDec(n,d){ if(n===null||n===undefined||isNaN(n)) return 'N/A'; return n.toLocaleString('vi-VN',{maximumFractionDigits:d===undefined?2:d}); },
+
+  detectAOAType(aoa){
+    const scanRows = aoa.slice(0,3).map(r=>r.join('|')).join('|');
+    if(scanRows.includes('Tên buổi livestream')) return 'session';
+    if(scanRows.includes('Xếp hạng') && scanRows.includes('Các sản phẩm')) return 'product';
+    if(scanRows.includes('Số phiên Livestream') || scanRows.includes('Giao dịch')) return 'overview';
+    return 'unknown';
+  },
+
+  aoaFromFile(file, cb){
+    const reader = new FileReader();
+    const name = file.name.toLowerCase();
+    reader.onload = function(e){
+      try{
+        let wb;
+        if(name.endsWith('.csv')){
+          let text = e.target.result;
+          text = RawParser.stripBOM(text);
+          wb = XLSX.read(text, {type:'string'});
+        } else {
+          wb = XLSX.read(e.target.result, {type:'array'});
+        }
+        const sheetName = wb.SheetNames[0];
+        const sheet = wb.Sheets[sheetName];
+        const aoa = XLSX.utils.sheet_to_json(sheet, {header:1, raw:false, defval:''});
+        if(aoa.length && aoa[0].length) aoa[0][0] = RawParser.stripBOM(aoa[0][0]);
+        cb(null, {aoa, sheetName, fileName:file.name});
+      }catch(err){ cb(err); }
+    };
+    reader.onerror = function(){ cb(new Error('Không đọc được file')); };
+    if(name.endsWith('.csv')) reader.readAsText(file, 'utf-8');
+    else reader.readAsArrayBuffer(file);
+  }
+};
+
+/* ============================================================
+   1b. METRIC DEFINITIONS — tooltip chú thích định nghĩa/công thức
+============================================================ */
+const METRIC_DEFS = {
+  'Người xem': 'Raw Shopee — tổng số người đã vào xem buổi livestream (Live List / Overview).',
+  'Engaged': 'Raw Shopee — Số người xem tương tác: người xem có thao tác tương tác (bình luận, thả tim…) trong lúc xem live.',
+  'Engaged Rate': 'Derived = Số người xem tương tác ÷ Người xem. Tỷ lệ người xem có tương tác trên tổng người xem cùng buổi live.',
+  'Bình luận': 'Raw Shopee — tổng số bình luận trong buổi livestream.',
+  'ATC': 'Add To Cart — raw Shopee, số lượt thêm sản phẩm vào giỏ hàng trong buổi live.',
+  'Đơn đặt': 'Raw Shopee — số đơn hàng đã đặt (Order Placed) trong buổi live. Giữ riêng với Đơn xác nhận theo nguyên tắc Order vs Confirmed.',
+  'Đơn xác nhận': 'Raw Shopee — số đơn hàng đã được xác nhận (Order Confirmed), thường thấp hơn hoặc bằng Đơn đặt.',
+  'Doanh thu đặt': 'Raw Shopee — doanh thu tính trên đơn đã đặt (chưa lọc huỷ/hoàn).',
+  'Doanh thu xác nhận': 'Raw Shopee — doanh thu tính trên đơn đã được xác nhận.',
+  'GMV/Giờ': 'Derived = Doanh thu (Đặt) ÷ Thời lượng live (giờ). Hiệu suất doanh thu theo mỗi giờ live.',
+  'GMV/Phiên': 'Derived = Σ Doanh thu (Đặt) của nhóm ÷ Số phiên trong nhóm.',
+  'Click': 'Raw Shopee (Live Product List) — lượt click vào sản phẩm trong buổi live.',
+  'Click→Order': 'Derived = Đơn hàng (Đặt) ÷ Lượt click sản phẩm. Không gọi là CTR vì Shopee không export Product Impression ở cấp sản phẩm.',
+  'Quadrant': '2×2 chẩn đoán: so Click và Click→Order Rate của từng sản phẩm với median của chính danh sách đang xem — không dùng ngưỡng tuyệt đối cố định.',
+  '% Doanh thu': 'Tỷ trọng doanh thu (đặt) của nhóm này trên tổng doanh thu (đặt) toàn bộ nhóm đang xét trong bảng.',
+  'Driver candidate': 'Trong các metric được xét (Traffic, Engagement, ATC, Orders, Doanh thu/Đơn), đây là metric lệch benchmark (trung bình toàn kênh) nhiều nhất về % và vượt ngưỡng biến động có ý nghĩa đã cấu hình.',
+  'WHAT': 'Metric nào đang thay đổi — mô tả quan sát được từ số liệu, chưa suy diễn nguyên nhân.',
+  'BENCHMARK': 'So với benchmark phù hợp (trung bình toàn kênh trong kỳ đang xét) đang cao/thấp bao nhiêu %.',
+  'WHY': 'Driver giải thích thay đổi, dựa trên metric lệch benchmark rõ nhất. Nếu không có metric nào vượt ngưỡng biến động có ý nghĩa → ghi "Chưa đủ dữ liệu để kết luận", không suy đoán.',
+  'IMPACT': 'Ảnh hưởng tới Revenue/Orders/Units — ví dụ tỷ trọng đóng góp trên tổng doanh thu toàn kênh.',
+  'ACTION': 'Hướng kiểm tra tiếp theo dựa trên evidence ở trên — là gợi ý cần xác minh thêm, không phải kết luận cuối cùng.',
+  'Funnel step': 'Tỷ lệ chuyển đổi giữa 2 bước liền kề trong phễu = số ở bước sau ÷ số ở bước trước (raw Shopee).',
+  'Phân loại SKU': 'Suy ra từ tên sản phẩm: nếu tên chứa 1 trong các từ khoá cấu hình (mặc định: combo, set, bộ) → Combo, ngược lại → Single. Không phải field có sẵn trong raw, có thể chỉnh từ khoá cho khớp cách đặt tên của shop.',
+  'Customer split': 'Derived = Doanh số Khách hàng Mới (hoặc Cũ) ÷ (Doanh số Khách hàng Mới + Khách hàng Cũ). Tính riêng cho Đơn đã đặt và Đơn đã xác nhận vì 2 loại đơn không được cộng gộp.',
+  'Weekly report': '5 chỉ số đầu (Doanh thu, Đơn, AOV, GMV/Giờ, Số giờ) tự tính từ Live List theo tuần (T6→T5). 5 dòng Chi phí là ô nhập tay vì Shopee raw không xuất dữ liệu chi phí quảng cáo/vận hành livestream — cần điền thủ công từ số liệu kế toán/marketing của shop.',
+  'Weekly report plan': 'Cột tổng hợp cả tháng: 5 dòng đầu tự tính trực tiếp từ toàn bộ Live List trong kỳ (không phải cộng các cột tuần hiển thị, để tránh sai số làm tròn); 5 dòng Chi phí = tổng các ô đã nhập ở từng tuần.',
+  'ROI livestream': 'Derived = Doanh thu livestream (Đặt) ÷ Chi phí livestream self channel (net) của cùng cột. Cần nhập đủ cả 2 ô (doanh thu ở dòng Plan, hoặc doanh thu tự tính theo tuần) mới ra kết quả; thiếu 1 trong 2 → N/A.',
+  'ATC rate ref': '">15–20% là tốt" là kinh nghiệm ngành do người vận hành cung cấp (không phải chuẩn tính từ raw Shopee) — chỉ dùng để so sánh tham khảo.',
+};
+function dot(key){
+  const tip = METRIC_DEFS[key];
+  if(!tip) return '';
+  const safe = tip.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+  return `<span class="infodot" tabindex="0" data-tip="${safe}"></span>`;
+}
+
+/* ============================================================
+   2. NORMALIZER — turn raw AOA into row objects
+============================================================ */
+const Normalizer = {
+  normalizeSession(aoa, meta){
+    const headers = aoa[0];
+    const idx = h => headers.indexOf(h);
+    const rows = [];
+    for(let r=1;r<aoa.length;r++){
+      const row = aoa[r];
+      if(!row || row.every(c=>String(c).trim()==='')) continue;
+      const get = h => row[idx(h)];
+      const tf = RawParser.parseVNDateRange(get('Khung Thời Gian'));
+      rows.push({
+        _rawRow: row,
+        timeframe: get('Khung Thời Gian'), timeframeStart: tf.start, timeframeEnd: tf.end,
+        streamerId: get('Streamer ID'),
+        no: get('No.'),
+        name: get('Tên buổi livestream'),
+        startRaw: get('Thời gian bắt đầu'), startAt: RawParser.parseVNDateTime(get('Thời gian bắt đầu')),
+        durationRaw: get('Thời lượng'), durationSec: RawParser.parseHMS(get('Thời lượng')),
+        engagedViewers: RawParser.toNum(get('Số người xem tương tác')),
+        comments: RawParser.toNum(get('Tổng số Bình luận')),
+        atc: RawParser.toNum(get('ATC')),
+        avgWatchRaw: get('Thời lượng xem bình quân'), avgWatchSec: RawParser.parseHMS(get('Thời lượng xem bình quân')),
+        viewers: RawParser.toNum(get('Người xem')),
+        ordersPlaced: RawParser.toNum(get('Đơn hàng(Đơn đã đặt)')),
+        ordersConfirmed: RawParser.toNum(get('Đơn hàng(Đơn hàng được xác nhận)')),
+        unitsPlaced: RawParser.toNum(get('Sản phẩm đã bán(Đơn đã đặt)')),
+        unitsConfirmed: RawParser.toNum(get('Sản phẩm đã bán(Đơn hàng được xác nhận)')),
+        revenuePlaced: RawParser.toNum(get('Doanh thu(Đơn đã đặt)')),
+        revenueConfirmed: RawParser.toNum(get('Doanh thu(Đơn hàng được xác nhận)')),
+      });
+    }
+    return { headers, rows, fileName: meta.fileName, sheetName: meta.sheetName };
+  },
+
+  normalizeProduct(aoa, meta){
+    const headers = aoa[0];
+    const idx = h => headers.indexOf(h);
+    const rows = [];
+    for(let r=1;r<aoa.length;r++){
+      const row = aoa[r];
+      if(!row || row.every(c=>String(c).trim()==='')) continue;
+      const get = h => row[idx(h)];
+      const tf = RawParser.parseVNDateRange(get('Khung Thời Gian'));
+      rows.push({
+        _rawRow: row,
+        timeframe: get('Khung Thời Gian'), timeframeStart: tf.start, timeframeEnd: tf.end,
+        streamerId: get('Streamer ID'),
+        rank: RawParser.toNum(get('Xếp hạng')),
+        productName: get('Các sản phẩm'),
+        clicks: RawParser.toNum(get('Lượt click vào sản phẩm')),
+        atc: RawParser.toNum(get('ATC')),
+        ordersPlaced: RawParser.toNum(get('Đơn hàng(Đơn đã đặt)')),
+        ordersConfirmed: RawParser.toNum(get('Đơn hàng(Đơn hàng được xác nhận)')),
+        unitsPlaced: RawParser.toNum(get('Sản phẩm đã bán(Đơn đã đặt)')),
+        unitsConfirmed: RawParser.toNum(get('Sản phẩm đã bán(Đơn hàng được xác nhận)')),
+        revenuePlaced: RawParser.toNum(get('Doanh thu(Đơn đã đặt)')),
+        revenueConfirmed: RawParser.toNum(get('Doanh thu(Đơn hàng được xác nhận)')),
+      });
+    }
+    return { headers, rows, fileName: meta.fileName, sheetName: meta.sheetName };
+  },
+
+  splitBlocks(aoa){
+    const blocks = []; let cur = [];
+    for(const row of aoa){
+      const blank = !row || row.every(c=>String(c).trim()==='');
+      if(blank){ if(cur.length>=2) blocks.push(cur); cur=[]; }
+      else cur.push(row);
+    }
+    if(cur.length>=2) blocks.push(cur);
+    return blocks;
+  },
+
+  normalizeOverview(aoa, meta){
+    const blocks = this.splitBlocks(aoa);
+    const parsedBlocks = blocks.map(block=>{
+      const groupsRow = block[0], headerRow = block[1], dataRows = block.slice(2);
+      let last='';
+      const groups = groupsRow.map(g=>{ const s=String(g).trim(); if(s) last=s; return last; });
+      const isDuration = h => /thời lượng/i.test(h);
+      const cols = headerRow.map((h,i)=>({header:h, group: (i<2? '': groups[i]), colIdx:i, duration:isDuration(h)}))
+                             .filter(c=>c.header && String(c.header).trim()!=='');
+      const rows = dataRows.filter(r=>!r.every(c=>String(c).trim()==='')).map(r=>{
+        const tf = RawParser.parseVNDateRange(r[0]);
+        const metricsByGroup = {};
+        cols.forEach(c=>{
+          if(c.colIdx===0 || c.colIdx===1) return;
+          const raw = r[c.colIdx];
+          const num = c.duration ? RawParser.parseVNDuration(raw) : RawParser.toNum(raw);
+          if(!metricsByGroup[c.group]) metricsByGroup[c.group]=[];
+          metricsByGroup[c.group].push({header:c.header, raw, num, duration:c.duration});
+        });
+        return { timeframe:r[0], timeframeStart:tf.start, timeframeEnd:tf.end, streamerId:r[1], metricsByGroup, _rawRow:r };
+      });
+      const groupLabel = cols.find(c=>c.group)?.group || (groupsRow.find(g=>String(g).trim())||'').toString();
+      return { groupLabel, cols, rows };
+    });
+    return { blocks: parsedBlocks, fileName: meta.fileName, sheetName: meta.sheetName };
+  }
+};
+
+/* ============================================================
+   3. LIVE DATA MODEL — derived metrics (marked Derived)
+============================================================ */
+const LiveDataModel = {
+  classifySku(name, keywords){
+    if(!name) return 'Single';
+    const lower = String(name).toLowerCase();
+    for(const kw of keywords){
+      if(kw && lower.indexOf(String(kw).toLowerCase()) !== -1) return 'Combo';
+    }
+    return 'Single';
+  },
+  applySkuType(productData, keywords){
+    if(!productData) return productData;
+    productData.rows.forEach(r=> r.skuType = this.classifySku(r.productName, keywords));
+    return productData;
+  },
+  enrichSession(sessionData){
+    sessionData.rows.forEach(row=>{
+      const durH = row.durationSec ? row.durationSec/3600 : null;
+      row.derived = {
+        gmvPerHourPlaced: durH ? row.revenuePlaced/durH : null,
+        gmvPerHourConfirmed: durH ? row.revenueConfirmed/durH : null,
+        ordersPerHourPlaced: durH ? row.ordersPlaced/durH : null,
+        unitsPerHourPlaced: durH ? row.unitsPlaced/durH : null,
+        engagedViewerRate: (row.viewers) ? row.engagedViewers/row.viewers : null,
+        gmvPerViewerPlaced: row.viewers ? row.revenuePlaced/row.viewers : null,
+        gmvPerViewerConfirmed: row.viewers ? row.revenueConfirmed/row.viewers : null,
+      };
+    });
+    return sessionData;
+  },
+  enrichProduct(productData){
+    productData.rows.forEach(row=>{
+      row.derived = {
+        clickToOrderRatePlaced: row.clicks ? row.ordersPlaced/row.clicks : null,
+        clickToOrderRateConfirmed: row.clicks ? row.ordersConfirmed/row.clicks : null,
+        atcToClickRate: row.clicks ? row.atc/row.clicks : null,
+        revenuePerClickPlaced: row.clicks ? row.revenuePlaced/row.clicks : null,
+      };
+    });
+    // median split for 2x2 diagnostic
+    const withClicks = productData.rows.filter(r=>r.clicks!==null && r.derived.clickToOrderRatePlaced!==null);
+    function median(arr){ if(!arr.length) return null; const s=[...arr].sort((a,b)=>a-b); const mid=Math.floor(s.length/2); return s.length%2? s[mid] : (s[mid-1]+s[mid])/2; }
+    const medClick = median(withClicks.map(r=>r.clicks));
+    const medConv = median(withClicks.map(r=>r.derived.clickToOrderRatePlaced));
+    productData.medianClick = medClick; productData.medianConv = medConv;
+    productData.rows.forEach(row=>{
+      if(row.clicks===null || row.derived.clickToOrderRatePlaced===null || medClick===null){ row.quadrant=null; return; }
+      const hiClick = row.clicks >= medClick;
+      const hiConv = row.derived.clickToOrderRatePlaced >= medConv;
+      row.quadrant = hiClick && hiConv ? 'HH' : hiClick && !hiConv ? 'HL' : !hiClick && hiConv ? 'LH' : 'LL';
+    });
+    return productData;
+  }
+};
+
+/* ============================================================
+   4. BENCHMARK ENGINE — same-period / full-channel average
+============================================================ */
+const LiveBenchmarkEngine = {
+  mean(arr){ const v=arr.filter(x=>x!==null && x!==undefined && !isNaN(x)); if(!v.length) return null; return v.reduce((a,b)=>a+b,0)/v.length; },
+  build(sessionData, productData){
+    const bm = { session:{}, product:{} };
+    if(sessionData && sessionData.rows.length){
+      const R = sessionData.rows;
+      bm.session = {
+        viewers: this.mean(R.map(r=>r.viewers)),
+        engagedViewers: this.mean(R.map(r=>r.engagedViewers)),
+        engagedViewerRate: this.mean(R.map(r=>r.derived.engagedViewerRate)),
+        atc: this.mean(R.map(r=>r.atc)),
+        comments: this.mean(R.map(r=>r.comments)),
+        ordersPlaced: this.mean(R.map(r=>r.ordersPlaced)),
+        revenuePlaced: this.mean(R.map(r=>r.revenuePlaced)),
+        revenueConfirmed: this.mean(R.map(r=>r.revenueConfirmed)),
+        avgWatchSec: this.mean(R.map(r=>r.avgWatchSec)),
+        gmvPerHourPlaced: this.mean(R.map(r=>r.derived.gmvPerHourPlaced)),
+        revenuePerOrderPlaced: this.mean(R.filter(r=>r.ordersPlaced).map(r=>r.revenuePlaced/r.ordersPlaced)),
+        n: R.length
+      };
+    }
+    if(productData && productData.rows.length){
+      const R = productData.rows;
+      bm.product = {
+        clicks: this.mean(R.map(r=>r.clicks)),
+        atc: this.mean(R.map(r=>r.atc)),
+        ordersPlaced: this.mean(R.map(r=>r.ordersPlaced)),
+        revenuePlaced: this.mean(R.map(r=>r.revenuePlaced)),
+        clickToOrderRatePlaced: this.mean(R.map(r=>r.derived.clickToOrderRatePlaced)),
+        n: R.length
+      };
+    }
+    return bm;
+  },
+  variance(actual, benchmark){
+    if(actual===null||actual===undefined||benchmark===null||benchmark===undefined||isNaN(actual)||isNaN(benchmark)) return {abs:null, pct:null};
+    const abs = actual-benchmark;
+    const pct = benchmark!==0 ? abs/benchmark : null;
+    return {abs, pct};
+  }
+};
+
+/* ============================================================
+   5. DRIVER ENGINE — GMV driver candidates vs benchmark
+============================================================ */
+const LiveDriverEngine = {
+  build(sessionData, productData, bm, materialityPct){
+    const out = {sessionTop:[], sessionBottom:[], productTop:[], productBottom:[]};
+    const mat = materialityPct/100;
+    if(sessionData && sessionData.rows.length && bm.session.n){
+      const withRev = sessionData.rows.filter(r=>r.revenuePlaced!==null).sort((a,b)=>b.revenuePlaced-a.revenuePlaced);
+      const top = withRev.slice(0,3), bottom = withRev.slice(-3).reverse();
+      const metricDefs = [
+        {key:'viewers', label:'Traffic (Người xem)'},
+        {key:'engagedViewerRate', label:'Engagement Rate', derived:true},
+        {key:'atc', label:'ATC'},
+        {key:'ordersPlaced', label:'Orders (Đặt)'},
+      ];
+      const decorate = (r)=>{
+        const evals = metricDefs.map(m=>{
+          const actual = m.derived ? r.derived[m.key] : r[m.key];
+          const benchVal = bm.session[m.key];
+          const v = LiveBenchmarkEngine.variance(actual, benchVal);
+          return {...m, actual, bench:benchVal, ...v};
+        });
+        // add revenue-per-order (AOV proxy)
+        const rpo = r.ordersPlaced ? r.revenuePlaced/r.ordersPlaced : null;
+        const rpoV = LiveBenchmarkEngine.variance(rpo, bm.session.revenuePerOrderPlaced);
+        evals.push({key:'revenuePerOrderPlaced', label:'Doanh thu/Đơn (AOV proxy)', derived:true, actual:rpo, bench:bm.session.revenuePerOrderPlaced, ...rpoV});
+        const withPct = evals.filter(e=>e.pct!==null);
+        withPct.sort((a,b)=>Math.abs(b.pct)-Math.abs(a.pct));
+        const primary = withPct.length && Math.abs(withPct[0].pct) >= mat ? withPct[0] : null;
+        const revVar = LiveBenchmarkEngine.variance(r.revenuePlaced, bm.session.revenuePlaced);
+        return {row:r, evals, primary, revVar};
+      };
+      out.sessionTop = top.map(decorate);
+      out.sessionBottom = bottom.map(decorate);
+    }
+    if(productData && productData.rows.length && bm.product.n){
+      const withRev = productData.rows.filter(r=>r.revenuePlaced!==null).sort((a,b)=>b.revenuePlaced-a.revenuePlaced);
+      const top = withRev.slice(0,3), bottom = withRev.slice(-3).reverse();
+      const metricDefs = [
+        {key:'clicks', label:'Product Clicks'},
+        {key:'clickToOrderRatePlaced', label:'Click→Order Rate', derived:true},
+        {key:'atc', label:'ATC'},
+      ];
+      const decorate = (r)=>{
+        const evals = metricDefs.map(m=>{
+          const actual = m.derived ? r.derived[m.key] : r[m.key];
+          const benchVal = bm.product[m.key];
+          const v = LiveBenchmarkEngine.variance(actual, benchVal);
+          return {...m, actual, bench:benchVal, ...v};
+        });
+        const withPct = evals.filter(e=>e.pct!==null);
+        withPct.sort((a,b)=>Math.abs(b.pct)-Math.abs(a.pct));
+        const primary = withPct.length && Math.abs(withPct[0].pct) >= mat ? withPct[0] : null;
+        return {row:r, evals, primary};
+      };
+      out.productTop = top.map(decorate);
+      out.productBottom = bottom.map(decorate);
+    }
+    return out;
+  }
+};
+
+/* ============================================================
+   5b. SEGMENT ENGINE — nhóm theo chiều thời gian/độ dài, dùng TỔNG có trọng số
+   (không lấy trung bình cộng của tỷ lệ từng phiên, tránh sai số thống kê)
+============================================================ */
+const LiveSegmentEngine = {
+  weekdayVN(d){ return ['CN','Th 2','Th 3','Th 4','Th 5','Th 6','Th 7'][d.getDay()]; },
+  weekdayOrder: ['Th 2','Th 3','Th 4','Th 5','Th 6','Th 7','CN'],
+  weekOfMonth(d){
+    return this.weekOfMonthInfo(d).label;
+  },
+  weekOfMonthInfo(d){
+    const y = d.getFullYear(), m = d.getMonth();
+    const daysInMonth = new Date(y, m+1, 0).getDate();
+    const firstDow = new Date(y, m, 1).getDay(); // 0=CN..6=T7
+    const offsetToThu = (4 - firstDow + 7) % 7; // 4 = Thứ 5
+    const firstThuDay = 1 + offsetToThu; // ngày cuối của Tuần 1 (Thứ 5 gần nhất từ ngày 1)
+    const day = d.getDate();
+    let idx, startDay, endDay;
+    if(day <= firstThuDay){
+      idx = 1; startDay = 1; endDay = firstThuDay;
+    } else {
+      const daysAfter = day - firstThuDay;
+      idx = Math.ceil(daysAfter/7) + 1;
+      startDay = firstThuDay + 1 + (idx-2)*7;
+      endDay = Math.min(startDay + 6, daysInMonth);
+    }
+    const mm = this.pad2(m+1);
+    return { idx, startDay, endDay, label: `Tuần ${idx} [${this.pad2(startDay)}/${mm}–${this.pad2(endDay)}/${mm}]` };
+  },
+  pad2(n){ return String(n).padStart(2,'0'); },
+  timeSlotBuckets(edges){
+    const e = [...edges].sort((a,b)=>a-b);
+    const n = e.length;
+    return e.map((start,i)=>{
+      const end = e[(i+1)%n];
+      return { start, end, label: `${this.pad2(start)}:00–${this.pad2(end)}:00` };
+    });
+  },
+  timeSlotLabels(edges){
+    return this.timeSlotBuckets(edges).map(b=>b.label);
+  },
+  timeSlot(d, edges){
+    if(!d) return null;
+    const h = d.getHours() + d.getMinutes()/60;
+    const buckets = this.timeSlotBuckets(edges);
+    for(const b of buckets){
+      if(b.start < b.end){
+        if(h >= b.start && h < b.end) return b.label;
+      } else {
+        // khung xuyên đêm (vd 22:00–07:00)
+        if(h >= b.start || h < b.end) return b.label;
+      }
+    }
+    return buckets.length ? buckets[buckets.length-1].label : null;
+  },
+  dayStageOrder: ['D-2','D-1','D-Day','Mini Spike -1','Mini Spike','Memberday','Daily'],
+  addDays(d, n){ return new Date(d.getFullYear(), d.getMonth(), d.getDate()+n); },
+  sameDate(a,b){ return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); },
+  dDayOf(year, monthIndex0){ return new Date(year, monthIndex0, monthIndex0+1); }, // ngày = tháng, vd 9/9, 10/10
+  dayStage(d, cfg){
+    if(!d) return null;
+    const day = d.getDate();
+    if(cfg.enableDDay){
+      const thisDDay = this.dDayOf(d.getFullYear(), d.getMonth());
+      const nextMonthIdx = d.getMonth()===11 ? 0 : d.getMonth()+1;
+      const nextYear = d.getMonth()===11 ? d.getFullYear()+1 : d.getFullYear();
+      const nextDDay = this.dDayOf(nextYear, nextMonthIdx);
+      if(this.sameDate(d, thisDDay)) return 'D-Day';
+      if(this.sameDate(d, this.addDays(thisDDay,-1)) || this.sameDate(d, this.addDays(nextDDay,-1))) return 'D-1';
+      if(this.sameDate(d, this.addDays(thisDDay,-2)) || this.sameDate(d, this.addDays(nextDDay,-2))) return 'D-2';
+    }
+    if(cfg.memberDay && day === cfg.memberDay) return 'Memberday';
+    if(cfg.miniSpike){
+      if(day === cfg.miniSpike) return 'Mini Spike';
+      const msDate = new Date(d.getFullYear(), d.getMonth(), cfg.miniSpike);
+      if(this.sameDate(d, this.addDays(msDate,-1))) return 'Mini Spike -1';
+    }
+    return 'Daily';
+  },
+  dimFns: {
+    weekday: r => r.startAt ? LiveSegmentEngine.weekdayVN(r.startAt) : null,
+    weekOfMonth: r => r.startAt ? LiveSegmentEngine.weekOfMonth(r.startAt) : null,
+    timeSlot: r => LiveSegmentEngine.timeSlot(r.startAt, STATE.timeSlotEdges),
+    dayStage: r => LiveSegmentEngine.dayStage(r.startAt, STATE.dayStageConfig),
+  },
+  dimLabels: { weekday:'Thứ trong tuần', weekOfMonth:'Tuần trong tháng', timeSlot:'Khung giờ live', dayStage:'Giai đoạn ngày (D-Day/Memberday/Mini Spike)' },
+  buildDayStageBenchmarks(sessionRows, dayStageConfig){
+    const groups = {};
+    sessionRows.forEach(r=>{
+      const stage = this.dayStage(r.startAt, dayStageConfig) || 'Daily';
+      if(!groups[stage]) groups[stage] = [];
+      groups[stage].push(r);
+    });
+    const out = {};
+    Object.keys(groups).forEach(stage=>{
+      const g = groups[stage];
+      const rev = g.reduce((a,r)=>a+(r.revenuePlaced||0),0);
+      const hours = g.reduce((a,r)=>a+(r.durationSec?r.durationSec/3600:0),0);
+      out[stage] = { sessions: g.length, hours, avgGmvPerHour: hours ? rev/hours : null, avgRevenuePerSession: g.length ? rev/g.length : null };
+    });
+    return out;
+  },
+  build(sessionRows, dimKey){
+    const dimFn = this.dimFns[dimKey];
+    const groups = {}; const order = [];
+    sessionRows.forEach(r=>{
+      let k = dimFn(r);
+      k = (k===null||k===undefined||k==='') ? 'N/A' : k;
+      if(!groups[k]){ groups[k]=[]; order.push(k); }
+      groups[k].push(r);
+    });
+    let rows = order.map(k=>{
+      const g = groups[k];
+      const hours = g.reduce((a,r)=>a+(r.durationSec?r.durationSec/3600:0),0);
+      const viewers = g.reduce((a,r)=>a+(r.viewers||0),0);
+      const engaged = g.reduce((a,r)=>a+(r.engagedViewers||0),0);
+      const atc = g.reduce((a,r)=>a+(r.atc||0),0);
+      const ordersPlaced = g.reduce((a,r)=>a+(r.ordersPlaced||0),0);
+      const ordersConfirmed = g.reduce((a,r)=>a+(r.ordersConfirmed||0),0);
+      const unitsPlaced = g.reduce((a,r)=>a+(r.unitsPlaced||0),0);
+      const revenuePlaced = g.reduce((a,r)=>a+(r.revenuePlaced||0),0);
+      const revenueConfirmed = g.reduce((a,r)=>a+(r.revenueConfirmed||0),0);
+      return {
+        dim:k, sessions:g.length, hours, viewers, engaged, atc,
+        ordersPlaced, ordersConfirmed, unitsPlaced, revenuePlaced, revenueConfirmed,
+        engagedViewerRate: viewers? engaged/viewers : null,
+        gmvPerHourPlaced: hours? revenuePlaced/hours : null,
+        gmvPerSessionPlaced: g.length? revenuePlaced/g.length : null,
+        aovPlaced: ordersPlaced? revenuePlaced/ordersPlaced : null,
+      };
+    });
+    const totalRev = rows.reduce((a,r)=>a+(r.revenuePlaced||0),0);
+    rows.forEach(r=> r.revShare = totalRev? r.revenuePlaced/totalRev : null);
+    if(dimKey==='weekday'){
+      rows.sort((a,b)=> this.weekdayOrder.indexOf(a.dim) - this.weekdayOrder.indexOf(b.dim));
+    } else if(dimKey==='timeSlot'){
+      const order2 = LiveSegmentEngine.timeSlotLabels(STATE.timeSlotEdges);
+      rows.sort((a,b)=> order2.indexOf(a.dim) - order2.indexOf(b.dim));
+    } else if(dimKey==='weekOfMonth'){
+      const wnum = s => parseInt((s.match(/^Tuần (\d+)/)||[])[1],10)||0;
+      rows.sort((a,b)=> wnum(a.dim) - wnum(b.dim));
+    } else if(dimKey==='dayStage'){
+      rows.sort((a,b)=> this.dayStageOrder.indexOf(a.dim) - this.dayStageOrder.indexOf(b.dim));
+    } else {
+      rows.sort((a,b)=> (b.revenuePlaced||0)-(a.revenuePlaced||0));
+    }
+    return rows;
+  },
+  buildDailyTrend(sessionRows){
+    const groups = {};
+    sessionRows.forEach(r=>{
+      if(!r.startAt) return;
+      const key = r.startAt.toISOString().slice(0,10);
+      if(!groups[key]) groups[key]=[];
+      groups[key].push(r);
+    });
+    const days = Object.keys(groups).sort();
+    return days.map(d=>{
+      const g = groups[d];
+      return {
+        date:d, sessions:g.length,
+        revenuePlaced: g.reduce((a,r)=>a+(r.revenuePlaced||0),0),
+        ordersPlaced: g.reduce((a,r)=>a+(r.ordersPlaced||0),0),
+        viewers: g.reduce((a,r)=>a+(r.viewers||0),0),
+      };
+    });
+  },
+  buildSkuTypeSummary(productRows){
+    const groups = {Single:[], Combo:[]};
+    productRows.forEach(r=>{ const t = r.skuType || 'Single'; if(!groups[t]) groups[t]=[]; groups[t].push(r); });
+    const order = ['Single','Combo'].filter(t=> groups[t] && groups[t].length);
+    const rows = order.map(t=>{
+      const g = groups[t];
+      const clicks = g.reduce((a,r)=>a+(r.clicks||0),0);
+      const atc = g.reduce((a,r)=>a+(r.atc||0),0);
+      const ordersPlaced = g.reduce((a,r)=>a+(r.ordersPlaced||0),0);
+      const ordersConfirmed = g.reduce((a,r)=>a+(r.ordersConfirmed||0),0);
+      const unitsPlaced = g.reduce((a,r)=>a+(r.unitsPlaced||0),0);
+      const revenuePlaced = g.reduce((a,r)=>a+(r.revenuePlaced||0),0);
+      const revenueConfirmed = g.reduce((a,r)=>a+(r.revenueConfirmed||0),0);
+      return {
+        type:t, skuCount:g.length, clicks, atc, ordersPlaced, ordersConfirmed, unitsPlaced,
+        revenuePlaced, revenueConfirmed,
+        clickToOrderRatePlaced: clicks? ordersPlaced/clicks : null,
+      };
+    });
+    const totalRev = rows.reduce((a,r)=>a+(r.revenuePlaced||0),0);
+    rows.forEach(r=> r.revShare = totalRev? r.revenuePlaced/totalRev : null);
+    return rows;
+  }
+};
+
+/* ============================================================
+   6. INSIGHT ENGINE (rule-based, deterministic) — WHAT/BENCHMARK/WHY/IMPACT/ACTION
+============================================================ */
+const LiveInsightEngine = {
+  build(sessionData, productData, overviewData, bm, driver, totalRevenue){
+    const cards = [];
+    const P = RawParser;
+    if(driver.sessionTop.length){
+      driver.sessionTop.forEach((d,i)=>{
+        const contribPct = totalRevenue ? d.row.revenuePlaced/totalRevenue : null;
+        cards.push({
+          title: `Session doanh thu cao #${i+1}: ${d.row.name||'(không tên)'}`,
+          type:'session-top',
+          what: `Doanh thu (đặt) ${P.fmtMoney(d.row.revenuePlaced)}, cao nhất trong nhóm được xét.`,
+          benchmark: `So với trung bình toàn kênh ${P.fmtMoney(bm.session.revenuePlaced)}: chênh lệch ${d.revVar.pct!==null?P.fmtPct(d.revVar.pct):'N/A'}.`,
+          why: d.primary ? `Driver chính lệch benchmark rõ nhất: ${d.primary.label} = ${typeof d.primary.actual==='number'? (d.primary.key.includes('Rate')? P.fmtPct(d.primary.actual): P.fmtDec(d.primary.actual,1)) : d.primary.actual} (benchmark ${typeof d.primary.bench==='number'?P.fmtDec(d.primary.bench,1):'N/A'}, lệch ${P.fmtPct(d.primary.pct)}).` : 'Chưa đủ dữ liệu để kết luận nguyên nhân (không có metric nào lệch benchmark đủ ngưỡng có ý nghĩa).',
+          impact: contribPct!==null ? `Đóng góp ${P.fmtPct(contribPct)} tổng doanh thu (đặt) toàn kênh trong kỳ.` : 'Chưa đủ dữ liệu để tính tỷ trọng đóng góp.',
+          action: d.primary ? `Kiểm tra điều kiện vận hành của session này (khung giờ, kịch bản, sản phẩm chủ đạo) liên quan tới ${d.primary.label} để đánh giá khả năng lặp lại.` : 'Chưa đủ evidence để đề xuất hành động cụ thể.',
+        });
+      });
+    }
+    if(driver.sessionBottom.length){
+      const d = driver.sessionBottom[0];
+      const contribPct = totalRevenue ? d.row.revenuePlaced/totalRevenue : null;
+      cards.push({
+        title: `Session doanh thu thấp nhất: ${d.row.name||'(không tên)'}`,
+        type:'session-bottom',
+        what: `Doanh thu (đặt) ${P.fmtMoney(d.row.revenuePlaced)}, thấp nhất trong nhóm được xét.`,
+        benchmark: `So với trung bình toàn kênh ${P.fmtMoney(bm.session.revenuePlaced)}: chênh lệch ${d.revVar.pct!==null?P.fmtPct(d.revVar.pct):'N/A'}.`,
+        why: d.primary ? `Driver chính lệch benchmark rõ nhất: ${d.primary.label} = ${typeof d.primary.actual==='number'? (d.primary.key.includes('Rate')? P.fmtPct(d.primary.actual): P.fmtDec(d.primary.actual,1)) : d.primary.actual} (benchmark ${typeof d.primary.bench==='number'?P.fmtDec(d.primary.bench,1):'N/A'}, lệch ${P.fmtPct(d.primary.pct)}).` : 'Chưa đủ dữ liệu để kết luận nguyên nhân.',
+        impact: contribPct!==null ? `Chỉ đóng góp ${P.fmtPct(contribPct)} tổng doanh thu (đặt) toàn kênh.` : 'Chưa đủ dữ liệu để tính tỷ trọng đóng góp.',
+        action: 'Xem lại timing/kịch bản của buổi live này trước khi lặp lại cấu hình tương tự.',
+      });
+    }
+    if(productData && productData.rows.length){
+      const hh = productData.rows.filter(r=>r.quadrant==='HH').sort((a,b)=>b.revenuePlaced-a.revenuePlaced)[0];
+      const hl = productData.rows.filter(r=>r.quadrant==='HL').sort((a,b)=>b.clicks-a.clicks)[0];
+      if(hh){
+        cards.push({
+          title:`Sản phẩm hiệu quả: ${hh.productName}`,
+          type:'product-hh',
+          what:`Click ${P.fmtInt(hh.clicks)}, Click→Order Rate ${P.fmtPct(hh.derived.clickToOrderRatePlaced)} — cả hai đều ≥ median toàn danh sách.`,
+          benchmark:`Median Click ${P.fmtInt(productData.medianClick)}, Median Conversion ${P.fmtPct(productData.medianConv)}.`,
+          why:'High Click / High Conversion: sản phẩm vừa có interest tốt vừa monetize tốt (theo Product Diagnostic Framework).',
+          impact:`Doanh thu (đặt) đóng góp ${P.fmtMoney(hh.revenuePlaced)}.`,
+          action:'Ưu tiên vị trí/thời lượng giới thiệu sản phẩm này trong các buổi live kế tiếp; đây là ứng viên hero-product.',
+        });
+      }
+      if(hl){
+        cards.push({
+          title:`Sản phẩm cần kiểm tra: ${hl.productName}`,
+          type:'product-hl',
+          what:`Click ${P.fmtInt(hl.clicks)} (≥ median) nhưng Click→Order Rate ${P.fmtPct(hl.derived.clickToOrderRatePlaced)} (< median ${P.fmtPct(productData.medianConv)}).`,
+          benchmark:`Median Click ${P.fmtInt(productData.medianClick)}, Median Conversion ${P.fmtPct(productData.medianConv)}.`,
+          why:'High Click / Low Conversion: có interest nhưng conversion thấp — theo framework cần kiểm tra offer/giá/CTA, raw hiện tại không đủ field để xác định nguyên nhân cụ thể.',
+          impact:`ATC ghi nhận ${P.fmtInt(hl.atc)} trên ${P.fmtInt(hl.clicks)} click; đơn đặt chỉ ${P.fmtInt(hl.ordersPlaced)}.`,
+          action:'Kiểm tra giá/voucher/kịch bản chốt đơn khi lên sản phẩm này; chưa đủ dữ liệu raw để kết luận nguyên nhân gốc.',
+        });
+      }
+    }
+    if(!cards.length){
+      cards.push({title:'Chưa đủ dữ liệu', type:'none', what:'Chưa đủ dữ liệu để kết luận.', benchmark:'', why:'', impact:'', action:''});
+    }
+    return cards;
+  }
+};
+
+/* ============================================================
+   7. DATA QUALITY ENGINE
+============================================================ */
+const DataQualityEngine = {
+  build(sessionData, productData, overviewData){
+    const files = [];
+    if(sessionData) files.push({type:'Live List (Session)', fileName:sessionData.fileName, sheet:sessionData.sheetName, rows:sessionData.rows.length});
+    if(productData) files.push({type:'Live Product List', fileName:productData.fileName, sheet:productData.sheetName, rows:productData.rows.length});
+    if(overviewData) files.push({type:'Livestream Overview', fileName:overviewData.fileName, sheet:overviewData.sheetName, rows: overviewData.blocks[0]?overviewData.blocks[0].rows.length:0});
+
+    const issues = [];
+    const dateRanges = [];
+
+    if(sessionData){
+      const missing = sessionData.rows.filter(r=>!r.name || r.startAt===null).length;
+      if(missing) issues.push({level:'warn', msg:`Live List: ${missing} dòng thiếu tên buổi live hoặc thời gian bắt đầu không parse được.`});
+      const invalidDur = sessionData.rows.filter(r=>r.durationRaw && r.durationSec===null).length;
+      if(invalidDur) issues.push({level:'warn', msg:`Live List: ${invalidDur} dòng có Thời lượng không đúng định dạng HH:MM:SS.`});
+      const zeroDur = sessionData.rows.filter(r=>r.durationSec===null || r.durationSec===0).length;
+      if(zeroDur) issues.push({level:'warn', msg:`Live List: ${zeroDur} phiên có Thời lượng = 0 hoặc không đọc được → không tính được GMV/Giờ cho phiên này.`});
+      const negRev = sessionData.rows.filter(r=>r.revenuePlaced!==null && r.revenuePlaced<0).length;
+      if(negRev) issues.push({level:'warn', msg:`Live List: ${negRev} phiên có Doanh thu (Đặt) âm — kiểm tra lại raw trước khi dùng cho tổng hợp.`});
+      const seen = new Set(); let dup=0;
+      sessionData.rows.forEach(r=>{ const k=r.name+'|'+r.startRaw; if(seen.has(k)) dup++; seen.add(k); });
+      if(dup) issues.push({level:'warn', msg:`Live List: ${dup} dòng trùng lặp (tên + thời gian bắt đầu).`});
+      else issues.push({level:'ok', msg:'Live List: không phát hiện dòng trùng lặp.'});
+      const starts = sessionData.rows.map(r=>r.startAt).filter(Boolean);
+      if(starts.length) dateRanges.push({file:'Live List', min:new Date(Math.min(...starts)), max:new Date(Math.max(...starts))});
+    }
+    if(productData){
+      const missing = productData.rows.filter(r=>!r.productName || r.clicks===null).length;
+      if(missing) issues.push({level:'warn', msg:`Product List: ${missing} dòng thiếu tên sản phẩm hoặc click.`});
+      const seen = new Set(); let dup=0;
+      productData.rows.forEach(r=>{ const k=r.productName+'|'+r.timeframe; if(seen.has(k)) dup++; seen.add(k); });
+      if(dup) issues.push({level:'warn', msg:`Product List: ${dup} dòng trùng lặp (tên sản phẩm + khung thời gian).`});
+      else issues.push({level:'ok', msg:'Product List: không phát hiện dòng trùng lặp.'});
+    }
+    if(overviewData && overviewData.blocks[0]){
+      issues.push({level:'info', msg:`Overview: phát hiện ${overviewData.blocks.length} khối dữ liệu (block) trong file — khối chính dùng cho Channel Overview, các khối phụ (nếu có) là phân bổ theo loại cửa hàng.`});
+    }
+
+    // cross-file consistency
+    if(sessionData && overviewData && overviewData.blocks[0]){
+      const ov = overviewData.blocks[0].rows[0];
+      if(ov){
+        const findMetric = (name)=>{ for(const g in ov.metricsByGroup){ const m = ov.metricsByGroup[g].find(x=>x.header===name); if(m) return m; } return null; };
+        const sessCountMetric = findMetric('Số phiên Livestream');
+        if(sessCountMetric && sessCountMetric.num!==null){
+          const delta = sessionData.rows.length - sessCountMetric.num;
+          if(delta===0) issues.push({level:'ok', msg:`Số phiên: Live List (${sessionData.rows.length}) khớp Overview (${sessCountMetric.num}).`});
+          else issues.push({level:'warn', msg:`Số phiên: Live List có ${sessionData.rows.length} dòng, Overview báo ${sessCountMetric.num} phiên (lệch ${delta>0?'+':''}${delta}).`});
+        }
+        const revMetric = findMetric('Doanh thu(Đơn đã đặt)');
+        if(revMetric && revMetric.num!==null){
+          const sumRev = sessionData.rows.reduce((a,r)=>a+(r.revenuePlaced||0),0);
+          const delta = sumRev - revMetric.num;
+          const pct = revMetric.num? delta/revMetric.num : null;
+          issues.push({level: Math.abs(pct||0)<0.01?'ok':'info', msg:`Doanh thu đặt: tổng Live List ${RawParser.fmtMoney(sumRev)} vs Overview ${RawParser.fmtMoney(revMetric.num)} (lệch ${pct!==null?RawParser.fmtPct(pct):'N/A'}).`});
+        }
+      }
+    }
+    return { files, issues, dateRanges };
+  }
+};
+
+/* ============================================================
+   8. EXPORT ENGINE
+============================================================ */
+const EXPORT_FORMATS = { money:'#,##0"₫"', int:'#,##0', pct:'0.0%', dec2:'#,##0.00' };
+function applyColFormats(ws, dataRowCount, colFormatMap){
+  Object.keys(colFormatMap).forEach(ciStr=>{
+    const ci = parseInt(ciStr,10);
+    const fmt = EXPORT_FORMATS[colFormatMap[ciStr]];
+    if(!fmt) return;
+    for(let ri=1; ri<=dataRowCount; ri++){
+      const addr = XLSX.utils.encode_cell({r:ri, c:ci});
+      const cell = ws[addr];
+      if(cell && typeof cell.v === 'number') cell.z = fmt;
+    }
+  });
+}
+function applyRowFormats(ws, valueColIndex, rowFormatMap){
+  Object.keys(rowFormatMap).forEach(riStr=>{
+    const ri = parseInt(riStr,10);
+    const fmt = EXPORT_FORMATS[rowFormatMap[riStr]];
+    if(!fmt) return;
+    const addr = XLSX.utils.encode_cell({r:ri, c:valueColIndex});
+    const cell = ws[addr];
+    if(cell && typeof cell.v === 'number') cell.z = fmt;
+  });
+}
+const ExportEngine = {
+  build(){
+    const wb = XLSX.utils.book_new();
+    const S = STATE;
+
+    if(S.overview && S.overview.blocks[0]){
+      const rows = [];
+      const ovRow = S.overview.blocks[0].rows[0];
+      if(ovRow){
+        rows.push(['Khung Thời Gian', ovRow.timeframe]);
+        rows.push(['Streamer ID', ovRow.streamerId]);
+        rows.push([]);
+        Object.keys(ovRow.metricsByGroup).forEach(g=>{
+          rows.push([g]);
+          ovRow.metricsByGroup[g].forEach(m=> rows.push(['', m.header, m.raw]));
+          rows.push([]);
+        });
+      }
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), 'Overview');
+    }
+    if(S.session){
+      const head = ['No.','Tên buổi livestream','Bắt đầu','Thời lượng','Người xem','Engaged Viewers','Engaged Viewer Rate (Derived)','Bình luận','ATC','Đơn đặt','Đơn xác nhận','SP bán đặt','SP bán xác nhận','Doanh thu đặt','Doanh thu xác nhận','GMV/Hour đặt (Derived)'];
+      const body = S.session.rows.map(r=>[r.no,r.name,r.startRaw,r.durationRaw,r.viewers,r.engagedViewers,r.derived.engagedViewerRate,r.comments,r.atc,r.ordersPlaced,r.ordersConfirmed,r.unitsPlaced,r.unitsConfirmed,r.revenuePlaced,r.revenueConfirmed,r.derived.gmvPerHourPlaced]);
+      const ws = XLSX.utils.aoa_to_sheet([head,...body]);
+      applyColFormats(ws, body.length, {4:'int',5:'int',6:'pct',7:'int',8:'int',9:'int',10:'int',11:'int',12:'int',13:'money',14:'money',15:'money'});
+      XLSX.utils.book_append_sheet(wb, ws, 'Session Performance');
+    }
+    if(S.product){
+      const head = ['Xếp hạng','Sản phẩm','Phân loại SKU','Click','ATC','Đơn đặt','Đơn xác nhận','SP bán đặt','SP bán xác nhận','Doanh thu đặt','Doanh thu xác nhận','Click→Order Rate (Derived)','Quadrant'];
+      const body = S.product.rows.map(r=>[r.rank,r.productName,r.skuType,r.clicks,r.atc,r.ordersPlaced,r.ordersConfirmed,r.unitsPlaced,r.unitsConfirmed,r.revenuePlaced,r.revenueConfirmed,r.derived.clickToOrderRatePlaced,r.quadrant]);
+      const ws = XLSX.utils.aoa_to_sheet([head,...body]);
+      applyColFormats(ws, body.length, {0:'int',3:'int',4:'int',5:'int',6:'int',7:'int',8:'int',9:'money',10:'money',11:'pct'});
+      XLSX.utils.book_append_sheet(wb, ws, 'Product Performance');
+
+      const skuSummary = LiveSegmentEngine.buildSkuTypeSummary(S.product.rows);
+      const shead = ['Phân loại SKU','Số SKU','Click','ATC','Đơn đặt','Đơn xác nhận','SP bán đặt','Doanh thu đặt','Doanh thu xác nhận','% Doanh thu','Click→Order Rate (Derived)'];
+      const sbody = skuSummary.map(s=>[s.type,s.skuCount,s.clicks,s.atc,s.ordersPlaced,s.ordersConfirmed,s.unitsPlaced,s.revenuePlaced,s.revenueConfirmed,s.revShare,s.clickToOrderRatePlaced]);
+      const wsSku = XLSX.utils.aoa_to_sheet([shead,...sbody]);
+      applyColFormats(wsSku, sbody.length, {1:'int',2:'int',3:'int',4:'int',5:'int',6:'int',7:'money',8:'money',9:'pct',10:'pct'});
+      XLSX.utils.book_append_sheet(wb, wsSku, 'SKU_Type_Summary');
+    }
+    if(S.benchmark && S.benchmark.session.n){
+      const bm = S.benchmark.session;
+      const bmFormat = { viewers:'int', engagedViewers:'int', engagedViewerRate:'pct', atc:'int', comments:'int',
+        ordersPlaced:'int', revenuePlaced:'money', revenueConfirmed:'money', avgWatchSec:'int',
+        gmvPerHourPlaced:'money', revenuePerOrderPlaced:'money' };
+      const head = ['Metric','Channel Benchmark (avg)'];
+      const keys = Object.keys(bm).filter(k=>k!=='n');
+      const body = keys.map(k=>[k, bm[k]]);
+      const ws = XLSX.utils.aoa_to_sheet([head,...body,[],['n sessions', bm.n]]);
+      const rowFmt = {}; keys.forEach((k,i)=>{ if(bmFormat[k]) rowFmt[i+1]=bmFormat[k]; });
+      applyRowFormats(ws, 1, rowFmt);
+      XLSX.utils.book_append_sheet(wb, ws, 'Benchmark');
+    }
+    if(S.insights){
+      const head = ['Title','WHAT','BENCHMARK','WHY','IMPACT','ACTION'];
+      const body = S.insights.map(c=>[c.title,c.what,c.benchmark,c.why,c.impact,c.action]);
+      const rows = [head,...body];
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), 'Insights');
+    }
+    if(S.aiSections){
+      const secTitles = {overview:'02. Tổng quan Kênh', session:'03. Buổi Livestream', product:'04. Sản phẩm',
+        segment_weekday:'05. Phân tích Nhóm — Thứ trong tuần', segment_weekOfMonth:'05. Phân tích Nhóm — Tuần trong tháng',
+        segment_timeSlot:'05. Phân tích Nhóm — Khung giờ live', segment_dayStage:'05. Phân tích Nhóm — Giai đoạn ngày'};
+      const keysOrder = ['overview','session','product','segment_weekday','segment_weekOfMonth','segment_timeSlot','segment_dayStage'];
+      const rows = [['Tab / Chiều phân tích','AI Insight & Action']];
+      keysOrder.forEach(k=>{ if(S.aiSections[k]) rows.push([secTitles[k], S.aiSections[k]]); });
+      if(rows.length>1) XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), 'AI_Insight');
+    }
+    if(S.session){
+      ['weekday','weekOfMonth','timeSlot','dayStage'].forEach(dimKey=>{
+        const rows = LiveSegmentEngine.build(S.session.rows, dimKey);
+        const head = [LiveSegmentEngine.dimLabels[dimKey],'Số phiên','Giờ Live','Người xem','Engaged Viewer Rate (Derived)','ATC','Đơn đặt','Đơn xác nhận','SP bán đặt','Doanh thu đặt','Doanh thu xác nhận','% Doanh thu','GMV/Giờ (Derived)','GMV/Phiên (Derived)'];
+        const body = rows.map(r=>[r.dim,r.sessions,r.hours,r.viewers,r.engagedViewerRate,r.atc,r.ordersPlaced,r.ordersConfirmed,r.unitsPlaced,r.revenuePlaced,r.revenueConfirmed,r.revShare,r.gmvPerHourPlaced,r.gmvPerSessionPlaced]);
+        const sheetName = {weekday:'Segment_Thu_Trong_Tuan', weekOfMonth:'Segment_Tuan_Trong_Thang', timeSlot:'Segment_Khung_Gio_Live', dayStage:'Segment_Giai_Doan_Ngay'}[dimKey];
+        const ws = XLSX.utils.aoa_to_sheet([head,...body]);
+        applyColFormats(ws, body.length, {2:'dec2',3:'int',4:'pct',5:'int',6:'int',7:'int',8:'int',9:'money',10:'money',11:'pct',12:'money',13:'money'});
+        XLSX.utils.book_append_sheet(wb, ws, sheetName);
+      });
+      const trend = LiveSegmentEngine.buildDailyTrend(S.session.rows);
+      const thead = ['Ngày','Số phiên','Người xem','Đơn đặt','Doanh thu đặt'];
+      const tbody = trend.map(d=>[d.date,d.sessions,d.viewers,d.ordersPlaced,d.revenuePlaced]);
+      const wsTrend = XLSX.utils.aoa_to_sheet([thead,...tbody]);
+      applyColFormats(wsTrend, tbody.length, {1:'int',2:'int',3:'int',4:'money'});
+      XLSX.utils.book_append_sheet(wb, wsTrend, 'Daily_Trend');
+    }
+    const playbook = [
+      ['Đòn bẩy','Tín hiệu cần chú ý','Hướng kiểm tra gợi ý'],
+      ['Traffic','Người xem / PCU thấp hơn benchmark toàn kênh','Xem lại khung giờ lên live, tần suất live, kênh dẫn traffic vào phòng live'],
+      ['Engagement','Engaged Viewer Rate hoặc Bình luận thấp hơn benchmark','Xem lại kịch bản tương tác, tốc độ trả lời bình luận, MC/host'],
+      ['Conversion','ATC hoặc Đơn/Người xem thấp hơn benchmark','Xem lại giá, voucher, CTA chốt đơn, thời điểm giới thiệu sản phẩm'],
+      ['AOV / Monetization','Doanh thu/Đơn (proxy AOV) thấp hơn benchmark','Xem lại combo/bundle, upsell, sản phẩm giá trị cao trong live'],
+      ['Product','Click cao nhưng Click→Order Rate thấp (quadrant HL)','Rà lại giá/offer/CTA của đúng sản phẩm đó'],
+    ];
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(playbook), 'Action_Playbook');
+
+    if(S.session){
+      const weekRows = LiveSegmentEngine.build(S.session.rows, 'weekOfMonth');
+      const cols = weekRows.map((w,i)=>({key:'w'+(i+1), label:w.dim, data:w}));
+      const rm = S.reportManual;
+      const reportLabel = (typeof reportColumnLabel==='function') ? reportColumnLabel() : 'Report';
+      const head = ['Danh mục','Chỉ số', reportLabel, ...cols.map(c=>c.label)];
+      const rows = [];
+      const getManual = (rowKey,colKey)=>{ const v = rm[rowKey] ? rm[rowKey][colKey] : null; return (v===undefined) ? null : v; };
+      const sumWeeks = (rowKey)=>{ const vals = cols.map(c=>getManual(rowKey,c.key)).filter(v=>v!==null && v!==undefined && !isNaN(v)); return vals.length ? vals.reduce((a,b)=>a+parseFloat(b),0) : null; };
+      const totalRevenue = S.session.rows.reduce((a,r)=>a+(r.revenuePlaced||0),0);
+      const totalOrders = S.session.rows.reduce((a,r)=>a+(r.ordersPlaced||0),0);
+      const totalHours = S.session.rows.reduce((a,r)=>a+(r.durationSec?r.durationSec/3600:0),0);
+      const reportAgg = { revenue: totalRevenue, orders: totalOrders, aov: totalOrders?totalRevenue/totalOrders:null, gmvHour: totalHours?totalRevenue/totalHours:null, hours: totalHours };
+      rows.push(['Live self channel','Doanh thu livestream self channel (Đặt)', reportAgg.revenue, ...cols.map(c=>c.data.revenuePlaced)]);
+      rows.push(['','Số đơn hàng livestream self channel (Đặt)', reportAgg.orders, ...cols.map(c=>c.data.ordersPlaced)]);
+      rows.push(['','AOV livestream self channel (Đặt) (Derived)', reportAgg.aov, ...cols.map(c=>c.data.aovPlaced)]);
+      rows.push(['','GMV trung bình/giờ livestream (Đặt) (Derived)', reportAgg.gmvHour, ...cols.map(c=>c.data.gmvPerHourPlaced)]);
+      rows.push(['','Số giờ livestream self channel', reportAgg.hours, ...cols.map(c=>c.data.hours)]);
+      ['costNet','costHostlive','costTungXu','costSetup','costMinigame'].forEach(k=>{
+        const labels = {costNet:'Chi phí livestream self channel (net)', costHostlive:'Chi phí hostlive', costTungXu:'Chi phí tung xu', costSetup:'Chi phí set up livestream', costMinigame:'Chi phí minigame'};
+        rows.push(['', labels[k], sumWeeks(k), ...cols.map(c=>getManual(k,c.key))]);
+      });
+      const roiOf = (revenue, cost)=> (revenue!==null && revenue!==undefined && cost!==null && cost!==undefined && cost!==0) ? revenue/cost : null;
+      rows.push(['','ROI livestream self channel (Derived)', roiOf(reportAgg.revenue, sumWeeks('costNet')), ...cols.map(c=> roiOf(c.data.revenuePlaced, getManual('costNet', c.key)))]);
+      const wsReport = XLSX.utils.aoa_to_sheet([head, ...rows]);
+      const moneyCols = {}; for(let i=2;i<head.length;i++) moneyCols[i]='money';
+      applyColFormats(wsReport, rows.length, moneyCols);
+      XLSX.utils.book_append_sheet(wb, wsReport, 'Weekly_Report');
+    }
+
+    if(S.dq){
+      const rows = [['File','Sheet','Rows'], ...S.dq.files.map(f=>[f.type+' — '+f.fileName, f.sheet, f.rows]), [], ['Data Quality Issues'], ...S.dq.issues.map(i=>[i.level.toUpperCase(), i.msg])];
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), 'Data Quality');
+    }
+    const calc = [
+      ['Calculation Logic — Livestream Channel V1'],
+      [],
+      ['Nguyên tắc: Raw First — metric xuất phát từ Data Raw Shopee, không suy diễn, N/A khi thiếu.'],
+      [],
+      ['Derived Metric','Công thức','Điều kiện'],
+      ['GMV/Hour (Đặt)','Doanh thu(Đặt) / Thời lượng (giờ)','Có Thời lượng > 0'],
+      ['Orders/Hour','Đơn(Đặt) / Thời lượng (giờ)','Có Thời lượng > 0'],
+      ['Engaged Viewer Rate','Số người xem tương tác / Người xem','Có Người xem > 0'],
+      ['GMV per Viewer','Doanh thu(Đặt) / Người xem','Có Người xem > 0, cùng scope session'],
+      ['Click→Order Rate (Product)','Đơn(Đặt) / Lượt click sản phẩm','Có Click > 0, cùng dòng sản phẩm'],
+      ['Benchmark','Trung bình cộng (mean) toàn bộ session/product trong kỳ tải lên','Same period / full-channel benchmark theo Blueprint mục 13'],
+      ['Product Quadrant','So Click & Click→Order Rate với median toàn danh sách','Không dùng ngưỡng tuyệt đối cố định'],
+      ['Ngưỡng biến động có ý nghĩa (driver)', `${STATE.materialityPct}% (cấu hình bởi người dùng)`, 'Dùng để lọc driver candidate, không phải business threshold Good/Low'],
+      ['Report theo Tuần — AOV', 'Σ Doanh thu(Đặt) tuần / Σ Đơn(Đặt) tuần', 'Weighted, không phải trung bình cộng AOV từng phiên'],
+      ['Report theo Tuần — Chi phí (net/hostlive/tungxu/setup/minigame)', 'Ô nhập tay', 'Shopee raw không xuất dữ liệu chi phí — người dùng tự điền'],
+      ['Report theo Tuần — ROI', 'Doanh thu livestream(Đặt) / Chi phí livestream (net) — cùng cột (Plan hoặc từng tuần)', 'N/A nếu thiếu 1 trong 2 giá trị, hoặc Chi phí = 0'],
+    ];
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(calc), 'Calculation Logic');
+    return wb;
+  }
+};
+
+/* ============================================================
+   9. UI RENDERING
+============================================================ */
+let currentTab = 'upload';
+
+function anyDataLoaded(n){
+  const count = [STATE.session, STATE.product, STATE.overview].filter(Boolean).length;
+  if(n==='any1') return count>=1;
+  if(n==='any2') return count>=2;
+  return true;
+}
+function tabEnabled(t){
+  if(!t.requires) return true;
+  if(t.requires==='session') return !!STATE.session;
+  if(t.requires==='product') return !!STATE.product;
+  if(t.requires==='overview') return !!STATE.overview || !!STATE.session;
+  return anyDataLoaded(t.requires);
+}
+
+function renderNav(){
+  const nav = document.getElementById('nav');
+  nav.innerHTML = '';
+  TABS.forEach((t,i)=>{
+    const btn = document.createElement('button');
+    btn.className = 'rail-btn'+(t.id===currentTab?' active':'');
+    const enabled = tabEnabled(t);
+    btn.disabled = !enabled;
+    btn.innerHTML = `<span class="n">${String(i+1).padStart(2,'0')}</span><span>${t.label}</span>`;
+    btn.onclick = ()=>{ if(enabled){ currentTab=t.id; renderAll(); } };
+    nav.appendChild(btn);
+  });
+}
+
+function switchView(){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+currentTab).classList.add('active');
+}
+
+/* ---------- Upload View ---------- */
+function renderUpload(){
+  const el = document.getElementById('view-upload');
+  const S = STATE;
+  const fileInfo = (d, label)=> d ? `<span class="badge on">✓ ${label}: ${d.rows? d.rows.length : (d.blocks&&d.blocks[0]?d.blocks[0].rows.length:0)} dòng</span>` : `<span class="badge">${label}: chưa tải</span>`;
+  el.innerHTML = `
+    <h2 class="pagetitle">Tải dữ liệu Livestream</h2>
+    <p class="sub">Tải đúng 3 file raw export từ Shopee Seller Center. Công cụ tự nhận diện loại file dựa trên cấu trúc cột — không cần đặt tên theo thứ tự.</p>
+    <div class="callout"><b>Nguyên tắc Raw First:</b> mọi số liệu hiển thị bám 100% theo export của Shopee. Metric suy ra (Derived) luôn được gắn nhãn <span class="tag derived">DERIVED</span> riêng biệt. Thiếu dữ liệu → hiển thị N/A, không suy diễn.</div>
+    <div class="panel">
+      <h3>1 · Nguồn dữ liệu</h3>
+      <div class="upload-row">
+        <label class="dropzone ${S.session?'filled':''}" id="dz-session">
+          <div class="ic">📄</div>
+          <div class="t1">${S.session?'Live List — đã tải':'Live List (Session)'}</div>
+          <div class="t2">${S.session? S.session.fileName : '.xlsx — hiệu suất từng buổi live'}</div>
+          <input type="file" accept=".xlsx,.xls,.csv" multiple style="display:none" id="input-session">
+        </label>
+        <label class="dropzone ${S.product?'filled':''}" id="dz-product">
+          <div class="ic">📦</div>
+          <div class="t1">${S.product?'Live Product List — đã tải':'Live Product List'}</div>
+          <div class="t2">${S.product? S.product.fileName : '.xlsx — hiệu suất sản phẩm trong live'}</div>
+          <input type="file" accept=".xlsx,.xls,.csv" multiple style="display:none" id="input-product">
+        </label>
+        <label class="dropzone ${S.overview?'filled':''}" id="dz-overview">
+          <div class="ic">📊</div>
+          <div class="t1">${S.overview?'Livestream Overview — đã tải':'Livestream Overview'}</div>
+          <div class="t2">${S.overview? S.overview.fileName : '.csv — full-funnel & aggregate kênh'}</div>
+          <input type="file" accept=".xlsx,.xls,.csv" multiple style="display:none" id="input-overview">
+        </label>
+      </div>
+      <p class="sub" style="margin:10px 0 0;">Có thể kéo-thả hoặc chọn cả 3 file cùng lúc vào bất kỳ ô nào — công cụ tự nhận diện và xếp đúng loại, không cần thả đúng từng ô.</p>
+      <div class="badgebar" style="margin-top:16px;">
+        ${fileInfo(S.session,'Session')} ${fileInfo(S.product,'Product')} ${fileInfo(S.overview,'Overview')}
+      </div>
+      <div id="upload-error" style="color:var(--alert);font-size:12.5px;margin-top:8px;"></div>
+    </div>
+    <div class="panel" id="upload-status-panel" style="${(S.session||S.product||S.overview)?'':'display:none'}">
+      <h3>2 · Trạng thái nhận diện</h3>
+      <div class="filelist">
+        ${S.session? `<div class="filerow"><span>Live List — ${S.session.rows.length} buổi live</span><span class="name">${S.session.fileName}</span></div>`:''}
+        ${S.product? `<div class="filerow"><span>Live Product List — ${S.product.rows.length} sản phẩm</span><span class="name">${S.product.fileName}</span></div>`:''}
+        ${S.overview? `<div class="filerow"><span>Livestream Overview — ${S.overview.blocks.length} khối dữ liệu</span><span class="name">${S.overview.fileName}</span></div>`:''}
+      </div>
+      <p class="sub" style="margin-top:14px;margin-bottom:0;">Đủ dữ liệu để mở các tab phân tích ở thanh bên trái. Streamer ID phát hiện: <b style="color:var(--ink)">${[...STATE.streamerIds].join(', ')||'—'}</b> ${STATE.streamerIds.size>1?'(nhiều Streamer — có thể tách theo Streamer)':'(1 streamer — không cần tách)'}.</p>
+    </div>
+    ${dqSectionHTML()}
+  `;
+  ['session','product','overview'].forEach(kind=>{
+    const dz = document.getElementById('dz-'+kind);
+    const input = document.getElementById('input-'+kind);
+    dz.addEventListener('dragover', e=>{e.preventDefault(); dz.classList.add('drag');});
+    dz.addEventListener('dragleave', ()=>dz.classList.remove('drag'));
+    dz.addEventListener('drop', e=>{
+      e.preventDefault(); dz.classList.remove('drag');
+      Array.from(e.dataTransfer.files || []).forEach(f=> handleFile(f));
+    });
+    input.addEventListener('change', e=>{
+      Array.from(e.target.files || []).forEach(f=> handleFile(f));
+      input.value = '';
+    });
+  });
+}
+
+function handleFile(file){
+  document.getElementById('upload-error').textContent = '';
+  RawParser.aoaFromFile(file, (err, res)=>{
+    if(err){ document.getElementById('upload-error').textContent = 'Lỗi đọc file: '+err.message; return; }
+    const type = RawParser.detectAOAType(res.aoa);
+    if(type==='unknown'){ document.getElementById('upload-error').textContent = `Không nhận diện được loại file "${file.name}". Kiểm tra lại có đúng là file export Shopee Livestream không.`; return; }
+    try{
+      if(type==='session'){ STATE.session = LiveDataModel.enrichSession(Normalizer.normalizeSession(res.aoa, res)); STATE.session.rows.forEach(r=>STATE.streamerIds.add(r.streamerId)); }
+      if(type==='product'){ STATE.product = LiveDataModel.enrichProduct(Normalizer.normalizeProduct(res.aoa, res)); STATE.product.rows.forEach(r=>STATE.streamerIds.add(r.streamerId)); }
+      if(type==='overview'){ STATE.overview = Normalizer.normalizeOverview(res.aoa, res); STATE.overview.blocks.forEach(b=>b.rows.forEach(r=>STATE.streamerIds.add(r.streamerId))); }
+      recompute();
+      renderAll();
+    }catch(e){
+      document.getElementById('upload-error').textContent = 'Lỗi xử lý dữ liệu: '+e.message;
+    }
+  });
+}
+
+function recompute(){
+  if(STATE.product) LiveDataModel.applySkuType(STATE.product, STATE.comboKeywords);
+  STATE.benchmark = LiveBenchmarkEngine.build(STATE.session, STATE.product);
+  STATE.driver = LiveDriverEngine.build(STATE.session, STATE.product, STATE.benchmark, STATE.materialityPct);
+  const totalRevenue = STATE.overview && STATE.overview.blocks[0] && STATE.overview.blocks[0].rows[0]
+    ? (()=>{ for(const g in STATE.overview.blocks[0].rows[0].metricsByGroup){ const m=STATE.overview.blocks[0].rows[0].metricsByGroup[g].find(x=>x.header==='Doanh thu(Đơn đã đặt)'); if(m) return m.num; } return null; })()
+    : (STATE.session ? STATE.session.rows.reduce((a,r)=>a+(r.revenuePlaced||0),0) : null);
+  STATE.insights = LiveInsightEngine.build(STATE.session, STATE.product, STATE.overview, STATE.benchmark, STATE.driver, totalRevenue);
+  STATE.dq = DataQualityEngine.build(STATE.session, STATE.product, STATE.overview);
+}
+
+/* ---------- Overview View ---------- */
+function renderOverview(){
+  const el = document.getElementById('view-overview');
+  if(!STATE.overview && !STATE.session){ el.innerHTML = emptyState('Tổng quan Kênh', 'Tải file Livestream Overview (hoặc Live List) để xem KPI toàn kênh.'); return; }
+
+  let html = `<h2 class="pagetitle">Tổng quan Kênh</h2>`;
+
+  if(STATE.overview && STATE.overview.blocks[0] && STATE.overview.blocks[0].rows[0]){
+    const row = STATE.overview.blocks[0].rows[0];
+    html += `<p class="sub">Khung thời gian: <b>${row.timeframe}</b> · Streamer ID: <b>${row.streamerId}</b> · Nguồn: ${STATE.overview.fileName}</p>`;
+
+    const groupOrder = Object.keys(row.metricsByGroup);
+    const CUSTOMER_HEADERS = [
+      'Doanh số từ Khách hàng Mới(Đơn đã đặt)','Doanh số từ Khách hàng Cũ(Đơn đã đặt)',
+      'Doanh số từ Khách hàng Mới(Đơn hàng được xác nhận)','Doanh số từ Khách hàng Cũ(Đơn hàng được xác nhận)'
+    ];
+    groupOrder.forEach(g=>{
+      const metrics = row.metricsByGroup[g];
+      if(g.indexOf('Nguồn Truy Cập') !== -1 && g.indexOf('Tất cả') !== -1){
+        html += renderTrafficFunnelPanel(g, metrics);
+        return;
+      }
+      const customerMetrics = metrics.filter(m=> CUSTOMER_HEADERS.indexOf(m.header)!==-1);
+      const mainMetrics = metrics.filter(m=> CUSTOMER_HEADERS.indexOf(m.header)===-1);
+      html += `<div class="panel"><h3>${g}</h3><div class="grid g4">`;
+      mainMetrics.forEach(m=>{
+        html += `<div class="kpi"><div class="lbl">${m.header}</div><div class="val ${m.raw==='-'||m.num===null?'na':''}">${m.raw==='' ? 'N/A' : m.raw}</div></div>`;
+      });
+      html += `</div></div>`;
+      if(customerMetrics.length) html += renderCustomerPanel(customerMetrics);
+    });
+  } else {
+    html += `<p class="sub">Chưa có file Livestream Overview — bên dưới là report tổng hợp tự tính từ Live List.</p>`;
+  }
+
+  if(STATE.session){
+    html += renderWeeklyReportTable();
+  }
+
+  html += aiSectionBlock('overview', 'Tổng quan Kênh');
+
+  el.innerHTML = html;
+  if(STATE.session) wireWeeklyReportInputs();
+  document.querySelectorAll('.ai-trigger-btn').forEach(b=> b.onclick = runAIInsightV2);
+}
+
+function reportColumnLabel(){
+  let start=null, end=null;
+  if(STATE.overview && STATE.overview.blocks[0] && STATE.overview.blocks[0].rows[0]){
+    start = STATE.overview.blocks[0].rows[0].timeframeStart;
+    end = STATE.overview.blocks[0].rows[0].timeframeEnd;
+  }
+  if((!start || !end) && STATE.session){
+    const starts = STATE.session.rows.map(r=>r.startAt).filter(Boolean);
+    if(starts.length){ start = new Date(Math.min(...starts)); end = new Date(Math.max(...starts)); }
+  }
+  if(!start || !end) return 'Report';
+  return `Report Tháng ${start.getMonth()+1}`;
+}
+
+function renderWeeklyReportTable(){
+  const weekRows = LiveSegmentEngine.build(STATE.session.rows, 'weekOfMonth');
+  const P = RawParser;
+  const cols = weekRows.map((w,i)=>({key:'w'+(i+1), label:w.dim, data:w}));
+  STATE._reportCols = cols;
+  const rm = STATE.reportManual;
+  const reportLabel = reportColumnLabel();
+
+  // Report (tháng) = tổng hợp trực tiếp từ toàn bộ session trong kỳ, không phải cộng dồn cột tuần hiển thị (để không lệch do làm tròn)
+  const allSessions = STATE.session.rows;
+  const totalRevenue = allSessions.reduce((a,r)=>a+(r.revenuePlaced||0),0);
+  const totalOrders = allSessions.reduce((a,r)=>a+(r.ordersPlaced||0),0);
+  const totalHours = allSessions.reduce((a,r)=>a+(r.durationSec?r.durationSec/3600:0),0);
+  const reportAgg = {
+    revenue: totalRevenue,
+    orders: totalOrders,
+    aov: totalOrders? totalRevenue/totalOrders : null,
+    gmvHour: totalHours? totalRevenue/totalHours : null,
+    hours: totalHours,
+  };
+
+  const computedRows = [
+    {key:'revenue', label:'Doanh thu livestream self channel (Đặt)', get:w=>w.revenuePlaced, fmt:v=>P.fmtMoney(v)},
+    {key:'orders', label:'Số đơn hàng livestream self channel (Đặt)', get:w=>w.ordersPlaced, fmt:v=>P.fmtInt(v)},
+    {key:'aov', label:'AOV livestream self channel (Đặt)', get:w=>w.aovPlaced, fmt:v=>P.fmtMoney(v), derived:true},
+    {key:'gmvHour', label:'GMV trung bình/giờ livestream (Đặt)', get:w=>w.gmvPerHourPlaced, fmt:v=>P.fmtMoney(v), derived:true},
+    {key:'hours', label:'Số giờ livestream self channel', get:w=>w.hours, fmt:v=>P.fmtDec(v,1)},
+  ];
+  const manualCostRows = [
+    {key:'costNet', label:'Chi phí livestream self channel (net)'},
+    {key:'costHostlive', label:'Chi phí hostlive'},
+    {key:'costTungXu', label:'Chi phí tung xu'},
+    {key:'costSetup', label:'Chi phí set up livestream'},
+    {key:'costMinigame', label:'Chi phí minigame'},
+  ];
+  const totalRows = computedRows.length + manualCostRows.length + 1;
+
+  function inputCell(rowKey, colKey){
+    const stored = rm[rowKey] ? rm[rowKey][colKey] : undefined;
+    const val = (stored!==undefined && stored!==null) ? stored : '';
+    return `<td class="num"><input type="number" class="report-input" data-row="${rowKey}" data-col="${colKey}" value="${val}" placeholder="—" style="width:100px;text-align:right;background:var(--surface);color:var(--ink);border:1px solid var(--border);border-radius:4px;padding:4px 6px;font-family:var(--mono);font-size:12px;"></td>`;
+  }
+  function costReportCell(rowKey){
+    return `<td class="num" id="report-cell-${rowKey}">—</td>`;
+  }
+
+  let html = `<div class="panel">
+    <h3>Report theo Tuần — Live Self Channel${dot('Weekly report')}</h3>
+    <p class="sub" style="margin-bottom:14px;">5 chỉ số đầu tự tính từ Live List theo đúng "Tuần trong tháng" (T6→T5, xem tab Phân tích Nhóm); cột "${reportLabel}" = tổng hợp cả tháng. Các ô Chi phí ở từng tuần là nhập tay — Shopee raw không có dữ liệu chi phí; cột "${reportLabel}" của các dòng Chi phí tự cộng dồn từ các tuần đã nhập. ROI tự tính khi đủ dữ liệu.</p>
+    <div class="tablewrap"><table id="weekly-report-table"><thead><tr>
+      <th>DANH MỤC</th><th>CÁC CHỈ SỐ CHÍNH</th><th class="num">${reportLabel}${dot('Weekly report plan')}</th>
+      ${cols.map(c=>`<th class="num">${c.label}</th>`).join('')}
+    </tr></thead><tbody>`;
+
+  computedRows.forEach((r,i)=>{
+    const v = r.get;
+    const aggVal = reportAgg[r.key];
+    html += `<tr>${i===0?`<td rowspan="${totalRows}" style="font-weight:600;vertical-align:top;">Live self channel</td>`:''}
+      <td class="text">${r.label}${r.derived?'<span class="tag derived">D</span>':''}</td>
+      <td class="num">${aggVal!==null && aggVal!==undefined ? r.fmt(aggVal) : 'N/A'}</td>
+      ${cols.map(c=>{ const val = v(c.data); return `<td class="num">${val!==null && val!==undefined ? r.fmt(val) : 'N/A'}</td>`; }).join('')}
+    </tr>`;
+  });
+  manualCostRows.forEach(r=>{
+    html += `<tr><td class="text">${r.label}</td>
+      ${costReportCell(r.key)}
+      ${cols.map(c=>inputCell(r.key,c.key)).join('')}
+    </tr>`;
+  });
+  html += `<tr><td class="text"><b>ROI livestream self channel</b>${dot('ROI livestream')}</td>
+    <td class="num" id="roi-cell-report">—</td>
+    ${cols.map(c=>`<td class="num" id="roi-cell-${c.key}">—</td>`).join('')}
+  </tr>`;
+  html += `</tbody></table></div></div>`;
+  STATE._reportAgg = reportAgg;
+  return html;
+}
+
+function wireWeeklyReportInputs(){
+  document.querySelectorAll('.report-input').forEach(inp=>{
+    inp.oninput = ()=>{
+      const rowKey = inp.dataset.row, colKey = inp.dataset.col;
+      if(!STATE.reportManual[rowKey]) STATE.reportManual[rowKey] = {};
+      const raw = inp.value;
+      const v = raw==='' ? null : parseFloat(raw);
+      STATE.reportManual[rowKey][colKey] = (v===null || isNaN(v)) ? null : v;
+      updateWeeklyReportROI();
+    };
+  });
+  updateWeeklyReportROI();
+}
+
+function weeklyCostReportSum(rowKey){
+  const cols = STATE._reportCols || [];
+  const rm = STATE.reportManual;
+  const vals = cols.map(c=> rm[rowKey] ? rm[rowKey][c.key] : null).filter(v=> v!==null && v!==undefined && !isNaN(v));
+  if(!vals.length) return null;
+  return vals.reduce((a,b)=>a+parseFloat(b),0);
+}
+
+function updateWeeklyReportROI(){
+  const cols = STATE._reportCols || [];
+  const reportAgg = STATE._reportAgg || {};
+  const rm = STATE.reportManual;
+
+  ['costNet','costHostlive','costTungXu','costSetup','costMinigame'].forEach(rowKey=>{
+    const cell = document.getElementById('report-cell-'+rowKey);
+    if(!cell) return;
+    const sum = weeklyCostReportSum(rowKey);
+    cell.textContent = sum===null ? 'N/A' : RawParser.fmtMoney(sum);
+  });
+
+  const calc = (colKey)=>{
+    let revenue, cost;
+    if(colKey==='report'){
+      revenue = reportAgg.revenue;
+      cost = weeklyCostReportSum('costNet');
+    } else {
+      const col = cols.find(c=>c.key===colKey);
+      revenue = col ? col.data.revenuePlaced : null;
+      const costV = rm.costNet ? rm.costNet[colKey] : null;
+      cost = (costV!==null && costV!==undefined) ? parseFloat(costV) : null;
+    }
+    if(revenue===null || revenue===undefined || isNaN(revenue) || cost===null || cost===undefined || isNaN(cost) || cost===0) return null;
+    return revenue/cost;
+  };
+  const setCell = (colKey, elId)=>{
+    const cell = document.getElementById(elId);
+    if(!cell) return;
+    const v = calc(colKey);
+    cell.textContent = v===null ? 'N/A' : v.toFixed(2)+'x';
+  };
+  setCell('report','roi-cell-report');
+  cols.forEach(c=> setCell(c.key, 'roi-cell-'+c.key));
+}
+
+function renderCustomerPanel(metrics, parentGroupLabel){
+  const find = h => metrics.find(m=>m.header===h);
+  const newP = find('Doanh số từ Khách hàng Mới(Đơn đã đặt)');
+  const oldP = find('Doanh số từ Khách hàng Cũ(Đơn đã đặt)');
+  const newC = find('Doanh số từ Khách hàng Mới(Đơn hàng được xác nhận)');
+  const oldC = find('Doanh số từ Khách hàng Cũ(Đơn hàng được xác nhận)');
+  let html = `<div class="panel"><h3>Khách hàng Mới / Khách hàng Cũ${parentGroupLabel? ` <span class="tag raw">${parentGroupLabel}</span>` : ''}</h3><div class="grid g4">`;
+  metrics.forEach(m=>{
+    html += `<div class="kpi"><div class="lbl">${m.header}</div><div class="val ${m.raw==='-'||m.num===null?'na':''}">${m.raw==='' ? 'N/A' : m.raw}</div></div>`;
+  });
+  html += `</div>${renderCustomerSplit(newP,oldP,newC,oldC)}</div>`;
+  return html;
+}
+
+function renderCustomerSplit(newP, oldP, newC, oldC){
+  if(!(newP && oldP) && !(newC && oldC)) return '';
+  const P = RawParser;
+  const pair = (n,o)=>{
+    if(n===null||n===undefined||o===null||o===undefined) return null;
+    const total = (n||0)+(o||0);
+    return total ? {pn: n/total, po: o/total} : null;
+  };
+  const sPlaced = newP&&oldP ? pair(newP.num, oldP.num) : null;
+  const sConfirmed = newC&&oldC ? pair(newC.num, oldC.num) : null;
+  let html = `<div class="legend" style="margin-top:14px;flex-wrap:wrap;gap:22px;">`;
+  if(sPlaced) html += `<span><b style="font-family:var(--mono);color:var(--ink);">${P.fmtPct(sPlaced.pn)}</b> Khách hàng Mới &nbsp;·&nbsp; <b style="font-family:var(--mono);color:var(--ink);">${P.fmtPct(sPlaced.po)}</b> Khách hàng Cũ <span class="tag raw">theo Doanh thu — Đơn đã đặt</span>${dot('Customer split')}</span>`;
+  if(sConfirmed) html += `<span><b style="font-family:var(--mono);color:var(--ink);">${P.fmtPct(sConfirmed.pn)}</b> Khách hàng Mới &nbsp;·&nbsp; <b style="font-family:var(--mono);color:var(--ink);">${P.fmtPct(sConfirmed.po)}</b> Khách hàng Cũ <span class="tag raw">theo Doanh thu — Đơn xác nhận</span>${dot('Customer split')}</span>`;
+  html += `</div>`;
+  return html;
+}
+function renderTrafficFunnelPanel(g, metrics){
+  const find = h => metrics.find(m=>m.header===h);
+  const order = ['Lượt xem Live','Người xem live','Số người xem tương tác'];
+  const items = order.map(h=>find(h)).filter(Boolean);
+  let html = `<div class="panel"><h3>${g}</h3><div class="grid g3">`;
+  items.forEach(m=>{
+    html += `<div class="kpi"><div class="lbl">${m.header}</div><div class="val ${m.raw==='-'||m.num===null?'na':''}">${m.raw===''?'N/A':m.raw}</div></div>`;
+  });
+  html += `</div>`;
+  if(items.length>=2){
+    html += `<div class="legend" style="margin-top:14px;flex-wrap:wrap;gap:20px;">`;
+    for(let i=0;i<items.length-1;i++){
+      const a = items[i], b = items[i+1];
+      const pct = (a.num!==null && a.num!==undefined && a.num!==0 && b.num!==null && b.num!==undefined)
+        ? RawParser.fmtPct(b.num/a.num) : 'N/A';
+      html += `<span><b style="color:var(--ink);font-family:var(--mono);font-size:13px;">${pct}</b> &nbsp;${a.header} → ${b.header}${dot('Funnel step')}</span>`;
+    }
+    html += `</div>`;
+  }
+  html += `</div>`;
+  return html;
+}
+
+function emptyState(title, msg){
+  return `<h2 class="pagetitle">${title}</h2><div class="panel empty">${msg}</div>`;
+}
+
+/* ---------- Session View ---------- */
+function renderSession(){
+  const el = document.getElementById('view-session');
+  if(!STATE.session){ el.innerHTML = emptyState('Buổi Livestream','Tải file Live List để xem hiệu suất từng buổi live.'); return; }
+  const rows = [...STATE.session.rows].sort((a,b)=> (b.startAt?.getTime()||0)-(a.startAt?.getTime()||0));
+  const P = RawParser;
+  let html = `<h2 class="pagetitle">Hiệu suất Buổi Livestream</h2>
+  <p class="sub">${rows.length} buổi live · Nguồn: ${STATE.session.fileName}. Cột có nhãn <span class="tag derived">DERIVED</span> là metric suy ra từ raw, không phải export gốc.</p>`;
+
+  // charts trước
+  html += `<div class="panel"><h3>Doanh thu (Đặt) theo buổi live</h3>${sessionRevenueSVG(rows)}</div>`;
+
+  const trend = LiveSegmentEngine.buildDailyTrend(STATE.session.rows);
+  html += `<div class="panel"><h3>Xu hướng theo Ngày (dựa trên Thời gian bắt đầu)</h3>${trendSVG(trend)}
+    <div class="tablewrap" style="margin-top:12px;"><table><thead><tr><th>Ngày</th><th class="num">Số phiên</th><th class="num">Người xem</th><th class="num">Đơn đặt</th><th class="num">Doanh thu đặt</th></tr></thead><tbody>
+    ${trend.map(d=>`<tr><td>${d.date}</td><td class="num">${P.fmtInt(d.sessions)}</td><td class="num">${P.fmtInt(d.viewers)}</td><td class="num">${P.fmtInt(d.ordersPlaced)}</td><td class="num">${P.fmtMoney(d.revenuePlaced)}</td></tr>`).join('')}
+    </tbody></table></div>
+  </div>`;
+
+  // data raw sau
+  html += `<div class="panel"><h3>Bảng chi tiết theo buổi live (Data raw)</h3><div class="tablewrap"><table><thead><tr>
+    <th>No.</th><th>Tên buổi live</th><th>Bắt đầu</th><th>Thời lượng</th>
+    <th class="num">Người xem${dot('Người xem')}</th><th class="num">Engaged${dot('Engaged')}</th><th class="num">Engaged Rate<span class="tag derived">D</span>${dot('Engaged Rate')}</th>
+    <th class="num">Bình luận${dot('Bình luận')}</th><th class="num">ATC${dot('ATC')}</th><th class="num">Đơn đặt${dot('Đơn đặt')}</th><th class="num">Đơn xác nhận${dot('Đơn xác nhận')}</th>
+    <th class="num">Doanh thu đặt${dot('Doanh thu đặt')}</th><th class="num">Doanh thu xác nhận${dot('Doanh thu xác nhận')}</th><th class="num">GMV/Giờ<span class="tag derived">D</span>${dot('GMV/Giờ')}</th>
+  </tr></thead><tbody>`;
+  rows.forEach(r=>{
+    html += `<tr>
+      <td>${r.no}</td><td class="text">${r.name||'N/A'}</td><td>${r.startRaw||'N/A'}</td><td>${r.durationRaw||'N/A'}</td>
+      <td class="num">${P.fmtInt(r.viewers)}</td><td class="num">${P.fmtInt(r.engagedViewers)}</td><td class="num">${P.fmtPct(r.derived.engagedViewerRate)}</td>
+      <td class="num">${P.fmtInt(r.comments)}</td><td class="num">${P.fmtInt(r.atc)}</td><td class="num">${P.fmtInt(r.ordersPlaced)}</td><td class="num">${P.fmtInt(r.ordersConfirmed)}</td>
+      <td class="num">${P.fmtMoney(r.revenuePlaced)}</td><td class="num">${P.fmtMoney(r.revenueConfirmed)}</td><td class="num">${P.fmtMoney(r.derived.gmvPerHourPlaced)}</td>
+    </tr>`;
+  });
+  html += `</tbody></table></div></div>`;
+
+  html += aiSectionBlock('session', 'Buổi Livestream');
+
+  el.innerHTML = html;
+  document.querySelectorAll('.ai-trigger-btn').forEach(b=> b.onclick = runAIInsightV2);
+}
+
+function sessionRevenueSVG(rows){
+  const data = [...rows].reverse();
+  const W = 1080, H = 240, padL=50, padB=42, padT=10;
+  const max = Math.max(...data.map(r=>r.revenuePlaced||0), 1);
+  const bw = (W-padL-10)/data.length;
+  const dayStageBm = LiveSegmentEngine.buildDayStageBenchmarks(STATE.session.rows, STATE.dayStageConfig);
+  const bm = dayStageBm['Daily'] ? dayStageBm['Daily'].avgRevenuePerSession : null;
+  let bars = data.map((r,i)=>{
+    const h = ((r.revenuePlaced||0)/max)*(H-padT-padB);
+    const x = padL + i*bw + bw*0.15;
+    const y = H-padB-h;
+    return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${(bw*0.7).toFixed(1)}" height="${h.toFixed(1)}" fill="var(--accent)" opacity="0.85"><title>${r.name}: ${RawParser.fmtMoney(r.revenuePlaced)}</title></rect>`;
+  }).join('');
+  const labels = data.map((r,i)=>{
+    const x = padL + i*bw + bw/2;
+    const y = H-padB+14;
+    const lbl = r.startAt ? String(r.startAt.getDate()) : '?';
+    return `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="end" font-size="9.5" fill="var(--ink-faint)" font-family="var(--mono)" transform="rotate(-35 ${x.toFixed(1)} ${y.toFixed(1)})">${lbl}</text>`;
+  }).join('');
+  let bmLine = '';
+  if(bm){
+    const y = H-padB-((bm/max)*(H-padT-padB));
+    bmLine = `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W-10}" y2="${y.toFixed(1)}" stroke="var(--derived)" stroke-width="1.5" stroke-dasharray="4,3"/><text x="${W-10}" y="${(y-5).toFixed(1)}" text-anchor="end" font-size="10.5" fill="var(--derived)" font-family="var(--mono)">Benchmark (Daily) ${RawParser.fmtMoney(bm)}</text>`;
+  }
+  return `<svg class="svgchart" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+    <line x1="${padL}" y1="${H-padB}" x2="${W-10}" y2="${H-padB}" stroke="var(--border)"/>
+    ${bars}${labels}${bmLine}
+  </svg>
+  <div class="legend"><span><span class="dot" style="background:var(--accent)"></span>Doanh thu (Đặt) từng buổi</span><span><span class="dot" style="background:var(--derived)"></span>Benchmark = GMV/phiên trung bình các phiên Daily (đã loại D-Day/Mini Spike/Memberday)</span></div>`;
+}
+
+/* ---------- Product View ---------- */
+function renderProduct(){
+  const el = document.getElementById('view-product');
+  if(!STATE.product){ el.innerHTML = emptyState('Sản phẩm','Tải file Live Product List để xem hiệu suất sản phẩm.'); return; }
+  const allRows = [...STATE.product.rows].sort((a,b)=>(a.rank||999)-(b.rank||999));
+  const filter = STATE.productTopFilter;
+  const rows = filter==='all'
+    ? allRows
+    : [...STATE.product.rows].sort((a,b)=>(b.revenuePlaced||0)-(a.revenuePlaced||0)).slice(0, filter);
+  const P = RawParser;
+  const quadLabel = {HH:'High Click / High Conv', HL:'High Click / Low Conv', LH:'Low Click / High Conv', LL:'Low Click / Low Conv'};
+  const quadClass = {HH:'good', HL:'alert', LH:'raw', LL:'raw'};
+  const typeClass = {Single:'raw', Combo:'derived'};
+  const skuSummary = LiveSegmentEngine.buildSkuTypeSummary(STATE.product.rows);
+  const filterOptions = [['all','Tất cả'],[10,'Top 10'],[20,'Top 20'],[50,'Top 50']].filter(([v])=> v==='all' || v<allRows.length);
+
+  let html = `<h2 class="pagetitle">Hiệu suất Sản phẩm</h2>
+  <p class="sub">${allRows.length} sản phẩm · Nguồn: ${STATE.product.fileName}. Quadrant chẩn đoán luôn dùng median Click/Conversion của <b>toàn bộ ${allRows.length} sản phẩm</b> (không đổi theo bộ lọc bên dưới) để không làm lệch ngưỡng phân loại.</p>
+  <div class="panel">
+    <h3>Tổng hợp theo Phân loại SKU (Single/Combo)${dot('Phân loại SKU')}</h3>
+    <div class="qtybox" style="margin-bottom:14px;flex-wrap:wrap;gap:10px;">Từ khoá nhận diện Combo trong tên sản phẩm (cách nhau bởi dấu phẩy): <input type="text" id="combo-kw-input" value="${STATE.comboKeywords.join(', ')}" style="width:220px;"> <button class="btn ghost" id="apply-combo-kw">Áp dụng</button></div>
+    <div class="tablewrap"><table><thead><tr>
+      <th>Phân loại SKU</th><th class="num">Số SKU</th><th class="num">Click${dot('Click')}</th><th class="num">ATC${dot('ATC')}</th><th class="num">Đơn đặt${dot('Đơn đặt')}</th>
+      <th class="num">Click→Order<span class="tag derived">D</span>${dot('Click→Order')}</th><th class="num">Doanh thu đặt${dot('Doanh thu đặt')}</th><th class="num">% Doanh thu${dot('% Doanh thu')}</th>
+    </tr></thead><tbody>
+    ${skuSummary.map(s=>`<tr><td><span class="tag ${typeClass[s.type]}">${s.type}</span></td><td class="num">${s.skuCount}</td><td class="num">${P.fmtInt(s.clicks)}</td><td class="num">${P.fmtInt(s.atc)}</td>
+      <td class="num">${P.fmtInt(s.ordersPlaced)}</td><td class="num">${P.fmtPct(s.clickToOrderRatePlaced)}</td><td class="num">${P.fmtMoney(s.revenuePlaced)}</td><td class="num">${P.fmtPct(s.revShare)}</td></tr>`).join('')}
+    </tbody></table></div>
+  </div>
+  <div class="two-col">
+    <div class="panel"><h3>Bảng chi tiết</h3>
+      <div class="chip-row" style="margin-bottom:12px;">Lọc theo Doanh thu đặt:&nbsp;
+        ${filterOptions.map(([v,label])=>`<button class="btn ${String(v)===String(filter)?'accent':'ghost'}" data-topfilter="${v}">${label}</button>`).join('')}
+      </div>
+      <div class="tablewrap"><table><thead><tr>
+      <th>#</th><th>Sản phẩm</th><th>Phân loại SKU</th><th class="num">Click${dot('Click')}</th><th class="num">ATC${dot('ATC')}</th><th class="num">Đơn đặt${dot('Đơn đặt')}</th>
+      <th class="num">Click→Order<span class="tag derived">D</span>${dot('Click→Order')}</th><th class="num">Doanh thu đặt${dot('Doanh thu đặt')}</th><th>Quadrant${dot('Quadrant')}</th>
+    </tr></thead><tbody>`;
+  rows.forEach(r=>{
+    html += `<tr>
+      <td>${r.rank}</td><td class="text">${r.productName}</td><td><span class="tag ${typeClass[r.skuType]}">${r.skuType}</span></td><td class="num">${P.fmtInt(r.clicks)}</td><td class="num">${P.fmtInt(r.atc)}</td>
+      <td class="num">${P.fmtInt(r.ordersPlaced)}</td><td class="num">${P.fmtPct(r.derived.clickToOrderRatePlaced)}</td><td class="num">${P.fmtMoney(r.revenuePlaced)}</td>
+      <td>${r.quadrant? `<span class="tag ${quadClass[r.quadrant]}">${quadLabel[r.quadrant]}</span>` : 'N/A'}</td>
+    </tr>`;
+  });
+  html += `</tbody></table></div></div>
+    <div class="panel"><h3>2×2 Diagnostic (Click vs Conversion)</h3>${productScatterSVG(rows)}</div>
+  </div>`;
+  html += aiSectionBlock('product', 'Sản phẩm');
+  el.innerHTML = html;
+  document.querySelectorAll('.ai-trigger-btn').forEach(b=> b.onclick = runAIInsightV2);
+  const applyKw = document.getElementById('apply-combo-kw');
+  if(applyKw) applyKw.onclick = ()=>{
+    const raw = document.getElementById('combo-kw-input').value;
+    const kws = raw.split(',').map(s=>s.trim()).filter(Boolean);
+    STATE.comboKeywords = kws.length ? kws : STATE.comboKeywords;
+    recompute();
+    renderAll();
+  };
+  el.querySelectorAll('[data-topfilter]').forEach(btn=>{
+    btn.onclick = ()=>{
+      const v = btn.getAttribute('data-topfilter');
+      STATE.productTopFilter = v==='all' ? 'all' : parseInt(v,10);
+      renderAll();
+    };
+  });
+}
+
+function productScatterSVG(rows){
+  const data = rows.filter(r=>r.clicks!==null && r.derived.clickToOrderRatePlaced!==null);
+  if(!data.length) return '<div class="empty">Không đủ dữ liệu để vẽ.</div>';
+  const W=460,H=380,pad=40;
+  const maxX = Math.max(...data.map(r=>r.clicks))*1.08;
+  const maxY = Math.max(...data.map(r=>r.derived.clickToOrderRatePlaced))*1.15;
+  const medX = STATE.product.medianClick, medY = STATE.product.medianConv;
+  const sx = x => pad + (x/maxX)*(W-pad*1.5);
+  const sy = y => H-pad - (y/maxY)*(H-pad*1.5);
+  const colors = {HH:'var(--good)', HL:'var(--alert)', LH:'var(--ink-faint)', LL:'var(--ink-faint)'};
+  const pts = data.map(r=>`<circle cx="${sx(r.clicks).toFixed(1)}" cy="${sy(r.derived.clickToOrderRatePlaced).toFixed(1)}" r="5" fill="${colors[r.quadrant]||'var(--ink-faint)'}" opacity="0.85"><title>${r.productName} — Click ${r.clicks}, Conv ${(r.derived.clickToOrderRatePlaced*100).toFixed(1)}%</title></circle>`).join('');
+  return `<svg class="svgchart" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+    <line x1="${pad}" y1="${H-pad}" x2="${W-8}" y2="${H-pad}" stroke="var(--border)"/>
+    <line x1="${pad}" y1="8" x2="${pad}" y2="${H-pad}" stroke="var(--border)"/>
+    <line x1="${sx(medX).toFixed(1)}" y1="8" x2="${sx(medX).toFixed(1)}" y2="${H-pad}" stroke="var(--border)" stroke-dasharray="3,3"/>
+    <line x1="${pad}" y1="${sy(medY).toFixed(1)}" x2="${W-8}" y2="${sy(medY).toFixed(1)}" stroke="var(--border)" stroke-dasharray="3,3"/>
+    <text x="${pad+4}" y="18" font-size="10" fill="var(--ink-faint)" font-family="var(--mono)">Median Conv →</text>
+    <text x="${W-10}" y="${H-pad-6}" text-anchor="end" font-size="10" fill="var(--ink-faint)" font-family="var(--mono)">Click →</text>
+    ${pts}
+  </svg>
+  <div class="legend">
+    <span><span class="dot" style="background:var(--good)"></span>High/High</span>
+    <span><span class="dot" style="background:var(--alert)"></span>High Click/Low Conv</span>
+    <span><span class="dot" style="background:var(--ink-faint)"></span>Low Click</span>
+  </div>`;
+}
+
+/* ---------- Segment & Trend View (Phân tích Nhóm & Xu hướng) ---------- */
+function renderSegment(){
+  const el = document.getElementById('view-segment');
+  if(!STATE.session){ el.innerHTML = emptyState('Phân tích Nhóm & Xu hướng','Tải file Live List để xem phân tích theo nhóm.'); return; }
+  const P = RawParser;
+  const dim = STATE.segmentDim;
+  const rows = LiveSegmentEngine.build(STATE.session.rows, dim);
+  const dimLabel = LiveSegmentEngine.dimLabels[dim];
+
+  let html = `<h2 class="pagetitle">Phân tích Nhóm & Xu hướng</h2>
+  <p class="sub">Gộp theo nhóm dùng <b>tổng có trọng số</b> (Σ doanh thu / Σ giờ...) rồi mới tính tỷ lệ — không lấy trung bình cộng của tỷ lệ từng phiên, tránh lệch do phiên nhỏ kéo méo số liệu. Các nhóm ở đây chỉ dùng field thời gian có sẵn trong raw (<code>Thời gian bắt đầu</code>); riêng "Giai đoạn ngày" là phân loại theo lịch bán hàng phổ biến, có thể chỉnh cho khớp lịch thực tế.</p>
+  <div class="panel">
+    <h3>Chọn chiều phân tích</h3>
+    <div class="chip-row">
+      ${Object.keys(LiveSegmentEngine.dimLabels).map(k=>`<button class="btn ${k===dim?'accent':'ghost'}" data-dim="${k}">${LiveSegmentEngine.dimLabels[k]}</button>`).join('')}
+    </div>
+    ${dim==='timeSlot' ? `<div class="qtybox" style="margin-top:12px;">Ranh giới khung giờ (0–24h, cách nhau bởi dấu phẩy): <input type="text" id="timeslot-input" value="${STATE.timeSlotEdges.join(', ')}" style="width:200px;"> <button class="btn ghost" id="apply-timeslots">Áp dụng</button></div>` : ''}
+    ${dim==='dayStage' ? `<div class="qtybox" style="margin-top:12px;flex-wrap:wrap;gap:14px;">
+      <span>D-Day = ngày trùng số tháng (vd 9/9, 10/10); D-1/D-2 tự tính lùi từ D-Day.</span>
+      <span>Memberday: <input type="number" id="memberday-input" value="${STATE.dayStageConfig.memberDay}" min="1" max="31" style="width:60px;"></span>
+      <span>Mini Spike: <input type="number" id="minispike-input" value="${STATE.dayStageConfig.miniSpike}" min="1" max="31" style="width:60px;"></span>
+      <button class="btn ghost" id="apply-daystage">Áp dụng</button>
+    </div>` : ''}
+  </div>
+  <div class="panel"><h3>${dimLabel} — tổng hợp có trọng số</h3><div class="tablewrap"><table><thead><tr>
+    <th>${dimLabel}</th><th class="num">Số phiên</th><th class="num">Giờ Live</th><th class="num">Người xem</th>
+    <th class="num">Engaged Rate<span class="tag derived">D</span>${dot('Engaged Rate')}</th><th class="num">ATC</th><th class="num">Đơn đặt</th>
+    <th class="num">Doanh thu đặt</th><th class="num">% Doanh thu${dot('% Doanh thu')}</th><th class="num">GMV/Giờ<span class="tag derived">D</span>${dot('GMV/Giờ')}</th><th class="num">GMV/Phiên<span class="tag derived">D</span>${dot('GMV/Phiên')}</th>
+  </tr></thead><tbody>`;
+  rows.forEach(r=>{
+    html += `<tr><td>${r.dim}</td><td class="num">${r.sessions}</td><td class="num">${P.fmtDec(r.hours,1)}</td><td class="num">${P.fmtInt(r.viewers)}</td>
+      <td class="num">${P.fmtPct(r.engagedViewerRate)}</td><td class="num">${P.fmtInt(r.atc)}</td><td class="num">${P.fmtInt(r.ordersPlaced)}</td>
+      <td class="num">${P.fmtMoney(r.revenuePlaced)}</td><td class="num">${P.fmtPct(r.revShare)}</td><td class="num">${P.fmtMoney(r.gmvPerHourPlaced)}</td><td class="num">${P.fmtMoney(r.gmvPerSessionPlaced)}</td>
+    </tr>`;
+  });
+  html += `</tbody></table></div>
+    <h4 style="font-size:12.5px;color:var(--ink-muted);margin:18px 0 8px;">Xu hướng GMV Trung bình/Giờ live theo ${dimLabel}${dot('GMV/Giờ')}</h4>
+    ${segmentGmvSVG(rows, dimLabel)}
+  </div>`;
+
+  html += aiSectionBlock('segment_'+dim, dimLabel + ' — Phân tích Nhóm & Xu hướng');
+
+  html += `<div class="panel"><h3>Playbook tham khảo chung theo Đòn bẩy</h3>
+  <p class="sub" style="margin-bottom:12px;">Bảng tra cứu chung (không phải insight tính từ dữ liệu hiện tại) — dùng khi cần thêm gợi ý kiểm tra theo từng đòn bẩy.</p>
+  <div class="tablewrap"><table><thead><tr><th>Đòn bẩy</th><th>Tín hiệu cần chú ý</th><th>Hướng kiểm tra gợi ý</th></tr></thead><tbody>
+    <tr><td class="text">Traffic</td><td class="text">Người xem / PCU thấp hơn benchmark toàn kênh</td><td class="text">Xem lại khung giờ lên live, tần suất live, kênh dẫn traffic vào phòng live</td></tr>
+    <tr><td class="text">Engagement</td><td class="text">Engaged Viewer Rate hoặc Bình luận thấp hơn benchmark</td><td class="text">Xem lại kịch bản tương tác, tốc độ trả lời bình luận, MC/host</td></tr>
+    <tr><td class="text">Conversion</td><td class="text">ATC hoặc Đơn/Người xem thấp hơn benchmark</td><td class="text">Xem lại giá, voucher, CTA chốt đơn, thời điểm giới thiệu sản phẩm</td></tr>
+    <tr><td class="text">AOV / Monetization</td><td class="text">Doanh thu/Đơn (proxy AOV) thấp hơn benchmark</td><td class="text">Xem lại combo/bundle, upsell, sản phẩm giá trị cao trong live</td></tr>
+    <tr><td class="text">Product</td><td class="text">Click cao nhưng Click→Order Rate thấp (quadrant HL)</td><td class="text">Rà lại giá/offer/CTA của đúng sản phẩm đó, xem tab Sản phẩm</td></tr>
+  </tbody></table></div></div>`;
+
+  el.innerHTML = html;
+  document.querySelectorAll('.ai-trigger-btn').forEach(b=> b.onclick = runAIInsightV2);
+  el.querySelectorAll('[data-dim]').forEach(btn=> btn.onclick = ()=>{ STATE.segmentDim = btn.dataset.dim; renderAll(); });
+  const applyBtn = document.getElementById('apply-timeslots');
+  if(applyBtn) applyBtn.onclick = ()=>{
+    const raw = document.getElementById('timeslot-input').value;
+    const edges = raw.split(',').map(s=>parseFloat(s.trim())).filter(n=>!isNaN(n) && n>=0 && n<=24).sort((a,b)=>a-b);
+    if(edges.length){
+      STATE.timeSlotEdges = edges;
+      renderAll();
+    }
+  };
+  const applyDS = document.getElementById('apply-daystage');
+  if(applyDS) applyDS.onclick = ()=>{
+    const md = parseInt(document.getElementById('memberday-input').value,10);
+    const ms = parseInt(document.getElementById('minispike-input').value,10);
+    STATE.dayStageConfig = {
+      enableDDay: true,
+      memberDay: (!isNaN(md) && md>=1 && md<=31) ? md : STATE.dayStageConfig.memberDay,
+      miniSpike: (!isNaN(ms) && ms>=1 && ms<=31) ? ms : STATE.dayStageConfig.miniSpike,
+    };
+    renderAll();
+  };
+}
+
+function segmentGmvSVG(rows, dimLabel){
+  const data = rows.filter(r=> r.gmvPerHourPlaced!==null && r.gmvPerHourPlaced!==undefined);
+  if(!data.length) return '<div class="empty">Không đủ dữ liệu để vẽ.</div>';
+  const W=1080, H=240, padL=60, padB=54, padT=10;
+  const max = Math.max(...data.map(r=>r.gmvPerHourPlaced||0), 1);
+  const bw = (W-padL-10)/data.length;
+  const bars = data.map((r,i)=>{
+    const h = ((r.gmvPerHourPlaced||0)/max)*(H-padT-padB);
+    const x = padL + i*bw + bw*0.15;
+    const y = H-padB-h;
+    return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${(bw*0.7).toFixed(1)}" height="${h.toFixed(1)}" fill="var(--accent)" opacity="0.85"><title>${r.dim}: ${RawParser.fmtMoney(r.gmvPerHourPlaced)} / giờ (${r.sessions} phiên, ${RawParser.fmtDec(r.hours,1)} giờ)</title></rect>`;
+  }).join('');
+  const labels = data.map((r,i)=>{
+    const x = padL + i*bw + bw/2;
+    const y = H-padB+14;
+    const lbl = r.dim.length>16 ? r.dim.slice(0,15)+'…' : r.dim;
+    return `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="end" font-size="9.5" fill="var(--ink-faint)" font-family="var(--mono)" transform="rotate(-35 ${x.toFixed(1)} ${y.toFixed(1)})">${lbl}</text>`;
+  }).join('');
+  return `<svg class="svgchart" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+    <line x1="${padL}" y1="${H-padB}" x2="${W-10}" y2="${H-padB}" stroke="var(--border)"/>
+    ${bars}${labels}
+  </svg>
+  <div class="legend"><span><span class="dot" style="background:var(--accent)"></span>GMV Trung bình/Giờ (Đặt) theo ${dimLabel}</span></div>`;
+}
+
+function trendSVG(days){
+  if(!days.length) return '<div class="empty">Chưa có dữ liệu ngày hợp lệ.</div>';
+  const W = 1080, H = 240, padL=50, padB=42, padT=10;
+  const max = Math.max(...days.map(d=>d.revenuePlaced||0), 1);
+  const bw = (W-padL-10)/days.length;
+  const bm = days.length ? days.reduce((a,d)=>a+(d.revenuePlaced||0),0)/days.length : null;
+  const bars = days.map((d,i)=>{
+    const h = ((d.revenuePlaced||0)/max)*(H-padT-padB);
+    const x = padL + i*bw + bw*0.15;
+    const y = H-padB-h;
+    return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${(bw*0.7).toFixed(1)}" height="${h.toFixed(1)}" fill="var(--accent)" opacity="0.85"><title>${d.date}: ${RawParser.fmtMoney(d.revenuePlaced)} (${d.sessions} phiên)</title></rect>`;
+  }).join('');
+  const labels = days.map((d,i)=>{
+    const x = padL + i*bw + bw/2;
+    const y = H-padB+14;
+    const day = parseInt(d.date.slice(8,10),10) || d.date;
+    return `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="end" font-size="9.5" fill="var(--ink-faint)" font-family="var(--mono)" transform="rotate(-35 ${x.toFixed(1)} ${y.toFixed(1)})">${day}</text>`;
+  }).join('');
+  let bmLine = '';
+  if(bm){
+    const y = H-padB-((bm/max)*(H-padT-padB));
+    bmLine = `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W-10}" y2="${y.toFixed(1)}" stroke="var(--derived)" stroke-width="1.5" stroke-dasharray="4,3"/><text x="${W-10}" y="${(y-5).toFixed(1)}" text-anchor="end" font-size="10.5" fill="var(--derived)" font-family="var(--mono)">Benchmark ${RawParser.fmtMoney(bm)}</text>`;
+  }
+  return `<svg class="svgchart" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+    <line x1="${padL}" y1="${H-padB}" x2="${W-10}" y2="${H-padB}" stroke="var(--border)"/>
+    ${bars}${labels}${bmLine}
+  </svg>
+  <div class="legend"><span><span class="dot" style="background:var(--accent)"></span>Doanh thu (Đặt) theo ngày</span><span><span class="dot" style="background:var(--derived)"></span>Benchmark = trung bình các ngày có live</span></div>`;
+}
+
+/* ---------- Benchmark View ---------- */
+function renderBenchmark(){
+  const el = document.getElementById('view-benchmark');
+  if(!STATE.benchmark || (!STATE.benchmark.session.n && !STATE.benchmark.product.n)){ el.innerHTML = emptyState('Benchmark & Driver','Tải ít nhất Live List hoặc Product List để tính benchmark.'); return; }
+  const P = RawParser;
+  let html = `<h2 class="pagetitle">Benchmark & GMV Driver</h2>
+  <p class="sub">Benchmark = trung bình cộng (mean) toàn bộ session/sản phẩm trong kỳ đã tải (Same period / Full channel, theo Blueprint mục 13). Không dùng ngưỡng tuyệt đối cố định cho Good/Low.</p>
+  <div class="panel">
+    <h3>Cấu hình</h3>
+    <div class="qtybox">Ngưỡng biến động có ý nghĩa để gắn nhãn "driver candidate":
+      <input type="number" id="materiality-input" value="${STATE.materialityPct}" min="1" max="100"> %
+      <button class="btn ghost" id="apply-materiality">Áp dụng</button>
+    </div>
+  </div>`;
+
+  if(STATE.benchmark.session.n){
+    html += `<div class="panel"><h3>Session — Top & Bottom Doanh thu vs Benchmark</h3>${driverTable(STATE.driver.sessionTop,'session',true)}${driverTable(STATE.driver.sessionBottom,'session',false)}</div>`;
+  }
+  if(STATE.benchmark.product.n){
+    html += `<div class="panel"><h3>Sản phẩm — Top & Bottom Doanh thu vs Benchmark</h3>${driverTable(STATE.driver.productTop,'product',true)}${driverTable(STATE.driver.productBottom,'product',false)}</div>`;
+  }
+  el.innerHTML = html;
+  const applyBtn = document.getElementById('apply-materiality');
+  if(applyBtn) applyBtn.onclick = ()=>{
+    const v = parseFloat(document.getElementById('materiality-input').value);
+    if(!isNaN(v) && v>0){ STATE.materialityPct = v; recompute(); renderAll(); }
+  };
+}
+
+function driverTable(list, kind, isTop){
+  if(!list.length) return '';
+  const P = RawParser;
+  const nameOf = d => kind==='session' ? (d.row.name||'N/A') : d.row.productName;
+  let html = `<h4 style="font-size:12.5px;color:var(--ink-muted);margin:14px 0 8px;">${isTop?'Top 3 doanh thu cao nhất':'Bottom 3 doanh thu thấp nhất'}</h4>
+  <div class="tablewrap"><table><thead><tr><th>${kind==='session'?'Buổi live':'Sản phẩm'}</th><th class="num">Doanh thu đặt</th><th>Driver candidate lệch benchmark rõ nhất${dot('Driver candidate')}</th></tr></thead><tbody>`;
+  list.forEach(d=>{
+    const driverTxt = d.primary
+      ? `${d.primary.label}: ${P.fmtDec(d.primary.actual,2)} vs bench ${P.fmtDec(d.primary.bench,2)} <span class="tag ${d.primary.pct>0?'good':'alert'}">${d.primary.pct>0?'+':''}${P.fmtPct(d.primary.pct)}</span>`
+      : `<span style="color:var(--ink-faint);font-style:italic;">Chưa đủ dữ liệu để kết luận</span>`;
+    html += `<tr><td class="text">${nameOf(d)}</td><td class="num">${P.fmtMoney(d.row.revenuePlaced)}</td><td class="text">${driverTxt}</td></tr>`;
+  });
+  html += `</tbody></table></div>`;
+  return html;
+}
+
+/* ---------- AI Insight computation — gắn theo từng Tab (02/03/04/05) ---------- */
+function computeOverviewInsightData(){
+  const S = STATE;
+  if(!S.overview || !S.overview.blocks[0] || !S.overview.blocks[0].rows[0]) return null;
+  const row = S.overview.blocks[0].rows[0];
+  const pick = groupSubstr => { for(const g in row.metricsByGroup){ if(g.indexOf(groupSubstr)!==-1) return row.metricsByGroup[g]; } return []; };
+  const findIn = (groupSubstr, header) => { const arr = pick(groupSubstr); const m = arr.find(x=>x.header===header); return m||null; };
+  const toPairs = arr => arr.map(m=>({metric:m.header, value:m.raw}));
+  const funnelMetrics = toPairs(pick('Tỷ lệ chuyển đổi - Phễu Chuyển Đổi'));
+  const perfMetrics = toPairs(pick('Tỷ lệ chuyển đổi - Hiệu suất'));
+  const engagementMetrics = toPairs(pick('Sự tương tác'));
+  const promoMetrics = toPairs(pick('Khuyến mãi'));
+  const trafficGroup = pick('Nguồn Truy Cập');
+  const find2 = h => trafficGroup.find(m=>m.header===h);
+  const a=find2('Lượt xem Live'), b=find2('Người xem live'), c=find2('Số người xem tương tác');
+  const viewToViewerRate = (a&&b&&a.num) ? b.num/a.num : null;
+  const viewerToEngagedRate = (b&&c&&b.num) ? c.num/b.num : null;
+  const newP = findIn('Giao dịch','Doanh số từ Khách hàng Mới(Đơn đã đặt)');
+  const oldP = findIn('Giao dịch','Doanh số từ Khách hàng Cũ(Đơn đã đặt)');
+  const customerSplit = (newP && oldP && (newP.num+oldP.num)) ? { newSharePlaced: newP.num/(newP.num+oldP.num), oldSharePlaced: oldP.num/(newP.num+oldP.num) } : null;
+  return { timeframe: row.timeframe, viewToViewerRate, viewerToEngagedRate, funnelMetrics, perfMetrics, engagementMetrics, promoMetrics, customerSplit };
+}
+
+function computeSessionInsightData(){
+  const S = STATE;
+  if(!S.session || !S.session.rows.length) return null;
+  const rows = S.session.rows;
+  const totalRevenue = rows.reduce((a,r)=>a+(r.revenuePlaced||0),0);
+  const withRev = rows.filter(r=>r.revenuePlaced!=null).sort((a,b)=>b.revenuePlaced-a.revenuePlaced);
+  const best = withRev[0] || null, worst = withRev.length? withRev[withRev.length-1] : null;
+  const dayStageBm = LiveSegmentEngine.buildDayStageBenchmarks(rows, S.dayStageConfig);
+  const dailyBenchmark = dayStageBm['Daily'] ? dayStageBm['Daily'].avgGmvPerHour : null;
+  const dailyBenchmarkSessions = dayStageBm['Daily'] ? dayStageBm['Daily'].sessions : 0;
+  const aboveCount = (dailyBenchmark!=null) ? rows.filter(r=> r.derived.gmvPerHourPlaced!=null && r.derived.gmvPerHourPlaced>=dailyBenchmark).length : null;
+  const abovePct = (aboveCount!=null && rows.length) ? aboveCount/rows.length : null;
+  const bestShare = (best && totalRevenue) ? best.revenuePlaced/totalRevenue : null;
+  const factorOf = r => {
+    if(!r) return null;
+    const stage = LiveSegmentEngine.dayStage(r.startAt, S.dayStageConfig);
+    const stageBm = dayStageBm[stage] ? dayStageBm[stage].avgGmvPerHour : null;
+    return {
+      name: r.name, revenuePlaced: r.revenuePlaced, hours: r.durationSec? r.durationSec/3600 : null,
+      gmvPerHourPlaced: r.derived.gmvPerHourPlaced, startRaw: r.startRaw,
+      weekday: r.startAt? LiveSegmentEngine.weekdayVN(r.startAt): null,
+      timeSlot: LiveSegmentEngine.timeSlot(r.startAt, S.timeSlotEdges),
+      dayStage: stage, ownDayStageBenchmarkGmvPerHour: stageBm,
+      vsOwnDayStageBenchmarkPct: (stageBm && r.derived.gmvPerHourPlaced!=null) ? (r.derived.gmvPerHourPlaced-stageBm)/stageBm : null,
+    };
+  };
+  const byWeekday = LiveSegmentEngine.build(rows,'weekday');
+  const byTimeSlot = LiveSegmentEngine.build(rows,'timeSlot');
+  const topWeekday = [...byWeekday].sort((a,b)=>(b.gmvPerHourPlaced||0)-(a.gmvPerHourPlaced||0))[0]||null;
+  const topTimeSlot = [...byTimeSlot].sort((a,b)=>(b.gmvPerHourPlaced||0)-(a.gmvPerHourPlaced||0))[0]||null;
+  const byDayStage = LiveSegmentEngine.build(rows,'dayStage').map(s=>({dim:s.dim, sessions:s.sessions, hours:s.hours, gmvPerHourPlaced:s.gmvPerHourPlaced, revenuePlaced:s.revenuePlaced, engagedViewerRate:s.engagedViewerRate,
+    vsDailyBenchmarkPct: (dailyBenchmark && s.gmvPerHourPlaced!=null) ? (s.gmvPerHourPlaced-dailyBenchmark)/dailyBenchmark : null }));
+  const viewers = rows.reduce((a,r)=>a+(r.viewers||0),0);
+  const engaged = rows.reduce((a,r)=>a+(r.engagedViewers||0),0);
+  const comments = rows.reduce((a,r)=>a+(r.comments||0),0);
+  const watchWeighted = rows.reduce((a,r)=>a+((r.avgWatchSec||0)*(r.viewers||0)),0);
+  const avgWatch = viewers? watchWeighted/viewers : null;
+  const withRate = rows.filter(r=>r.derived.engagedViewerRate!=null).sort((a,b)=>b.derived.engagedViewerRate-a.derived.engagedViewerRate);
+  const k = Math.min(3, withRate.length);
+  const top = withRate.slice(0,k), bottom = withRate.slice(withRate.length-k);
+  const convOf = arr=>{ const v=arr.reduce((a,r)=>a+(r.viewers||0),0); const o=arr.reduce((a,r)=>a+(r.ordersPlaced||0),0); return v? o/v : null; };
+  const avgOf = arr=> arr.length? arr.reduce((a,r)=>a+r.derived.engagedViewerRate,0)/arr.length : null;
+  return { totalRevenue, totalSessions: rows.length, best: factorOf(best), worst: factorOf(worst),
+    benchmarkNote: 'Toàn bộ so sánh benchmark ở đây dùng GMV/GIỜ (không dùng GMV/phiên) vì các phiên không cùng thời lượng, so theo phiên sẽ thiên vị phiên live dài. "dailyBenchmark" = GMV/giờ trung bình CHỈ tính trên các phiên loại Daily (đã loại trừ D-Day/D-1/D-2/Mini Spike/Mini Spike -1/Memberday). "abovePct" đếm số phiên (thuộc mọi loại ngày) có GMV/giờ đạt ≥ dailyBenchmark này. Mỗi phiên trong best/worst còn có "ownDayStageBenchmarkGmvPerHour" là chuẩn GMV/giờ đúng loại ngày của chính phiên đó (ví dụ phiên D-Day so với benchmark GMV/giờ của riêng D-Day, không so với benchmark Daily). Lưu ý: best/worst vẫn chọn theo revenuePlaced (đóng góp tuyệt đối), còn hiệu suất/giờ dùng field gmvPerHourPlaced đi kèm.',
+    dailyBenchmark, dailyBenchmarkSessions, aboveCount, abovePct, bestShare,
+    topWeekday: topWeekday?{dim:topWeekday.dim, gmvPerHourPlaced:topWeekday.gmvPerHourPlaced}:null,
+    topTimeSlot: topTimeSlot?{dim:topTimeSlot.dim, gmvPerHourPlaced:topTimeSlot.gmvPerHourPlaced}:null,
+    byDayStage,
+    engagedViewerRate: viewers? engaged/viewers : null, avgWatch, comments,
+    topEngageRate: avgOf(top), bottomEngageRate: avgOf(bottom), topConvRate: convOf(top), bottomConvRate: convOf(bottom) };
+}
+
+function computeProductInsightData(){
+  const S = STATE;
+  if(!S.product || !S.product.rows.length) return null;
+  const rows = [...S.product.rows].sort((a,b)=>(b.revenuePlaced||0)-(a.revenuePlaced||0));
+  const top5 = rows.slice(0,5).map(r=>({productName:r.productName, revenuePlaced:r.revenuePlaced, ordersPlaced:r.ordersPlaced, clickToOrderRatePlaced:r.derived.clickToOrderRatePlaced, quadrant:r.quadrant}));
+  const improve = S.product.rows.filter(r=>r.quadrant==='HL').sort((a,b)=>(b.clicks||0)-(a.clicks||0)).slice(0,5)
+    .map(r=>({productName:r.productName, clicks:r.clicks, atc:r.atc, ordersPlaced:r.ordersPlaced, clickToOrderRatePlaced:r.derived.clickToOrderRatePlaced}));
+  const totalClicks = S.product.rows.reduce((a,r)=>a+(r.clicks||0),0);
+  const totalAtcP = S.product.rows.reduce((a,r)=>a+(r.atc||0),0);
+  const totalOrdersP = S.product.rows.reduce((a,r)=>a+(r.ordersPlaced||0),0);
+  const productAtcToOrderRate = totalAtcP? totalOrdersP/totalAtcP : null;
+  let sessionAtcToOrderRate = null;
+  if(S.session && S.session.rows.length){
+    const atc = S.session.rows.reduce((a,r)=>a+(r.atc||0),0);
+    const ord = S.session.rows.reduce((a,r)=>a+(r.ordersPlaced||0),0);
+    sessionAtcToOrderRate = atc? ord/atc : null;
+  }
+  const skuMix = LiveSegmentEngine.buildSkuTypeSummary(S.product.rows).map(s=>({type:s.type, revShare:s.revShare, skuCount:s.skuCount}));
+  return { totalProducts: S.product.rows.length, top5, improve, productAtcToOrderRate, sessionAtcToOrderRate, skuMix };
+}
+
+function computeSegmentDimInsightData(dimKey){
+  const S = STATE;
+  if(!S.session || !S.session.rows.length) return null;
+  const allRows = S.session.rows;
+  const dayStageBm = LiveSegmentEngine.buildDayStageBenchmarks(allRows, S.dayStageConfig);
+  const dailyBenchmark = dayStageBm['Daily'] ? dayStageBm['Daily'].avgGmvPerHour : null;
+  const dailyBenchmarkSessions = dayStageBm['Daily'] ? dayStageBm['Daily'].sessions : 0;
+
+  if(dimKey === 'dayStage'){
+    const segRows = LiveSegmentEngine.build(allRows, 'dayStage');
+    const ranked = [...segRows].sort((a,b)=>(b.gmvPerHourPlaced||0)-(a.gmvPerHourPlaced||0)).map((r,i)=>({
+      priority: i+1, dim: r.dim, sessions: r.sessions, hours: r.hours, viewers: r.viewers, engagedViewerRate: r.engagedViewerRate,
+      atc: r.atc, ordersPlaced: r.ordersPlaced, revenuePlaced: r.revenuePlaced,
+      gmvPerHourPlaced: r.gmvPerHourPlaced,
+      vsDailyBenchmarkPct: (dailyBenchmark && r.gmvPerHourPlaced!=null) ? (r.gmvPerHourPlaced-dailyBenchmark)/dailyBenchmark : null,
+    }));
+    return {
+      dimLabel: LiveSegmentEngine.dimLabels.dayStage,
+      benchmarkNote: 'Xếp hạng và so sánh dùng GMV/GIỜ (không dùng GMV/phiên) vì các phiên không cùng thời lượng — nếu so theo phiên sẽ thiên vị các phiên live kéo dài. Mỗi loại ngày so với "dailyBenchmark" = GMV/giờ trung bình CHỈ tính trên các phiên Daily (ngày thường, đã loại trừ mọi loại campaign) — không so với trung bình toàn kênh vì bị chính các ngày campaign kéo lệch lên.',
+      dailyBenchmark, dailyBenchmarkSessions, ranked,
+    };
+  }
+
+  // weekday / weekOfMonth / timeSlot: chuẩn chính là chỉ dùng phiên Daily, xếp hạng và so sánh theo GMV/Giờ
+  const dailyOnlyRows = allRows.filter(r=> LiveSegmentEngine.dayStage(r.startAt, S.dayStageConfig)==='Daily');
+  const segDailyOnly = LiveSegmentEngine.build(dailyOnlyRows, dimKey);
+  const ranked = [...segDailyOnly].sort((a,b)=>(b.gmvPerHourPlaced||0)-(a.gmvPerHourPlaced||0)).map((r,i)=>({
+    priority: i+1, dim: r.dim, sessions: r.sessions, hours: r.hours, viewers: r.viewers, engagedViewerRate: r.engagedViewerRate,
+    atc: r.atc, ordersPlaced: r.ordersPlaced, revenuePlaced: r.revenuePlaced,
+    gmvPerHourPlaced: r.gmvPerHourPlaced,
+    vsBenchmarkPct: (dailyBenchmark && r.gmvPerHourPlaced!=null) ? (r.gmvPerHourPlaced-dailyBenchmark)/dailyBenchmark : null,
+  }));
+
+  const segAll = LiveSegmentEngine.build(allRows, dimKey);
+  const rankedIncludingAllSessionsForReference = [...segAll].sort((a,b)=>(b.gmvPerHourPlaced||0)-(a.gmvPerHourPlaced||0)).map((r,i)=>({
+    priority: i+1, dim: r.dim, sessions: r.sessions, gmvPerHourPlaced: r.gmvPerHourPlaced,
+  }));
+  const topDailyOnly = ranked[0] || null;
+  const topIncludingAllSessions = rankedIncludingAllSessionsForReference[0] || null;
+  const confoundedByCampaignDay = !!(topDailyOnly && topIncludingAllSessions && topDailyOnly.dim !== topIncludingAllSessions.dim);
+
+  return {
+    dimLabel: LiveSegmentEngine.dimLabels[dimKey],
+    benchmarkNote: 'Xếp hạng và so sánh dùng GMV/GIỜ (không dùng GMV/phiên) vì các phiên không cùng thời lượng. Bảng "ranked" CHỈ dùng phiên loại Daily (đã loại trừ D-Day/D-1/D-2/Mini Spike/Mini Spike -1/Memberday) và so với "dailyBenchmark" = GMV/giờ trung bình của riêng nhóm Daily — không dùng trung bình toàn kênh vì bị các ngày campaign kéo lệch. "rankedIncludingAllSessionsForReference" chỉ để đối chiếu xem có bị nhiễu bởi ngày campaign hay không (xem field confoundedByCampaignDay).',
+    dailyBenchmark, dailyBenchmarkSessions, ranked,
+    topDailyOnly, topIncludingAllSessions, confoundedByCampaignDay,
+    rankedIncludingAllSessionsForReference,
+  };
+}
+
+/* ---------- Shared AI trigger + block (nhúng vào cuối mỗi tab / mỗi chiều phân tích) ---------- */
+function aiSectionBlock(key, label){
+  const has = STATE.aiSections && STATE.aiSections[key];
+  return `<div class="panel">
+    <h3>✨ AI Insight — ${label}</h3>
+    <button class="btn accent ai-trigger-btn">${STATE._aiGenerated? '🔄 Tạo lại AI Insight (áp dụng cho tất cả các tab & từng chiều phân tích)' : '✨ Tạo AI Insight (áp dụng cho tất cả các tab & từng chiều phân tích)'}</button>
+    <div class="aiwrap ${has?'':'placeholder'}" id="ai-block-${key}" style="margin-top:12px;">${has? mdLite(STATE.aiSections[key]) : 'Chưa tạo — bấm nút phía trên (bấm từ tab nào cũng được).'}</div>
+  </div>`;
+}
+
+function mdLite(text){
+  let h = text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/^### (.*)$/gm,'<h4>$1</h4>')
+    .replace(/^## (.*)$/gm,'<h4>$1</h4>')
+    .replace(/^# (.*)$/gm,'<h4>$1</h4>')
+    .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+    .replace(/^- (.*)$/gm,'<li>$1</li>')
+    .replace(/(<li>.*<\/li>\n?)+/g, m=>'<ul>'+m+'</ul>')
+    .replace(/\n\n/g,'</p><p>')
+    .replace(/\n/g,'<br>');
+  return '<p>'+h+'</p>';
+}
+
+const SECTION_KEY_MAP = {
+  OVERVIEW:'overview', SESSION:'session', PRODUCT:'product',
+  SEGMENT_WEEKDAY:'segment_weekday', SEGMENT_WEEKOFMONTH:'segment_weekOfMonth',
+  SEGMENT_TIMESLOT:'segment_timeSlot', SEGMENT_DAYSTAGE:'segment_dayStage',
+};
+function parseSectionedAIResponse(text){
+  const out = {}; Object.values(SECTION_KEY_MAP).forEach(k=> out[k]='');
+  const re = /###\s*SECTION_([A-Z_]+)\s*\n?([\s\S]*?)(?=###\s*SECTION_[A-Z_]+|$)/g;
+  let m; let found = false;
+  while((m = re.exec(text))){
+    const key = SECTION_KEY_MAP[m[1]];
+    if(key){ out[key] = m[2].trim(); found = true; }
+  }
+  if(!found) out.overview = text.trim();
+  return out;
+}
+
+async function runAIInsightV2(){
+  const btns = document.querySelectorAll('.ai-trigger-btn');
+  const keys = Object.values(SECTION_KEY_MAP);
+  const data = {
+    overview: computeOverviewInsightData(),
+    session: computeSessionInsightData(),
+    product: computeProductInsightData(),
+    segment_weekday: computeSegmentDimInsightData('weekday'),
+    segment_weekOfMonth: computeSegmentDimInsightData('weekOfMonth'),
+    segment_timeSlot: computeSegmentDimInsightData('timeSlot'),
+    segment_dayStage: computeSegmentDimInsightData('dayStage'),
+  };
+  STATE._insightData = data;
+  const sample = window.claude ? await window.claude.use('sample') : null;
+  if(!sample){
+    keys.forEach(k=>{
+      const elb = document.getElementById('ai-block-'+k);
+      if(elb){ elb.classList.remove('placeholder'); elb.innerHTML = mdLite('**AI Insight không khả dụng trong chế độ xem này** — cần mở trong Claude viewer có quyền "sample". Data Summary phía trên mỗi tab vẫn đầy đủ vì tính bằng công thức, không phụ thuộc AI.'); }
+    });
+    return;
+  }
+  btns.forEach(b=>{ b.disabled = true; b.textContent = 'Đang tạo...'; });
+  keys.forEach(k=>{
+    const elb = document.getElementById('ai-block-'+k);
+    if(elb){ elb.classList.remove('placeholder'); elb.textContent = 'Đang phân tích...'; }
+  });
+
+  const prompt = `Bạn là chuyên gia vận hành Shopee Livestream, hỗ trợ viết phần Insight & Action cho báo cáo nội bộ, đặt trực tiếp bên dưới từng tab / từng chiều phân tích tương ứng — KHÔNG được gộp chung nhiều chiều vào 1 nhận định chung chung.
+
+QUY TẮC BẮT BUỘC (không được vi phạm):
+- Chỉ dùng đúng số liệu trong DATA SUMMARY từng mục dưới đây. KHÔNG bịa số liệu, KHÔNG tự tính lại, KHÔNG thêm metric ngoài dữ liệu được cung cấp.
+- Nếu một mục có giá trị null/N/A hoặc mảng rỗng, PHẢI nói rõ "chưa đủ dữ liệu để kết luận" ở đúng phần đó, không suy đoán thay.
+- QUY TẮC CHUNG VỀ CỠ MẪU: ở bất kỳ mục nào có field "sessions", nếu nhóm đang được chọn làm "tốt nhất"/"ưu tiên 1" có sessions ≤ 2, PHẢI cảnh báo rõ mẫu quá nhỏ để kết luận chắc chắn (ví dụ: "chỉ dựa trên X phiên nên độ tin cậy chưa cao"), không khẳng định chắc nịch. Áp dụng cho cả byDayStage (mục SESSION) lẫn "ranked" (4 mục SEGMENT_*).
+- MỤC PRODUCT: khi so sánh productAtcToOrderRate với sessionAtcToOrderRate, chỉ nêu chênh lệch và gợi ý hướng kiểm tra, không khẳng định nguyên nhân chắc chắn nếu không có thêm bằng chứng.
+- 4 MỤC SEGMENT_* (WEEKDAY / WEEKOFMONTH / TIMESLOT / DAYSTAGE): mỗi mục PHẢI tập trung riêng vào đúng chiều đó — nêu rõ mục nào (trong field "ranked", đã sắp theo "priority" từ tốt nhất theo GMV/GIỜ) đang đứng đầu, các chỉ số cụ thể của mục đó (sessions, hours, gmvPerHourPlaced, engagedViewerRate, atc, ordersPlaced...), và so sánh % với benchmark (field "vsBenchmarkPct"/"vsDailyBenchmarkPct" — dương là cao hơn benchmark, âm là thấp hơn). LUÔN dùng GMV/Giờ (gmvPerHourPlaced) khi nói về hiệu suất, KHÔNG dùng GMV/phiên hay tổng doanh thu để so sánh giữa các nhóm, vì các phiên không cùng thời lượng nên so theo phiên sẽ thiên vị nhóm có phiên live dài. Nêu luôn thứ tự ưu tiên 2-3 mục kế tiếp nếu có ý nghĩa.
+- QUY TẮC BENCHMARK CHUNG (áp dụng mục SESSION và cả 4 mục SEGMENT_*): mọi field "vsBenchmarkPct"/"vsDailyBenchmarkPct"/"vsOwnDayStageBenchmarkPct" đều so theo GMV/GIỜ (gmvPerHourPlaced), với "dailyBenchmark" = GMV/giờ trung bình CHỈ tính trên các phiên Daily (ngày thường, đã loại trừ D-Day/D-1/D-2/Mini Spike/Mini Spike -1/Memberday). KHÔNG dùng GMV/phiên hay trung bình toàn kênh để so sánh hiệu suất, vì các phiên không cùng thời lượng nên so theo phiên sẽ thiên vị phiên/nhóm live dài hơn. Đọc field "benchmarkNote" trong data để hiểu đúng cách tính trước khi viết Insight.
+- RIÊNG MỤC SEGMENT_WEEKDAY / SEGMENT_WEEKOFMONTH / SEGMENT_TIMESLOT: field "ranked" đã CHỈ tính trên phiên Daily (căn cứ chính, đáng tin để lên lịch live thường ngày) — dùng field này để trả lời "mục nào tốt nhất". Field "rankedIncludingAllSessionsForReference" chỉ để đối chiếu xem có bị nhiễu bởi ngày campaign hay không. Nếu field "confoundedByCampaignDay" = true, PHẢI nói rõ: nếu tính luôn cả ngày campaign thì kết quả "tốt nhất" sẽ khác (do bị ngày campaign kéo lệch), nhưng con số đáng tin cậy cho vận hành thường ngày vẫn là "topDailyOnly". Nếu = false, xác nhận kết quả nhất quán, không bị nhiễu.
+- RIÊNG MỤC SEGMENT_DAYSTAGE: đây là mục duy nhất dùng toàn bộ phiên (mọi loại ngày) trong "ranked", vì mục đích là so sánh CÁC LOẠI NGÀY với nhau; mỗi loại so với dailyBenchmark để biết "lift" (mức tăng) hoặc sụt giảm so với ngày thường.
+- Viết tiếng Việt, giọng vận hành nội bộ, ngắn gọn, đúng trọng tâm, không lặp lại số liệu đã có trong Data Summary.
+- Với MỖI mục, chỉ viết đúng 2 dòng: một dòng bắt đầu bằng "💡 Insight:" và một dòng bắt đầu bằng "🚀 Action:". Không viết thêm phần nào khác, không thêm tiêu đề, không thêm gạch đầu dòng phụ.
+
+DATA SUMMARY — TAB "Tổng quan Kênh":
+${JSON.stringify(data.overview, null, 2)}
+
+DATA SUMMARY — TAB "Buổi Livestream" (benchmark theo giai đoạn ngày Daily/D-Day/Mini Spike và tương tác):
+${JSON.stringify(data.session, null, 2)}
+
+DATA SUMMARY — TAB "Sản phẩm":
+${JSON.stringify(data.product, null, 2)}
+
+DATA SUMMARY — Phân tích Nhóm, chiều "Thứ trong tuần" (đã kiểm soát nhiễu ngày campaign):
+${JSON.stringify(data.segment_weekday, null, 2)}
+
+DATA SUMMARY — Phân tích Nhóm, chiều "Tuần trong tháng":
+${JSON.stringify(data.segment_weekOfMonth, null, 2)}
+
+DATA SUMMARY — Phân tích Nhóm, chiều "Khung giờ live":
+${JSON.stringify(data.segment_timeSlot, null, 2)}
+
+DATA SUMMARY — Phân tích Nhóm, chiều "Giai đoạn ngày (D-Day/Memberday/Mini Spike)":
+${JSON.stringify(data.segment_dayStage, null, 2)}
+
+Trả lời ĐÚNG định dạng sau, không thêm chữ nào khác ngoài định dạng này:
+### SECTION_OVERVIEW
+💡 Insight: ...
+🚀 Action: ...
+
+### SECTION_SESSION
+💡 Insight: ...
+🚀 Action: ...
+
+### SECTION_PRODUCT
+💡 Insight: ...
+🚀 Action: ...
+
+### SECTION_SEGMENT_WEEKDAY
+💡 Insight: ...
+🚀 Action: ...
+
+### SECTION_SEGMENT_WEEKOFMONTH
+💡 Insight: ...
+🚀 Action: ...
+
+### SECTION_SEGMENT_TIMESLOT
+💡 Insight: ...
+🚀 Action: ...
+
+### SECTION_SEGMENT_DAYSTAGE
+💡 Insight: ...
+🚀 Action: ...`;
+
+  try{
+    const {text} = await sample(prompt, { modelTier:'default' });
+    const parsed = parseSectionedAIResponse(text);
+    STATE.aiSections = parsed;
+    STATE._aiGenerated = true;
+    keys.forEach(k=>{
+      const elb = document.getElementById('ai-block-'+k);
+      if(elb) elb.innerHTML = parsed[k] ? mdLite(parsed[k]) : mdLite('_AI không trả về nội dung cho mục này._');
+    });
+  }catch(e){
+    const copy = {
+      not_granted: 'Bạn đã từ chối cho phép trang này dùng Claude.',
+      rate_limited: 'Đang có quá nhiều yêu cầu, vui lòng thử lại sau ít phút.',
+      refused: 'Claude từ chối yêu cầu này. Vui lòng thử lại.',
+    };
+    const msg = 'Không tạo được AI Insight: ' + (copy[e.code] || e.message || 'Lỗi không xác định.');
+    keys.forEach(k=>{
+      const elb = document.getElementById('ai-block-'+k);
+      if(elb) elb.innerHTML = mdLite(msg);
+    });
+  }finally{
+    document.querySelectorAll('.ai-trigger-btn').forEach(b=>{ b.disabled = false; b.textContent = STATE._aiGenerated? '🔄 Tạo lại AI Insight (áp dụng cho tất cả các tab)' : '✨ Tạo AI Insight (áp dụng cho tất cả các tab: Tổng quan, Buổi Livestream, Sản phẩm, Phân tích Nhóm)'; });
+  }
+}
+
+
+/* ---------- Data Quality View ---------- */
+function dqSectionHTML(){
+  if(!STATE.dq) return '';
+  const dq = STATE.dq;
+  return `
+  <div class="panel">
+    <h3>Chất lượng dữ liệu</h3>
+    <p class="sub" style="margin-bottom:14px;">Không silently drop bất kỳ dòng nào. Mọi cảnh báo dưới đây chỉ mang tính thông báo — số liệu ở các tab khác vẫn tính trên toàn bộ dữ liệu đọc được.</p>
+    <h4 style="font-size:12.5px;color:var(--ink-muted);margin:0 0 8px;">File đã nhận diện</h4>
+    <div class="tablewrap"><table><thead><tr><th>Loại</th><th>Tên file</th><th>Sheet</th><th class="num">Số dòng</th></tr></thead><tbody>
+    ${dq.files.map(f=>`<tr><td>${f.type}</td><td class="text">${f.fileName}</td><td>${f.sheet}</td><td class="num">${f.rows}</td></tr>`).join('')}
+    </tbody></table></div>
+    <h4 style="font-size:12.5px;color:var(--ink-muted);margin:16px 0 8px;">Khoảng thời gian dữ liệu</h4>
+    ${dq.dateRanges.length? dq.dateRanges.map(d=>`<div class="dq-issue info">${d.file}: ${d.min.toLocaleDateString('vi-VN')} → ${d.max.toLocaleDateString('vi-VN')}</div>`).join('') : '<div class="empty">Không xác định được từ dữ liệu hiện có.</div>'}
+    <h4 style="font-size:12.5px;color:var(--ink-muted);margin:16px 0 8px;">Cảnh báo & kiểm tra chéo</h4>
+    ${dq.issues.map(i=>`<div class="dq-issue ${i.level}">${i.msg}</div>`).join('')}
+  </div>`;
+}
+
+/* ---------- Export View ---------- */
+function renderExport(){
+  const el = document.getElementById('view-export');
+  let html = `<h2 class="pagetitle">Xuất Excel</h2>
+  <p class="sub">Xuất file <b>Livestream_Channel_Report.xlsx</b> gồm các sheet: Overview, Session Performance, Product Performance, SKU Type Summary, Benchmark, Insights, AI_Insight (nếu đã tạo), 4 sheet Segment (Thứ/Tuần/Khung giờ/Giai đoạn ngày), Daily Trend, Action Playbook, <b>Weekly Report (Report theo Tuần — Live Self Channel)</b>, Data Quality, Calculation Logic.</p>
+  <div class="panel">
+    <h3>Sẵn sàng xuất</h3>
+    <div class="badgebar">
+      ${STATE.overview?'<span class="badge on">✓ Overview</span>':'<span class="badge">Overview</span>'}
+      ${STATE.session?'<span class="badge on">✓ Session Performance</span>':'<span class="badge">Session Performance</span>'}
+      ${STATE.product?'<span class="badge on">✓ Product Performance</span>':'<span class="badge">Product Performance</span>'}
+      ${STATE.product?'<span class="badge on">✓ SKU Type Summary</span>':'<span class="badge">SKU Type Summary</span>'}
+      ${STATE.benchmark&&(STATE.benchmark.session.n||STATE.benchmark.product.n)?'<span class="badge on">✓ Benchmark</span>':'<span class="badge">Benchmark</span>'}
+      ${STATE.insights?'<span class="badge on">✓ Insights</span>':'<span class="badge">Insights</span>'}
+      ${STATE.session?'<span class="badge on">✓ Segment (4 sheet)</span>':'<span class="badge">Segment (4 sheet)</span>'}
+      ${STATE.session?'<span class="badge on">✓ Daily Trend</span>':'<span class="badge">Daily Trend</span>'}
+      <span class="badge on">✓ Action Playbook</span>
+      ${STATE.session?'<span class="badge on">✓ Report theo Tuần — Live Self Channel</span>':'<span class="badge">Report theo Tuần — Live Self Channel (cần tải Live List)</span>'}
+      ${STATE.dq?'<span class="badge on">✓ Data Quality</span>':'<span class="badge">Data Quality</span>'}
+      <span class="badge on">✓ Calculation Logic</span>
+    </div>
+    <button class="btn accent" id="export-btn">⬇ Xuất Livestream_Channel_Report.xlsx</button>
+  </div>`;
+  el.innerHTML = html;
+  document.getElementById('export-btn').onclick = doExport;
+}
+
+async function doExport(){
+  const wb = ExportEngine.build();
+  const wbout = XLSX.write(wb, {bookType:'xlsx', type:'array'});
+  const blob = new Blob([wbout], {type:'application/octet-stream'});
+  const filename = 'Livestream_Channel_Report.xlsx';
+  const downloads = window.claude ? await window.claude.use('downloads') : null;
+  if(downloads){
+    try{ await downloads.save({filename, data: blob}); return; }catch(e){ /* fall through to anchor */ }
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+
+/* ---------- Master render ---------- */
+function renderAll(){
+  renderNav();
+  switchView();
+  renderUpload();
+  renderOverview();
+  renderSession();
+  renderProduct();
+  renderSegment();
+  renderBenchmark();
+  renderExport();
+}
+
+/* ---------- Global tooltip (fixed to viewport, không bị .tablewrap che) ---------- */
+function initGlobalTooltip(){
+  const tipEl = document.createElement('div');
+  tipEl.className = 'gtooltip';
+  document.body.appendChild(tipEl);
+  function place(target){
+    const tip = target.getAttribute('data-tip');
+    if(!tip) return;
+    tipEl.textContent = tip;
+    tipEl.style.display = 'block';
+    const r = target.getBoundingClientRect();
+    tipEl.style.left = (r.left + r.width/2) + 'px';
+    tipEl.style.top = Math.max(8, r.top - 8) + 'px';
+    requestAnimationFrame(()=>{
+      const tw = tipEl.offsetWidth, th = tipEl.offsetHeight;
+      let left = r.left + r.width/2 - tw/2;
+      left = Math.min(Math.max(8, left), window.innerWidth - tw - 8);
+      let top = r.top - th - 8;
+      if(top < 8) top = r.bottom + 8;
+      tipEl.style.left = left + 'px';
+      tipEl.style.top = top + 'px';
+    });
+  }
+  function hide(){ tipEl.style.display = 'none'; }
+  document.addEventListener('mouseover', e=>{ const t = e.target.closest('.infodot'); if(t) place(t); });
+  document.addEventListener('mouseout', e=>{ if(e.target.closest('.infodot')) hide(); });
+  document.addEventListener('focusin', e=>{ const t = e.target.closest('.infodot'); if(t) place(t); });
+  document.addEventListener('focusout', e=>{ if(e.target.closest('.infodot')) hide(); });
+  document.addEventListener('scroll', hide, true);
+}
+
+renderAll();
+initGlobalTooltip();
+</script>
+</body>
+</html>

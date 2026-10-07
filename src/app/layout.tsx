@@ -11,8 +11,8 @@ const jetbrains = JetBrains_Mono({ variable: "--font-jetbrains", subsets: ["lati
 export const instant = false;
 
 export const metadata: Metadata = {
-  title: "TTVH2 OS",
-  description: "Hệ thống quản trị Trung tâm Vận hành 2 — UpBase",
+  title: "Marketing Ecom",
+  description: "Marketing Ecom, Trung tâm Vận hành 2, UpBase",
   robots: { index: false, follow: false },
 };
 

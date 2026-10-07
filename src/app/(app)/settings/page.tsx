@@ -1,15 +1,27 @@
-import { Check, Minus } from "lucide-react";
 import Link from "next/link";
-import { MODULE_META } from "@/components/module-meta";
 import { notFound } from "next/navigation";
-import { Card, PageHeader, td, th } from "@/components/ui";
+import { MODULE_META } from "@/components/module-meta";
+import { Card, Notice, PageHeader, Tbd, td, th } from "@/components/ui";
 import { getUser, listTeams, listUsers } from "@/lib/data/repo";
 import type { Role } from "@/lib/data/types";
+import { KPI_DEFINITIONS } from "@/lib/kpi-definitions";
 import { canOpen, ROLE_MODULES, type ModuleKey } from "@/lib/rbac";
 import { getI18n, requireUser } from "@/lib/session";
 
 const ROLES: Role[] = ["director", "manager", "teamlead", "staff", "viewer", "brand"];
-const MODULES: ModuleKey[] = ["overview", "stores", "people", "planning", "tasks", "reports", "career", "knowledge", "settings"];
+const MODULES: ModuleKey[] = ["home", "overview", "stores", "people", "planning", "tasks", "reports", "career", "knowledge", "settings"];
+
+function Access({ allowed }: { allowed: boolean }) {
+  return allowed ? (
+    <svg width="12" height="12" viewBox="0 0 12 12" className="inline text-success" role="img" aria-label="yes">
+      <circle cx="6" cy="6" r="5" fill="currentColor" />
+    </svg>
+  ) : (
+    <svg width="12" height="12" viewBox="0 0 12 12" className="inline text-muted-soft" role="img" aria-label="no">
+      <path d="M2 6 H10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}
 
 export default async function SettingsPage() {
   const user = await requireUser();
@@ -21,16 +33,16 @@ export default async function SettingsPage() {
 
   return (
     <>
-      <PageHeader icon={MODULE_META.settings.icon} accent={MODULE_META.settings.accent} title={t.settings.title} subtitle={t.settings.subtitle} />
-      <p className="mb-6 rounded-md border border-hairline-strong bg-canvas px-4 py-3 text-[13px] text-body">
-        {t.settings.editNote}
-      </p>
+      <PageHeader accent={MODULE_META.settings.accent} title={t.settings.title} subtitle={t.settings.subtitle} />
+      <div className="mb-6">
+        <Notice>{t.settings.editNote}</Notice>
+      </div>
 
       <div className="space-y-6">
-        <Card index={1} title={t.settings.org} hint={`${people.length} ${t.common.people.toLowerCase()}`}>
+        <Card index={1} accent="purple" title={t.settings.org} hint={`${people.length} ${t.common.people.toLowerCase()}`}>
           <div className="mb-4 text-sm">
             <span className="font-semibold">{director?.name}</span>
-            <span className="text-body"> · {director?.title}</span>
+            <span className="text-body">. {director?.title}</span>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             {teams.map((team) => {
@@ -59,7 +71,7 @@ export default async function SettingsPage() {
           </div>
         </Card>
 
-        <Card index={2} title={t.settings.permissions} padded={false}>
+        <Card index={2} accent="cyan" title={t.settings.permissions} padded={false}>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="border-b border-hairline">
@@ -75,14 +87,10 @@ export default async function SettingsPage() {
               <tbody className="divide-y divide-hairline">
                 {ROLES.map((role) => (
                   <tr key={role}>
-                    <td className={`${td} font-medium`}>{t.roles[role]}</td>
+                    <td className={`${td} whitespace-nowrap font-medium`}>{t.roles[role]}</td>
                     {MODULES.map((m) => (
                       <td key={m} className={`${td} text-center`}>
-                        {ROLE_MODULES[role].includes(m) ? (
-                          <Check size={16} className="inline text-success" aria-label="yes" />
-                        ) : (
-                          <Minus size={16} className="inline text-muted-soft" aria-label="no" />
-                        )}
+                        <Access allowed={ROLE_MODULES[role].includes(m)} />
                       </td>
                     ))}
                   </tr>
@@ -91,6 +99,35 @@ export default async function SettingsPage() {
             </table>
           </div>
         </Card>
+
+        <section id="definitions" className="scroll-mt-20">
+          <Card index={3} accent="orange" title={t.settings.definitions} hint={t.settings.definitionsNote} padded={false}>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="border-b border-hairline">
+                  <tr>
+                    <th className={th}>{t.settings.colKpi}</th>
+                    <th className={th}>{t.settings.colFormula}</th>
+                    <th className={th}>{t.settings.colRollUp}</th>
+                    <th className={th}>{t.settings.colSource}</th>
+                    <th className={th}>{t.settings.colStatus}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-hairline">
+                  {KPI_DEFINITIONS.map((d) => (
+                    <tr key={d.key}>
+                      <td className={`${td} whitespace-nowrap font-medium`}>{d.name}</td>
+                      <td className={`${td} min-w-56 text-body`}>{d.workingFormula}</td>
+                      <td className={`${td} min-w-48 text-body`}>{d.rollUp}</td>
+                      <td className={`${td} whitespace-nowrap text-muted`}>{d.source ?? t.common.notConfigured}</td>
+                      <td className={td}>{d.status === "tbd" ? <Tbd /> : "OK"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </section>
       </div>
     </>
   );

@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { MODULE_META } from "@/components/module-meta";
 import { notFound } from "next/navigation";
-import { Card, EmptyState, PageHeader, StatusLabel, td, th } from "@/components/ui";
+import { MODULE_META } from "@/components/module-meta";
+import { Card, EmptyState, Notice, PageHeader, StatusLabel, Tbd, td, tdNum, th } from "@/components/ui";
 import { money, monthLabel, pct, ratio } from "@/lib/format";
 import { currentMonth } from "@/lib/metrics";
 import { canOpen, isLeader } from "@/lib/rbac";
@@ -12,16 +12,16 @@ export default async function StoresPage() {
   const user = await requireUser();
   if (!canOpen(user, "stores")) notFound();
   const { locale, t } = await getI18n();
-  const rows = storeRows(user).sort((a, b) => b.kpis.gmv - a.kpis.gmv);
+  // Missing GMV sorts last, never as if it were 0.
+  const rows = storeRows(user).sort((a, b) => (b.kpis.gmv ?? -Infinity) - (a.kpis.gmv ?? -Infinity));
   const showOwners = isLeader(user.role);
 
   return (
     <>
       <PageHeader
-        icon={MODULE_META.stores.icon}
         accent={MODULE_META.stores.accent}
         title={t.stores.title}
-        subtitle={`${t.stores.subtitle} · ${t.common.mtd} ${monthLabel(currentMonth(), locale)} · ${rows.length} ${t.common.stores.toLowerCase()}`}
+        subtitle={`${t.stores.subtitle}. ${t.common.mtd} ${monthLabel(currentMonth(), locale)}. ${rows.length} ${t.common.stores.toLowerCase()}.`}
       />
       <Card index={1} padded={false}>
         {rows.length === 0 ? (
@@ -35,29 +35,40 @@ export default async function StoresPage() {
                   <th className={th}>{t.common.channel}</th>
                   {showOwners && <th className={th}>{t.common.owner}</th>}
                   <th className={`${th} text-right`}>{t.kpi.gmv}</th>
-                  <th className={`${th} text-right`}>{t.common.achievement}</th>
-                  <th className={`${th} text-right`}>{t.kpi.cr}</th>
-                  <th className={`${th} text-right`}>{t.kpi.roi}</th>
+                  <th className={`${th} text-right`}>
+                    {t.common.achievement}
+                    <Tbd />
+                  </th>
+                  <th className={`${th} text-right`}>
+                    {t.kpi.cr}
+                    <Tbd />
+                  </th>
+                  <th className={`${th} text-right`}>
+                    {t.kpi.roi}
+                    <Tbd />
+                  </th>
                   <th className={th}>{t.common.pace}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-hairline">
                 {rows.map((r) => (
                   <tr key={r.store.id} className="hover:bg-canvas-soft">
-                    <td className={td}>
+                    <td className={`${td} min-w-44`}>
                       <Link href={`/stores/${r.store.id}`} className="font-medium hover:text-link">
                         {r.store.name}
                       </Link>
                       <div className="text-[13px] text-muted">{r.brand?.category}</div>
                     </td>
-                    <td className={`${td} text-body`}>{t.channel[r.store.channel]}</td>
+                    <td className={`${td} whitespace-nowrap text-body`}>{t.channel[r.store.channel]}</td>
                     {showOwners && (
-                      <td className={`${td} text-body`}>{r.owners.map((o) => o.name).join(", ") || t.common.none}</td>
+                      <td className={`${td} whitespace-nowrap text-body`}>
+                        {r.owners.map((o) => o.name).join(", ") || t.common.none}
+                      </td>
                     )}
-                    <td className={`${td} tabular text-right`}>{money(r.kpis.gmv, locale)}</td>
-                    <td className={`${td} tabular text-right`}>{pct(r.kpis.achievement, locale)}</td>
-                    <td className={`${td} tabular text-right`}>{pct(r.kpis.cr, locale, 2)}</td>
-                    <td className={`${td} tabular text-right`}>{ratio(r.kpis.roi, locale)}</td>
+                    <td className={tdNum(r.kpis.gmv === null)}>{money(r.kpis.gmv, locale, true)}</td>
+                    <td className={tdNum(r.kpis.achievement === null)}>{pct(r.kpis.achievement, locale, 0, true)}</td>
+                    <td className={tdNum(r.kpis.cr === null)}>{pct(r.kpis.cr, locale, 2, true)}</td>
+                    <td className={tdNum(r.kpis.roi === null)}>{ratio(r.kpis.roi, locale, true)}</td>
                     <td className={td}>
                       <StatusLabel status={r.status} label={t.pace[r.status]} />
                     </td>
@@ -68,7 +79,11 @@ export default async function StoresPage() {
           </div>
         )}
       </Card>
-      <p className="mt-3 text-[13px] text-muted">* {t.common.provisional}</p>
+      <div className="mt-3">
+        <Notice tone="warning">
+          {t.common.tbdNotice} {t.common.naLegend}
+        </Notice>
+      </div>
     </>
   );
 }

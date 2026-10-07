@@ -4,8 +4,8 @@ import { useState } from "react";
 
 export interface GmvPoint {
   label: string;
-  gmv: number;
-  target: number;
+  gmv: number | null; // null = Missing: drawn as a dashed empty slot, not a zero bar
+  target: number | null;
   gmvText: string;
   targetText: string;
   achievementText: string;
@@ -24,7 +24,8 @@ export function GmvChart({
   const width = 640;
   const height = 220;
   const pad = { top: 12, bottom: 28, left: 8, right: 8 };
-  const max = Math.max(...points.flatMap((p) => [p.gmv, p.target])) * 1.08 || 1;
+  const values = points.flatMap((p) => [p.gmv, p.target]).filter((v): v is number => v !== null);
+  const max = Math.max(1, ...values) * 1.08;
   const slot = (width - pad.left - pad.right) / points.length;
   const barW = Math.min(44, slot * 0.5);
   const y = (v: number) => pad.top + (1 - v / max) * (height - pad.top - pad.bottom);
@@ -53,20 +54,39 @@ export function GmvChart({
         <line x1={pad.left} x2={width - pad.right} y1={base} y2={base} stroke="var(--hairline-strong)" />
         {points.map((p, i) => {
           const cx = pad.left + slot * i + slot / 2;
-          const top = y(p.gmv);
+          const top = y(p.gmv ?? 0);
           const h = Math.max(0, base - top);
           const r = Math.min(4, h);
           return (
             <g key={p.label}>
-              {/* Bar with 4px rounded top, square at the baseline. */}
-              <path
+              {p.gmv === null ? (
+                <g>
+                  <rect
+                    x={cx - barW / 2}
+                    y={base - 40}
+                    width={barW}
+                    height={40}
+                    rx={4}
+                    fill="none"
+                    stroke="var(--muted-soft)"
+                    strokeDasharray="4 3"
+                  />
+                  <text x={cx} y={base - 16} textAnchor="middle" fontSize={11} fill="var(--muted)">
+                    N/A
+                  </text>
+                </g>
+              ) : (
+                /* Bar with 4px rounded top, square at the baseline. */
+                <path
                 d={`M${cx - barW / 2},${base} V${top + r} Q${cx - barW / 2},${top} ${cx - barW / 2 + r},${top} H${cx + barW / 2 - r} Q${cx + barW / 2},${top} ${cx + barW / 2},${top + r} V${base} Z`}
                 fill="url(#gmv-bar)"
                 className="grow-y"
                 style={{ "--i": i, transition: "opacity 150ms" } as React.CSSProperties}
                 opacity={hover === null || hover === i ? 1 : 0.45}
-              />
-              <line
+                />
+              )}
+              {p.target !== null && (
+                <line
                 x1={cx - barW / 2 - 6}
                 x2={cx + barW / 2 + 6}
                 y1={y(p.target)}
@@ -74,7 +94,8 @@ export function GmvChart({
                 stroke="var(--ink)"
                 strokeWidth={2}
                 strokeLinecap="round"
-              />
+                />
+              )}
               <text x={cx} y={height - 8} textAnchor="middle" fontSize={12} fill="var(--muted)">
                 {p.label}
               </text>
@@ -87,6 +108,7 @@ export function GmvChart({
                 fill="transparent"
                 onMouseEnter={() => setHover(i)}
                 onMouseLeave={() => setHover(null)}
+                onClick={() => setHover((h) => (h === i ? null : i))}
               />
             </g>
           );
@@ -94,10 +116,11 @@ export function GmvChart({
       </svg>
       {hover !== null && (
         <div
-          className="pointer-events-none absolute top-2 z-10 rounded-md border border-hairline-strong bg-canvas px-3 py-2 text-[13px] shadow-[var(--shadow-soft)]"
+          className="pointer-events-none absolute top-2 z-10 whitespace-nowrap rounded-md border border-hairline-strong bg-canvas px-3 py-2 text-[13px] shadow-[var(--shadow-soft)]"
           style={{
             left: `${((pad.left + slot * hover + slot / 2) / width) * 100}%`,
-            transform: "translateX(-50%)",
+            // Keep the tooltip inside the card at the first and last bars.
+            transform: `translateX(${hover === 0 ? "-15%" : hover === points.length - 1 ? "-85%" : "-50%"})`,
           }}
         >
           <div className="font-semibold text-ink">{points[hover].label}</div>
