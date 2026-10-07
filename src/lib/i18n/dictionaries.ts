@@ -193,6 +193,10 @@ const vi = {
   home: {
     eyebrow: "UpBase · Khối E-commerce · Trung tâm Vận hành 2",
     siteLine: "Hệ thống quản trị của Trung tâm Vận hành 2 (TTVH2)",
+    demoPill: "Bản demo, dữ liệu mẫu",
+    logoCaption: "UpBase 2026: 600+ nhân sự, 100+ thương hiệu, $300M+ GMV. Đồng hành cùng",
+    scopeLead: "Growth nhận business goal, phân tích, lên chiến lược và kế hoạch, điều phối nguồn lực, triển khai và tối ưu hiệu quả.",
+    processLead: "Từ mục tiêu kinh doanh đến tối ưu hiệu quả, mỗi Brand đi qua cùng một quy trình.",
     lead:
       "Trung tâm Vận hành 2 quản trị và tăng trưởng doanh thu, tối ưu chi phí cho các Brand và gian hàng được phân công, từ mục tiêu kinh doanh đến lập kế hoạch, điều phối nguồn lực, triển khai và đo lường hiệu quả.",
     ctaSignedOut: "Đăng nhập",
@@ -457,6 +461,10 @@ const en: Dictionary = {
   home: {
     eyebrow: "UpBase · E-commerce Division · Operations Center 2",
     siteLine: "Management system of Operations Center 2 (TTVH2)",
+    demoPill: "Demo, sample data",
+    logoCaption: "UpBase 2026: 600+ people, 100+ brands, $300M+ GMV. Working with",
+    scopeLead: "Growth takes the business goal, analyses it, sets strategy and plan, coordinates resources, executes and optimises performance.",
+    processLead: "From business goal to performance optimisation, every brand follows the same process.",
     lead:
       "Operations Center 2 manages and grows revenue and optimises cost for its assigned brands and stores, from business goals to planning, resourcing, execution and performance measurement.",
     ctaSignedOut: "Sign in",

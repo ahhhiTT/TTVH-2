@@ -21,6 +21,7 @@
   --canvas: #ffffff;
   --canvas-soft: #fafafa;
   --surface-strong: #f0f0f3;
+  --panel: #f5f5f7; /* expo.dev bento panel */
   --surface-dark: #171717;
   --on-dark: #ffffff;
   --on-dark-soft: #b0b4ba;
@@ -65,6 +66,7 @@
     --canvas: #171717;
     --canvas-soft: #0e0e0f;
     --surface-strong: #26262a;
+    --panel: #202023;
     --surface-dark: #000000;
     --on-dark: #ffffff;
     --on-dark-soft: #b0b4ba;
@@ -103,6 +105,7 @@
   --canvas: #171717;
   --canvas-soft: #0e0e0f;
   --surface-strong: #26262a;
+  --panel: #202023;
   --surface-dark: #000000;
   --on-dark: #ffffff;
   --on-dark-soft: #b0b4ba;
@@ -139,6 +142,7 @@
   --color-canvas: var(--canvas);
   --color-canvas-soft: var(--canvas-soft);
   --color-surface-strong: var(--surface-strong);
+  --color-panel: var(--panel);
   --color-surface-dark: var(--surface-dark);
   --color-on-dark: var(--on-dark);
   --color-on-dark-soft: var(--on-dark-soft);
@@ -158,7 +162,7 @@
 }
 
 body {
-  background: var(--canvas-soft);
+  background: var(--canvas);
   color: var(--ink);
   font-family: var(--font-sans);
 }
@@ -245,7 +249,84 @@ body {
   border-color: color-mix(in oklab, var(--accent, var(--ink)) 35%, var(--hairline-strong));
 }
 
+/* ---------- expo.dev elements ---------- */
+
+/* Scroll reveal: <Reveal> adds .is-in when the block enters the viewport. */
+.reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 600ms cubic-bezier(0.2, 0.7, 0.2, 1), transform 600ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  transition-delay: calc(var(--i, 0) * 70ms);
+}
+.reveal.is-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* Logo carousel: the track holds the list twice and slides by half. */
+@keyframes logo-carousel {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.marquee {
+  mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+}
+.marquee-track {
+  animation: logo-carousel 30s linear infinite;
+}
+.marquee:hover .marquee-track {
+  animation-play-state: paused;
+}
+
+/* Live status dot with an expanding ring. */
+@keyframes status-pulse {
+  0% { transform: scale(1); opacity: 0.6; }
+  70%, 100% { transform: scale(2.6); opacity: 0; }
+}
+.pulse-ring {
+  animation: status-pulse 2.2s linear infinite;
+}
+
+/* Slow rotating arc around a mark. */
+@keyframes arc-sweep {
+  to { transform: rotate(360deg); }
+}
+.arc-sweep {
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: arc-sweep 16s linear infinite;
+}
+
+/* Breathing color glow. */
+@keyframes ai-glow {
+  0%, 100% { opacity: 0.45; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.08); }
+}
+.glow {
+  animation: ai-glow 9s ease-in-out infinite;
+}
+
+/* Progress ring on the active accordion step (auto-advance timer). */
+@keyframes workflow-ring {
+  from { stroke-dashoffset: var(--ring-len); }
+  to { stroke-dashoffset: 0; }
+}
+.workflow-ring {
+  animation: workflow-ring var(--ring-ms, 6000ms) linear 1 forwards;
+}
+
+/* Dashed flow line that moves along a path. */
+@keyframes dash-flow {
+  to { stroke-dashoffset: -24; }
+}
+.dash-flow {
+  animation: dash-flow 1.6s linear infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .enter, .grow-x, .grow-y, .drift { animation: none; }
+  .enter, .grow-x, .grow-y, .drift, .marquee-track, .pulse-ring, .arc-sweep, .glow, .dash-flow, .workflow-ring {
+    animation: none;
+  }
   .lift, .lift:hover { transition: none; transform: none; }
+  .reveal { opacity: 1; transform: none; transition: none; }
 }

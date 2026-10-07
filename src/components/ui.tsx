@@ -8,10 +8,11 @@ export function cx(...classes: (string | false | null | undefined)[]) {
   return classes.filter(Boolean).join(" ");
 }
 
+// Pill buttons, as on expo.dev (40px radius, 14px / 600).
 export const buttonPrimary =
-  "inline-flex h-10 items-center justify-center gap-2 rounded-md bg-primary px-[18px] text-sm font-medium text-on-primary transition-colors hover:bg-primary-active disabled:opacity-50";
+  "group inline-flex h-10 items-center justify-center gap-2 rounded-full bg-primary px-4 text-sm font-semibold text-on-primary transition-[background-color,transform] hover:bg-primary-active active:scale-[0.98] disabled:opacity-50";
 export const buttonSecondary =
-  "inline-flex h-10 items-center justify-center gap-2 rounded-md border border-hairline-strong bg-canvas px-[17px] text-sm font-medium text-ink transition-colors hover:bg-canvas-soft disabled:opacity-50";
+  "group inline-flex h-10 items-center justify-center gap-2 rounded-full border border-hairline-strong bg-canvas px-4 text-sm font-semibold text-ink transition-[background-color,transform] hover:bg-canvas-soft active:scale-[0.98] disabled:opacity-50";
 
 const stagger = (i?: number) => (i === undefined ? undefined : ({ "--i": i } as CSSProperties));
 
@@ -81,7 +82,7 @@ export function Card({
 }) {
   return (
     <section
-      className={cx("enter min-w-0 rounded-lg border border-hairline-strong bg-canvas", accent && `accent-${accent}`, className)}
+      className={cx("enter min-w-0 rounded-2xl border border-hairline-strong bg-canvas", accent && `accent-${accent}`, className)}
       style={stagger(index)}
     >
       {title && (
@@ -159,7 +160,7 @@ export function StatTile({
   return (
     <div
       className={cx(
-        `accent-${accent} enter lift relative min-w-0 overflow-hidden rounded-lg border p-4 md:p-5`,
+        `accent-${accent} enter lift relative min-w-0 overflow-hidden rounded-2xl border p-4 md:p-5`,
         featured ? "on-dark border-transparent bg-surface-dark text-on-dark" : "border-hairline-strong bg-canvas",
       )}
       style={stagger(index)}
