@@ -13,7 +13,7 @@ const ACCENTS: Accent[] = ["blue", "cyan", "purple", "green", "orange", "pink", 
 export default async function ReportsPage() {
   const user = await requireUser();
   if (!canOpen(user, "reports")) notFound();
-  const { t } = await getI18n();
+  const { locale, t } = await getI18n();
   const ready = REPORT_SECTIONS.flatMap((s) => s.items).filter((i) => i.status === "ok").length;
   const total = REPORT_SECTIONS.flatMap((s) => s.items).length;
 
@@ -42,8 +42,8 @@ export default async function ReportsPage() {
                 {si + 1}
               </span>
               <div>
-                <h2 className="text-base font-semibold text-ink">{section.name}</h2>
-                <p className="text-[13px] text-body">{section.sub}</p>
+                <h2 className="text-base font-semibold text-ink">{section.name[locale]}</h2>
+                <p className="text-[13px] text-body">{section.sub[locale]}</p>
               </div>
             </div>
             <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -52,7 +52,7 @@ export default async function ReportsPage() {
                 const body = (
                   <>
                     <div className="flex items-start justify-between gap-2">
-                      <div className="text-sm font-semibold text-ink">{item.label}</div>
+                      <div className="text-sm font-semibold text-ink">{item.label[locale]}</div>
                       <span
                         className={cx(
                           "shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold",
@@ -65,7 +65,7 @@ export default async function ReportsPage() {
                     {(item.group || item.platform) && (
                       <div className="mt-1 text-[12px] text-muted">{[item.group, item.platform].filter(Boolean).join(" / ")}</div>
                     )}
-                    <p className="mt-2 text-[13px] leading-relaxed text-body">{item.desc}</p>
+                    <p className="mt-2 text-[13px] leading-relaxed text-body">{item.desc[locale]}</p>
                     {ok && (
                       <div className="mt-3 flex items-center gap-1.5 text-[13px] font-medium text-[color:var(--accent)]">
                         {t.reports.open} <FlowArrow />

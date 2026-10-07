@@ -11,7 +11,7 @@ export default async function ReportViewerPage({ params }: PageProps<"/reports/[
   const user = await requireUser();
   const report = getReport(id);
   if (!report || !canOpen(user, "reports")) notFound();
-  const { t } = await getI18n();
+  const { locale, t } = await getI18n();
   const src = `/reports/${report.file}`;
 
   return (
@@ -19,8 +19,8 @@ export default async function ReportViewerPage({ params }: PageProps<"/reports/[
       <PageHeader
         back={{ href: "/reports", label: t.reports.allReports }}
         accent={MODULE_META.reports.accent}
-        title={report.label}
-        subtitle={`${report.section.name}. ${report.desc}`}
+        title={report.label[locale]}
+        subtitle={`${report.section.name[locale]}. ${report.desc[locale]}`}
         actions={
           report.status === "ok" ? (
             <a href={src} target="_blank" rel="noreferrer" className={cx(buttonSecondary, "h-9 text-[13px]")}>
@@ -34,7 +34,7 @@ export default async function ReportViewerPage({ params }: PageProps<"/reports/[
           <p className="mb-3 text-[13px] text-body">{t.reports.privacy}</p>
           <iframe
             src={src}
-            title={report.label}
+            title={report.label[locale]}
             className="enter h-[calc(100dvh-13rem)] min-h-[560px] w-full rounded-lg border border-hairline-strong bg-white"
           />
         </>

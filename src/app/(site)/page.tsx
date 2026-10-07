@@ -59,6 +59,7 @@ export default async function HomePage() {
           <h1 className="mt-3 text-[40px] font-semibold leading-[1.05] tracking-[-1.2px] text-ink md:text-[64px] md:tracking-[-1.92px]">
             {t.app.name}
           </h1>
+          <p className="mt-2 text-[17px] font-semibold text-ink md:text-[20px]">{h.siteLine}</p>
           <p className="mt-4 text-[15px] leading-relaxed text-body md:text-[17px]">{h.lead}</p>
           <div className="mt-7 flex flex-wrap gap-3">
             <Link href={user ? "/overview" : "/login"} className={buttonPrimary}>

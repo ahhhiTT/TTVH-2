@@ -192,6 +192,7 @@ const vi = {
   },
   home: {
     eyebrow: "UpBase · Khối E-commerce · Trung tâm Vận hành 2",
+    siteLine: "Hệ thống quản trị của Trung tâm Vận hành 2 (TTVH2)",
     lead:
       "Trung tâm Vận hành 2 quản trị và tăng trưởng doanh thu, tối ưu chi phí cho các Brand và gian hàng được phân công, từ mục tiêu kinh doanh đến lập kế hoạch, điều phối nguồn lực, triển khai và đo lường hiệu quả.",
     ctaSignedOut: "Đăng nhập",
@@ -455,6 +456,7 @@ const en: Dictionary = {
   },
   home: {
     eyebrow: "UpBase · E-commerce Division · Operations Center 2",
+    siteLine: "Management system of Operations Center 2 (TTVH2)",
     lead:
       "Operations Center 2 manages and grows revenue and optimises cost for its assigned brands and stores, from business goals to planning, resourcing, execution and performance measurement.",
     ctaSignedOut: "Sign in",
