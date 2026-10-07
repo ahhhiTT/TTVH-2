@@ -24,6 +24,12 @@ export async function requireUser() {
   return user;
 }
 
+// Explicit theme choice saved by ThemeToggle; null means "follow the OS".
+export async function getTheme(): Promise<"light" | "dark" | null> {
+  const value = (await cookies()).get("ttvh2_theme")?.value;
+  return value === "light" || value === "dark" ? value : null;
+}
+
 export async function getLocale(): Promise<Locale> {
   const value = (await cookies()).get(LOCALE_COOKIE)?.value;
   return LOCALES.includes(value as Locale) ? (value as Locale) : DEFAULT_LOCALE;

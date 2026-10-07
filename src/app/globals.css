@@ -1,10 +1,15 @@
 @import "tailwindcss";
 
 /* Design tokens from docs/DESIGN.md (Expo design analysis).
-   Swap these values to rebrand; components only reference tokens. */
+   Swap these values to rebrand; components only reference tokens.
+
+   Two themes: light (default) and dark. With no saved choice the OS setting
+   decides; html[data-theme] (from the ttvh2_theme cookie) overrides it. */
 :root {
+  color-scheme: light;
   --primary: #000000;
   --primary-active: #1a1a1a;
+  --on-primary: #ffffff;
   --text-link: #0d74ce;
   --ink: #171717;
   --body: #60646c;
@@ -16,19 +21,74 @@
   --canvas: #ffffff;
   --canvas-soft: #fafafa;
   --surface-strong: #f0f0f3;
-  --surface-dark: #171717;
-  --on-dark-soft: #b0b4ba;
   --sky-light: #cfe7ff;
-  --sky-mid: #a8c8e8;
   --warning: #ab6400;
+  --warning-soft: #fff4e5;
   --success: #16a34a;
   --error: #c4373b; /* darkened from #eb8e90 so status text passes contrast on white */
   --chart-bar: #0d74ce;
+  --shadow-color: rgba(0, 0, 0, 0.04);
+}
+
+/* Dark: Expo's dark surfaces (#171717 / #1a1a1a) become the canvas; the CTA
+   inverts to white-on-black so black stays "the" action color in light mode
+   and white plays that role in dark mode. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --primary: #ffffff;
+    --primary-active: #e4e4e7;
+    --on-primary: #000000;
+    --text-link: #5aa9f0;
+    --ink: #ededed;
+    --body: #b0b4ba;
+    --muted: #8b8f96;
+    --muted-soft: #4a4d52;
+    --hairline: #232326;
+    --hairline-soft: #1f1f22;
+    --hairline-strong: #303035;
+    --canvas: #171717;
+    --canvas-soft: #0e0e0f;
+    --surface-strong: #26262a;
+    --sky-light: #10263d;
+    --warning: #e8a64a;
+    --warning-soft: #2b2112;
+    --success: #4ccb76;
+    --error: #f08a8c;
+    --chart-bar: #4a9be6;
+    --shadow-color: rgba(0, 0, 0, 0.4);
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --primary: #ffffff;
+  --primary-active: #e4e4e7;
+  --on-primary: #000000;
+  --text-link: #5aa9f0;
+  --ink: #ededed;
+  --body: #b0b4ba;
+  --muted: #8b8f96;
+  --muted-soft: #4a4d52;
+  --hairline: #232326;
+  --hairline-soft: #1f1f22;
+  --hairline-strong: #303035;
+  --canvas: #171717;
+  --canvas-soft: #0e0e0f;
+  --surface-strong: #26262a;
+  --sky-light: #10263d;
+  --warning: #e8a64a;
+  --warning-soft: #2b2112;
+  --success: #4ccb76;
+  --error: #f08a8c;
+  --chart-bar: #4a9be6;
+  --shadow-color: rgba(0, 0, 0, 0.4);
 }
 
 @theme inline {
   --color-primary: var(--primary);
   --color-primary-active: var(--primary-active);
+  --color-on-primary: var(--on-primary);
   --color-link: var(--text-link);
   --color-ink: var(--ink);
   --color-body: var(--body);
@@ -40,9 +100,8 @@
   --color-canvas: var(--canvas);
   --color-canvas-soft: var(--canvas-soft);
   --color-surface-strong: var(--surface-strong);
-  --color-surface-dark: var(--surface-dark);
-  --color-on-dark-soft: var(--on-dark-soft);
   --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
   --color-success: var(--success);
   --color-error: var(--error);
   --color-chart-bar: var(--chart-bar);
@@ -53,7 +112,7 @@
   --radius-md: 8px;
   --radius-lg: 12px;
   --radius-xl: 16px;
-  --shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.04);
+  --shadow-soft: 0 4px 12px var(--shadow-color);
 }
 
 body {

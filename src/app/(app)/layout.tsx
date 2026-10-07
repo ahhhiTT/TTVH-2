@@ -1,5 +1,6 @@
 import { LogOut } from "lucide-react";
 import { Sidebar, type NavGroup } from "@/components/sidebar";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Badge, buttonSecondary, cx } from "@/components/ui";
 import { setLocale, signOut } from "@/lib/actions";
 import { canOpen, type ModuleKey } from "@/lib/rbac";
@@ -25,8 +26,9 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
       <Sidebar appName={t.app.name} groups={groups} />
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-10 flex h-16 items-center justify-between gap-4 border-b border-hairline-strong bg-canvas px-6">
-          <Badge className="bg-[#fff4e5] text-warning">{t.common.sampleData}</Badge>
+          <Badge className="bg-warning-soft text-warning">{t.common.sampleData}</Badge>
           <div className="flex items-center gap-3">
+            <ThemeToggle labels={{ light: t.common.themeLight, dark: t.common.themeDark }} />
             <form action={setLocale} className="flex rounded-md border border-hairline-strong p-0.5">
               {(["vi", "en"] as const).map((l) => (
                 <button
@@ -36,7 +38,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
                   aria-pressed={locale === l}
                   className={cx(
                     "h-8 rounded-sm px-2.5 text-[13px] font-medium uppercase",
-                    locale === l ? "bg-primary text-white" : "text-body hover:text-ink",
+                    locale === l ? "bg-primary text-on-primary" : "text-body hover:text-ink",
                   )}
                 >
                   {l}

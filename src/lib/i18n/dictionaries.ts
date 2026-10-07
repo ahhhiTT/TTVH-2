@@ -54,6 +54,8 @@ const vi = {
     category: "Ngành hàng",
     none: "—",
     noStores: "Chưa có gian hàng nào trong phạm vi của bạn.",
+    themeLight: "Giao diện sáng",
+    themeDark: "Giao diện tối",
   },
   kpi: {
     gmv: "GMV",
@@ -229,6 +231,8 @@ const en: Dictionary = {
     category: "Category",
     none: "—",
     noStores: "No stores in your scope yet.",
+    themeLight: "Light theme",
+    themeDark: "Dark theme",
   },
   kpi: {
     gmv: "GMV",

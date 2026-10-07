@@ -26,6 +26,9 @@ Three axes — department, people, brands/stores — each running Planning → E
 - Design tokens follow `docs/DESIGN.md`: colors are CSS variables in `globals.css`;
   black is the only CTA color; Inter 600 for headings; 8px buttons, 12px cards.
   Status is never color-only (icon + label).
+- Two themes, light and dark. Dark values live in `globals.css` (both the
+  `prefers-color-scheme` block and `:root[data-theme="dark"]` — keep them in sync).
+  Use tokens (`bg-canvas`, `text-ink`, `text-on-primary`…), never raw hex or `text-white`.
 
 ## Commands
 - `npm run dev` — local dev at http://localhost:3000

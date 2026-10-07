@@ -7,7 +7,7 @@ export function cx(...classes: (string | false | null | undefined)[]) {
 }
 
 export const buttonPrimary =
-  "inline-flex h-10 items-center justify-center gap-2 rounded-md bg-primary px-[18px] text-sm font-medium text-white hover:bg-primary-active disabled:opacity-50";
+  "inline-flex h-10 items-center justify-center gap-2 rounded-md bg-primary px-[18px] text-sm font-medium text-on-primary hover:bg-primary-active disabled:opacity-50";
 export const buttonSecondary =
   "inline-flex h-10 items-center justify-center gap-2 rounded-md border border-hairline-strong bg-canvas px-[17px] text-sm font-medium text-ink hover:bg-canvas-soft";
 

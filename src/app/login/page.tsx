@@ -1,5 +1,6 @@
 import { ChartColumn } from "lucide-react";
 import { redirect } from "next/navigation";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { buttonPrimary, buttonSecondary, cx } from "@/components/ui";
 import { demoSignIn, setLocale } from "@/lib/actions";
 import { listUsers } from "@/lib/data/repo";
@@ -21,11 +22,13 @@ export default async function LoginPage() {
       <div className="w-full max-w-md rounded-xl border border-hairline-strong bg-canvas p-8 shadow-[var(--shadow-soft)]">
         <div className="mb-6 flex items-center justify-between">
           <span className="flex items-center gap-2">
-            <span className="flex size-8 items-center justify-center rounded-md bg-primary text-white">
+            <span className="flex size-8 items-center justify-center rounded-md bg-primary text-on-primary">
               <ChartColumn size={18} aria-hidden />
             </span>
             <span className="text-lg font-semibold tracking-[-0.3px]">{t.app.name}</span>
           </span>
+          <div className="flex items-center gap-2">
+          <ThemeToggle labels={{ light: t.common.themeLight, dark: t.common.themeDark }} />
           <form action={setLocale} className="flex gap-1">
             {(["vi", "en"] as const).map((l) => (
               <button
@@ -42,6 +45,7 @@ export default async function LoginPage() {
               </button>
             ))}
           </form>
+          </div>
         </div>
 
         <h1 className="text-[22px] font-semibold tracking-[-0.5px]">{t.login.title}</h1>

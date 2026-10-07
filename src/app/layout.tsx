@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
-import { getLocale } from "@/lib/session";
+import { getLocale, getTheme } from "@/lib/session";
 import "./globals.css";
 
 const inter = Inter({ variable: "--font-inter", subsets: ["latin", "vietnamese"] });
@@ -17,9 +17,9 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const locale = await getLocale();
+  const [locale, theme] = await Promise.all([getLocale(), getTheme()]);
   return (
-    <html lang={locale} className={`${inter.variable} ${jetbrains.variable} h-full antialiased`}>
+    <html lang={locale} data-theme={theme ?? undefined} className={`${inter.variable} ${jetbrains.variable} h-full antialiased`}>
       <body className="min-h-full">{children}</body>
     </html>
   );

@@ -25,7 +25,7 @@ export async function ModulePlaceholder({ module }: { module: PlannedModule }) {
           ))}
         </ul>
         {"waiting" in m && (
-          <p className="mt-5 rounded-md bg-[#fff4e5] px-4 py-3 text-[13px] text-warning">{m.waiting}</p>
+          <p className="mt-5 rounded-md bg-warning-soft px-4 py-3 text-[13px] text-warning">{m.waiting}</p>
         )}
       </Card>
     </>

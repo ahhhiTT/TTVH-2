@@ -51,7 +51,7 @@ export function Sidebar({ appName, groups }: { appName: string; groups: NavGroup
   return (
     <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-hairline-strong bg-canvas md:flex">
       <Link href="/" className="flex h-16 items-center gap-2 border-b border-hairline px-5">
-        <span className="flex size-7 items-center justify-center rounded-md bg-primary text-white">
+        <span className="flex size-7 items-center justify-center rounded-md bg-primary text-on-primary">
           <ChartColumn size={16} aria-hidden />
         </span>
         <span className="text-[15px] font-semibold tracking-[-0.3px]">{appName}</span>
