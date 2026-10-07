@@ -50,7 +50,9 @@ running Planning, Execution (checklist, SLA) and Report, plus career path / L&D.
 - Two themes, light and dark. Dark values live in `globals.css` (both the
   `prefers-color-scheme` block and `:root[data-theme="dark"]`, keep them in sync).
   Use tokens (`bg-canvas`, `text-ink`, `text-on-primary`), never raw hex.
-- Mobile: every page must work at 375px wide. Sidebar becomes a drawer below `md`.
+- Navigation is a horizontal top bar with dropdown groups (`TopNav` in
+  `src/components/top-nav.tsx`); below `lg` it becomes a slide-in drawer (`MobileNav`).
+  Every page must work at 375px wide.
 
 ## Access rules
 - Every app page goes through `requireUser()` and the `rbac.ts` helpers. Never read

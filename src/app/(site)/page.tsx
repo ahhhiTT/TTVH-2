@@ -3,6 +3,7 @@ import type { CSSProperties, ReactNode } from "react";
 import { ChainFlow, OrbitDiagram } from "@/components/diagrams";
 import { ArcMark, ArrowRight, Eyebrow, Marquee, Panel, StatusPill } from "@/components/expo";
 import { GrowthAccordion } from "@/components/growth-accordion";
+import { Starburst } from "@/components/starburst";
 import { MODULE_META, type Accent } from "@/components/module-meta";
 import { Reveal } from "@/components/reveal";
 import { FlowArrow } from "@/components/svg";
@@ -36,13 +37,13 @@ export default async function HomePage() {
 
   return (
     <div className="space-y-6 md:space-y-8">
-      {/* Hero: left headline, right description (expo.dev layout). */}
-      <section className="grid gap-8 pt-4 pb-6 md:grid-cols-[1.5fr_1fr] md:items-end md:gap-12 md:pt-10 md:pb-10">
-        <div className="enter">
-          <h1 className="text-[44px] font-semibold leading-[1.02] tracking-[-1.3px] text-ink md:text-[72px] md:tracking-[-2.2px]">
+      {/* Hero: headline left, mark with starburst centre, description right (expo.dev). */}
+      <section className="grid items-center gap-6 pt-2 pb-4 lg:grid-cols-[1fr_minmax(0,520px)_1fr] lg:gap-4 lg:pt-6">
+        <div className="enter relative z-10 order-1">
+          <h1 className="text-[44px] font-semibold leading-[1.02] tracking-[-1.3px] text-ink md:text-[60px] md:tracking-[-1.8px]">
             {t.app.name}
           </h1>
-          <p className="mt-3 text-[18px] font-semibold tracking-[-0.3px] text-body md:text-[22px]">{h.siteLine}</p>
+          <p className="mt-3 text-[18px] font-semibold tracking-[-0.3px] text-body md:text-[20px]">{h.siteLine}</p>
           <div className="mt-7 flex flex-wrap gap-3">
             <Link href={user ? "/overview" : "/login"} className={buttonPrimary}>
               {user ? h.ctaSignedIn : h.ctaSignedOut}
@@ -55,9 +56,21 @@ export default async function HomePage() {
             )}
           </div>
         </div>
-        <div className="enter space-y-4" style={{ "--i": 2 } as CSSProperties}>
+
+        <div className="enter relative order-2 mx-auto aspect-square w-full max-w-[520px]" style={{ "--i": 1 } as CSSProperties}>
+          <Starburst className="absolute inset-0 h-full w-full" />
+          <div className="absolute top-1/2 left-1/2 flex aspect-square w-[30%] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-[24%] bg-primary shadow-[0_20px_60px_var(--shadow-hover)]">
+            <svg viewBox="0 0 28 28" className="w-[58%]" aria-hidden>
+              <rect x="3" y="15" width="5.5" height="10" rx="1.5" fill="var(--on-primary)" />
+              <rect x="11.25" y="9" width="5.5" height="16" rx="1.5" fill="var(--on-primary)" />
+              <rect x="19.5" y="3" width="5.5" height="22" rx="1.5" fill="var(--on-primary)" opacity="0.7" />
+            </svg>
+          </div>
+        </div>
+
+        <div className="enter relative z-10 order-3 space-y-4" style={{ "--i": 2 } as CSSProperties}>
           <StatusPill>{h.demoPill}</StatusPill>
-          <p className="text-[15px] leading-relaxed text-body">{h.lead}</p>
+          <p className="text-[16px] leading-relaxed text-body">{h.lead}</p>
           <Eyebrow>{h.eyebrow}</Eyebrow>
         </div>
       </section>

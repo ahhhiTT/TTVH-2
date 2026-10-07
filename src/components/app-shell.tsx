@@ -1,8 +1,9 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { MobileNav, Sidebar, type NavGroup } from "@/components/sidebar";
+import { MobileNav, type NavGroup } from "@/components/sidebar";
+import { AccountMenu, TopNav, type TopNavGroup } from "@/components/top-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { Badge, buttonPrimary, buttonSecondary, cx } from "@/components/ui";
+import { Badge, buttonPrimary, cx } from "@/components/ui";
 import { setLocale, signOut } from "@/lib/actions";
 import type { User } from "@/lib/data/types";
 import type { Dictionary, Locale } from "@/lib/i18n/dictionaries";
@@ -56,7 +57,7 @@ export function navGroupsFor(user: User, t: Dictionary): NavGroup[] {
   ].filter((g) => g.items.length > 0);
 }
 
-// Signed-in shell: sidebar (drawer on mobile) + top bar.
+// Signed-in shell: horizontal top bar with dropdown menus (drawer on mobile).
 export function AppShell({
   user,
   locale,
@@ -69,43 +70,54 @@ export function AppShell({
   children: ReactNode;
 }) {
   const groups = navGroupsFor(user, t);
+  const topGroups: TopNavGroup[] = groups.map((g) => ({
+    label: g.label,
+    items: g.items.map((it) => ({ ...it, desc: t.navDesc[it.key] })),
+  }));
   return (
-    <div className="flex min-h-screen">
-      <Sidebar appName={t.app.name} groups={groups} />
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-2 border-b border-hairline-strong bg-canvas/90 px-3 backdrop-blur md:h-16 md:px-6">
-          <div className="flex items-center gap-2">
-            <MobileNav appName={t.app.name} groups={groups} labels={{
+    <div className="flex min-h-screen flex-col">
+      <header className="sticky top-0 z-30 border-b border-hairline-strong bg-canvas/90 backdrop-blur">
+        <div className="mx-auto flex h-14 max-w-[1200px] items-center justify-between gap-3 px-3 md:h-16 md:px-6">
+          <div className="flex min-w-0 items-center gap-2 lg:gap-6">
+            <MobileNav
+              appName={t.app.name}
+              groups={groups}
+              labels={{
                 open: t.nav.openMenu,
                 close: t.nav.closeMenu,
                 light: t.common.themeLight,
                 dark: t.common.themeDark,
                 theme: t.common.themeLabel,
-              }} />
-            <Link href="/" className="flex items-center gap-2 md:hidden">
-              <LogoMark size={24} />
-              <span className="hidden text-sm font-semibold whitespace-nowrap min-[400px]:inline">{t.app.name}</span>
+              }}
+            />
+            <Link href="/" className="flex shrink-0 items-center gap-2.5">
+              <LogoMark size={26} />
+              <span className="hidden text-[15px] font-semibold tracking-[-0.3px] whitespace-nowrap min-[400px]:inline">
+                {t.app.name}
+              </span>
             </Link>
-            <span className="hidden sm:block">
+            <TopNav groups={topGroups} />
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <span className="hidden 2xl:block">
               <Badge className="bg-warning-soft text-warning">{t.common.sampleData}</Badge>
             </span>
+            <LocaleSwitch locale={locale} label={t.common.languageLabel} />
+            <AccountMenu
+              name={user.name}
+              role={`${t.roles[user.role]} · ${t.common.sampleData}`}
+              signOutLabel={t.common.switchRole}
+              signOutAction={signOut}
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-[13px] text-muted">{t.common.themeLabel}</span>
+                <ThemeToggle labels={{ light: t.common.themeLight, dark: t.common.themeDark, group: t.common.themeLabel }} />
+              </div>
+            </AccountMenu>
           </div>
-          <div className="flex items-center gap-2 md:gap-3">
-            <Preferences locale={locale} t={t} />
-            <div className="hidden text-right leading-tight lg:block">
-              <div className="text-sm font-medium text-ink">{user.name}</div>
-              <div className="text-[13px] text-muted">{t.roles[user.role]}</div>
-            </div>
-            <form action={signOut}>
-              <button className={cx(buttonSecondary, "h-9 px-3 text-[13px] whitespace-nowrap")}>
-                <span className="hidden sm:inline">{t.common.switchRole}</span>
-                <span className="sm:hidden">{t.common.signOut}</span>
-              </button>
-            </form>
-          </div>
-        </header>
-        <main className="mx-auto w-full max-w-[1200px] flex-1 px-4 py-6 md:px-6 md:py-8">{children}</main>
-      </div>
+        </div>
+      </header>
+      <main className="mx-auto w-full max-w-[1200px] flex-1 px-4 py-6 md:px-6 md:py-8">{children}</main>
     </div>
   );
 }

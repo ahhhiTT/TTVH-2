@@ -77,16 +77,7 @@ function Brand({ appName, onNavigate, bordered = true }: { appName: string; onNa
   );
 }
 
-export function Sidebar({ appName, groups }: { appName: string; groups: NavGroup[] }) {
-  return (
-    <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-hairline-strong bg-canvas md:flex">
-      <Brand appName={appName} />
-      <NavList groups={groups} />
-    </aside>
-  );
-}
-
-// Below md the sidebar becomes a slide-in drawer opened from the top bar.
+// Below lg the top menu becomes a slide-in drawer opened from the top bar.
 export function MobileNav({
   appName,
   groups,
@@ -117,7 +108,7 @@ export function MobileNav({
   }, [open]);
 
   return (
-    <div className="md:hidden">
+    <div className="lg:hidden">
       <button
         type="button"
         onClick={() => setOpen(true)}
