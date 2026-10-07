@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Activity Sources: TikTok Shop analysis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F7F7F2;
+  --surface:#FFFFFF;
+  --surface-2:#F1F1EA;
+  --ink:#16211A;
+  --ink-soft:#5B6B60;
+  --ink-faint:#8B978C;
+  --border:#E2E3DA;
+  --brand:#2F5233;
+  --brand-soft:#E8EEE4;
+  --c-selfLive:#BE4B2E;
+  --c-selfVideo:#C7891C;
+  --c-liveAff:#1F6F72;
+  --c-videoAff:#6B4C7A;
+  --c-card:#3E5C87;
+  --c-showcase:#83833C;
+  --good:#2F7A4F;
+  --bad:#B23B3B;
+  --shadow: 0 1px 2px rgba(20,30,20,0.04), 0 6px 20px rgba(20,30,20,0.05);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#12160F; --surface:#1A2018; --surface-2:#20261D;
+    --ink:#ECEEE8; --ink-soft:#A9B2A2; --ink-faint:#78826F; --border:#2C3327;
+    --brand:#7FAE83; --brand-soft:#233026;
+    --c-selfLive:#E07352; --c-selfVideo:#E0A83F; --c-liveAff:#4FB3B6;
+    --c-videoAff:#B08BC2; --c-card:#7C9BCB; --c-showcase:#C3C368;
+    --good:#63C285; --bad:#E0716B;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#12160F; --surface:#1A2018; --surface-2:#20261D;
+  --ink:#ECEEE8; --ink-soft:#A9B2A2; --ink-faint:#78826F; --border:#2C3327;
+  --brand:#7FAE83; --brand-soft:#233026;
+  --c-selfLive:#E07352; --c-selfVideo:#E0A83F; --c-liveAff:#4FB3B6;
+  --c-videoAff:#B08BC2; --c-card:#7C9BCB; --c-showcase:#C3C368;
+  --good:#63C285; --bad:#E0716B;
+  --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:'Inter',-apple-system,sans-serif;
+  font-feature-settings:'tnum' 1; font-variant-numeric: tabular-nums;
+  min-height:100vh; line-height:1.5;
+}
+.app{max-width:1220px;margin:0 auto;padding:28px 20px 80px;}
+
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+  padding-bottom:22px;border-bottom:1px solid var(--border);margin-bottom:32px;}
+.brand{display:flex;align-items:center;gap:10px;font-family:'Fraunces',serif;font-weight:600;font-size:20px;letter-spacing:-0.01em;}
+.brand-mark{width:26px;height:26px;border-radius:7px;background:var(--brand);display:inline-flex;align-items:center;justify-content:center;
+  color:var(--bg);font-size:14px;font-weight:700;flex-shrink:0;}
+.mode-switch{display:inline-flex;background:var(--surface-2);border-radius:10px;padding:3px;border:1px solid var(--border);}
+.mode-switch button{border:none;background:transparent;color:var(--ink-soft);font-family:inherit;font-size:13.5px;font-weight:600;
+  padding:8px 16px;border-radius:8px;cursor:pointer;transition:background .15s,color .15s;}
+.mode-switch button.active{background:var(--surface);color:var(--ink);box-shadow:var(--shadow);}
+
+.upload-panel{margin-bottom:8px;}
+.upload-copy h1{font-family:'Fraunces',serif;font-weight:600;font-size:clamp(24px,4vw,32px);margin:0 0 10px;letter-spacing:-0.01em;line-height:1.15;}
+.upload-copy p{color:var(--ink-soft);font-size:15px;max-width:660px;margin:0 0 26px;}
+.upload-copy code{background:var(--surface-2);padding:1px 6px;border-radius:5px;font-size:0.93em;}
+
+.dropzone{display:block;border:1.5px dashed var(--border);border-radius:16px;background:var(--surface);
+  padding:36px 24px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s;}
+.dropzone:hover,.dropzone.drag{border-color:var(--brand);background:var(--brand-soft);}
+.dz-inner{display:flex;flex-direction:column;align-items:center;gap:8px;}
+.dz-icon{width:44px;height:44px;border-radius:50%;background:var(--surface-2);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--brand);margin-bottom:4px;}
+.dz-title{font-weight:600;font-size:15px;}
+.dz-sub{color:var(--ink-faint);font-size:13px;}
+
+.file-list{margin-top:14px;display:flex;flex-direction:column;gap:8px;}
+.file-row{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:13.5px;}
+.file-row .fname{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.file-row .fmeta{color:var(--ink-faint);font-size:12.5px;flex-shrink:0;}
+.file-row .fstatus{flex-shrink:0;font-size:12px;font-weight:600;}
+.file-row .fstatus.ok{color:var(--good);}
+.file-row .fstatus.err{color:var(--bad);}
+.file-row .fremove{border:none;background:none;color:var(--ink-faint);cursor:pointer;font-size:15px;padding:2px 4px;flex-shrink:0;}
+.error-msg{margin-top:14px;background:rgba(178,59,59,0.08);border:1px solid var(--bad);color:var(--bad);
+  border-radius:10px;padding:12px 14px;font-size:13.5px;}
+
+.toolbar-row{display:flex;justify-content:flex-end;gap:10px;margin:14px 0 0;}
+.btn{font-family:inherit;font-size:13px;font-weight:600;border-radius:9px;padding:9px 15px;cursor:pointer;
+  border:1px solid var(--border);background:var(--surface);color:var(--ink);transition:background .15s;}
+.btn:hover{background:var(--surface-2);}
+.btn.primary{background:var(--brand);color:var(--bg);border-color:var(--brand);}
+
+.dashboard{margin-top:36px;display:flex;flex-direction:column;gap:32px;}
+
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;}
+.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;box-shadow:var(--shadow);}
+.kpi-label{font-size:12.5px;color:var(--ink-faint);font-weight:600;margin-bottom:8px;}
+.kpi-value{font-family:'Fraunces',serif;font-size:25px;font-weight:600;letter-spacing:-0.01em;}
+.kpi-sub{font-size:12.5px;color:var(--ink-soft);margin-top:6px;}
+.kpi-sub.good{color:var(--good);} .kpi-sub.bad{color:var(--bad);}
+
+.section{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;box-shadow:var(--shadow);}
+.section-head{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:18px;}
+.section-title-row{display:flex;align-items:center;gap:10px;}
+.section-letter{width:24px;height:24px;border-radius:7px;background:var(--brand-soft);color:var(--brand);font-weight:700;
+  font-size:12px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
+.section-title{font-family:'Fraunces',serif;font-weight:600;font-size:19px;}
+.section-hint{font-size:12.5px;color:var(--ink-faint);max-width:440px;text-align:right;}
+
+.chart-wrap{position:relative;width:100%;}
+
+.channel-rank{display:flex;flex-direction:column;gap:10px;margin-top:4px;}
+.channel-rank-row{display:grid;grid-template-columns:170px 1fr 90px;align-items:center;gap:12px;font-size:13.5px;}
+.channel-rank-name{font-weight:600;display:flex;align-items:center;gap:8px;}
+.dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.channel-rank-bar-bg{background:var(--surface-2);border-radius:6px;height:10px;overflow:hidden;}
+.channel-rank-bar-fill{height:100%;border-radius:6px;}
+.channel-rank-val{text-align:right;font-weight:600;}
+
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead th{text-align:right;font-weight:600;color:var(--ink-faint);font-size:11.5px;padding:8px 10px;
+  border-bottom:1px solid var(--border);white-space:nowrap;}
+thead th:first-child,thead th.left{text-align:left;}
+thead th.sortable{cursor:pointer;user-select:none;}
+thead th.sortable:hover{color:var(--ink);}
+tbody td{padding:9px 10px;border-bottom:1px solid var(--border);text-align:right;white-space:nowrap;}
+tbody td:first-child,tbody td.left{text-align:left;white-space:normal;}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr:hover{background:var(--surface-2);}
+.table-scroll{overflow-x:auto;}
+.name-cell{max-width:280px;overflow:hidden;text-overflow:ellipsis;}
+.rank-badge{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:6px;
+  background:var(--surface-2);font-size:11px;font-weight:700;color:var(--ink-soft);margin-right:8px;}
+
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;}
+.tab-btn{border:1px solid var(--border);background:var(--surface);color:var(--ink-soft);font-family:inherit;
+  font-size:12.5px;font-weight:600;padding:7px 13px;border-radius:20px;cursor:pointer;display:flex;align-items:center;gap:6px;}
+.tab-btn.active{background:var(--ink);color:var(--bg);border-color:var(--ink);}
+
+.search-row{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+.search-input{flex:1;min-width:200px;font-family:inherit;font-size:13.5px;padding:9px 13px;border-radius:9px;
+  border:1px solid var(--border);background:var(--surface-2);color:var(--ink);}
+.search-input:focus{outline:2px solid var(--brand);outline-offset:1px;}
+
+.delta{font-weight:600;font-size:12px;}
+.delta.up{color:var(--good);} .delta.down{color:var(--bad);} .delta.flat{color:var(--ink-faint);}
+
+.empty-note{color:var(--ink-faint);font-size:13px;padding:20px 0;text-align:center;}
+
+.product-card{border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:14px;background:var(--surface-2);}
+.product-card:last-child{margin-bottom:0;}
+.product-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap;}
+.product-card-title{display:flex;align-items:center;gap:10px;}
+.product-card-name{font-weight:700;font-size:14.5px;max-width:480px;}
+.product-card-meta{font-size:12px;color:var(--ink-faint);margin-top:3px;}
+.product-card-gmv{text-align:right;}
+.product-card-gmv .v{font-family:'Fraunces',serif;font-size:19px;font-weight:600;}
+.product-card-gmv .l{font-size:11px;color:var(--ink-faint);}
+.big-rank{width:30px;height:30px;border-radius:9px;background:var(--brand);color:var(--bg);font-weight:700;font-size:14px;
+  display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
+
+.badge{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:20px;background:var(--brand-soft);color:var(--brand);margin-left:6px;}
+
+footer.note{color:var(--ink-faint);font-size:12px;text-align:center;margin-top:40px;}
+
+@media (max-width:640px){
+  .channel-rank-row{grid-template-columns:120px 1fr 74px;font-size:12.5px;}
+  .section{padding:18px;}
+  .kpi-value{font-size:21px;}
+  .section-hint{text-align:left;max-width:100%;}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="topbar">
+    <div class="brand"><span class="brand-mark">N</span>Activity Sources</div>
+    <div class="mode-switch" id="modeSwitch">
+      <button data-mode="single" class="active">By month</button>
+      <button data-mode="trend">By period</button>
+    </div>
+  </div>
+
+  <section class="upload-panel">
+    <div class="upload-copy">
+      <h1 id="uploadTitle">Store activity source analysis</h1>
+      <p id="modeDesc">Upload 1 <code>product_list</code> file (.xlsx) to analyse GMV and funnel performance across 6 activity sources: Livestream Self-Channel, Video Self-Channel, Livestream Affiliate, Video Affiliate, Product Card, Showcase Affiliate.</p>
+    </div>
+    <label class="dropzone" id="dropzone">
+      <input type="file" id="fileInput" accept=".xlsx" hidden />
+      <div class="dz-inner">
+        <div class="dz-icon">↑</div>
+        <div class="dz-title" id="dzTitle">Drag and drop an .xlsx file here, or click to choose</div>
+        <div class="dz-sub" id="dzSub">Accepts 1 file product_list_YYYYMMDD.xlsx</div>
+      </div>
+    </label>
+    <div id="fileList" class="file-list"></div>
+    <div id="uploadError" class="error-msg" hidden></div>
+    <div class="toolbar-row" id="toolbarRow" hidden>
+      <button class="btn" id="resetBtn">Load other data</button>
+    </div>
+  </section>
+
+  <section id="dashboard" class="dashboard" hidden></section>
+
+  <footer class="note">Figures are calculated in your browser from the file you upload. No data is sent anywhere.</footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
+<script>
+(function(){
+"use strict";
+
+/* ---------------- Column map (0-based indices, relative to header row) ---------------- */
+const NAME_IDX = 0, ID_IDX = 1, GMV_TOTAL_IDX = 3, ORDERS_IDX = 18;
+
+const CHANNELS = [
+  { id:"selfLive",  label:"Livestream Self-Channel", short:"Live Self-Channel",  color:"var(--c-selfLive)",  gmvIdx:4,  imprIdx:63,  clickIdx:64,  atcIdx:66  },
+  { id:"selfVideo", label:"Video Self-Channel",       short:"Video Self-Channel", color:"var(--c-selfVideo)", gmvIdx:7,  imprIdx:88,  clickIdx:89,  atcIdx:91  },
+  { id:"liveAff",   label:"Livestream Affiliate",     short:"Live Affiliate",     color:"var(--c-liveAff)",   gmvIdx:11, imprIdx:127, clickIdx:128, atcIdx:130 },
+  { id:"videoAff",  label:"Video Affiliate",          short:"Video Affiliate",    color:"var(--c-videoAff)",  gmvIdx:14, imprIdx:139, clickIdx:140, atcIdx:142 },
+  { id:"card",      label:"Product Card",             short:"Product Card",       color:"var(--c-card)",      gmvIdx:17, imprIdx:163, clickIdx:164, atcIdx:166 },
+  { id:"showcase",  label:"Showcase Affiliate",       short:"Showcase Affiliate", color:"var(--c-showcase)",  derived:true },
+];
+// columns used only to derive Showcase Affiliate = AffiliateTotal - LiveAffiliate - VideoAffiliate
+const AFF_TOTAL = { gmvIdx:10, imprIdx:115, clickIdx:116, atcIdx:118 };
+
+/* ---------------- Number / text parsing ---------------- */
+function parseNum(v){
+  if(v===null||v===undefined) return 0;
+  let s=String(v).trim();
+  if(s===""||s==="-"||s==="—") return 0;
+  if(s.indexOf("%")!==-1){
+    const n=parseFloat(s.replace("%","").replace(",","."));
+    return isNaN(n)?0:n;
+  }
+  let cleaned=s.replace(/[₫đ\s]/gi,"").replace(/\./g,"").replace(",",".");
+  const n=parseFloat(cleaned);
+  return isNaN(n)?0:n;
+}
+function fmtCurrency(n){ if(!isFinite(n)) n=0; return Math.round(n).toLocaleString("vi-VN")+"₫"; }
+function fmtNum(n,decimals){ if(!isFinite(n)) n=0; return n.toLocaleString("vi-VN",{maximumFractionDigits:decimals||0, minimumFractionDigits:decimals||0}); }
+function fmtPercent(n,decimals){ if(!isFinite(n)) n=0; const d=decimals!==undefined?decimals:2; return n.toLocaleString("vi-VN",{maximumFractionDigits:d, minimumFractionDigits:d})+"%"; }
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function fmtCompact(v){
+  const n = Number(v); const sign = n<0?"-":"";
+  const a = Math.abs(n);
+  if(a>=1e9) return sign+(a/1e9).toFixed(1).replace(/\.0$/,"")+"B";
+  if(a>=1e6) return sign+(a/1e6).toFixed(1).replace(/\.0$/,"")+"tr";
+  if(a>=1e3) return sign+(a/1e3).toFixed(0)+"k";
+  return String(n);
+}
+function resolveColor(varExpr){
+  if(!varExpr.startsWith("var(")) return varExpr;
+  const name = varExpr.slice(4,-1).trim();
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || "#888";
+}
+
+/* ---------------- File parsing ---------------- */
+function findHeaderRow(rows){
+  for(let i=0;i<Math.min(rows.length,15);i++){
+    const row=rows[i]; if(!row) continue;
+    const a = row[0]!=null ? String(row[0]).trim() : "";
+    const b = row[1]!=null ? String(row[1]).trim() : "";
+    if(a==="Tên" && b.indexOf("ID sản phẩm")!==-1) return i;
+  }
+  return -1;
+}
+function extractPeriod(rows, filename){
+  for(let i=0;i<3;i++){
+    const cell = rows[i] && rows[i][0];
+    if(cell){
+      const m = String(cell).match(/(\d{2})\/(\d{2})\/(\d{4})\s*~\s*(\d{2})\/(\d{2})\/(\d{4})/);
+      if(m){
+        const start = new Date(+m[3], +m[2]-1, +m[1]);
+        const end = new Date(+m[6], +m[5]-1, +m[4]);
+        return { start, end, label: m[2]+"/"+m[3], rangeLabel: m[1]+"/"+m[2]+"/"+m[3]+" – "+m[4]+"/"+m[5]+"/"+m[6] };
+      }
+    }
+  }
+  const fm = filename.match(/(\d{4})(\d{2})(\d{2})/);
+  if(fm){
+    const start = new Date(+fm[1], +fm[2]-1, +fm[3]);
+    return { start, end:start, label: fm[2]+"/"+fm[1], rangeLabel: filename };
+  }
+  return { start:new Date(0), end:new Date(0), label:filename, rangeLabel:filename };
+}
+function readChannelBlock(row, def){
+  return { gmv: parseNum(row[def.gmvIdx]), impr: parseNum(row[def.imprIdx]), clicks: parseNum(row[def.clickIdx]), atc: parseNum(row[def.atcIdx]) };
+}
+function parseWorkbookRows(rows, filename){
+  const headerIdx = findHeaderRow(rows);
+  if(headerIdx===-1){
+    throw new Error('Header row ("Tên" / "ID sản phẩm") not found in file "'+filename+'". Please check that this is the product_list file exported from TikTok Shop Seller Center.');
+  }
+  const period = extractPeriod(rows, filename);
+  const products = [];
+  for(let r=headerIdx+1; r<rows.length; r++){
+    const row = rows[r];
+    if(!row || row[0]==null) continue;
+    const name = String(row[0]).trim();
+    if(!name) continue;
+    const channels = {};
+    CHANNELS.forEach(ch=>{
+      if(!ch.derived) channels[ch.id] = readChannelBlock(row, ch);
+    });
+    const affTotal = readChannelBlock(row, AFF_TOTAL);
+    channels.showcase = {
+      gmv: Math.max(0, affTotal.gmv - channels.liveAff.gmv - channels.videoAff.gmv),
+      impr: Math.max(0, affTotal.impr - channels.liveAff.impr - channels.videoAff.impr),
+      clicks: Math.max(0, affTotal.clicks - channels.liveAff.clicks - channels.videoAff.clicks),
+      atc: Math.max(0, affTotal.atc - channels.liveAff.atc - channels.videoAff.atc),
+    };
+    products.push({
+      name, id: row[ID_IDX]!=null?String(row[ID_IDX]):"",
+      gmvTotal: parseNum(row[GMV_TOTAL_IDX]), orders: parseNum(row[ORDERS_IDX]),
+      channels
+    });
+  }
+  if(products.length===0) throw new Error('File "'+filename+'" has no product rows after the header row.');
+  return { fileName: filename, period, products };
+}
+function parseFile(file){
+  return new Promise((resolve,reject)=>{
+    const reader = new FileReader();
+    reader.onerror = ()=> reject(new Error('Could not read file "'+file.name+'".'));
+    reader.onload = (e)=>{
+      try{
+        const data = new Uint8Array(e.target.result);
+        const wb = XLSX.read(data, {type:"array"});
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null, raw:false});
+        resolve(parseWorkbookRows(rows, file.name));
+      }catch(err){ reject(err); }
+    };
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+/* ---------------- Aggregation ---------------- */
+function summarize(products){
+  const totalGMV = products.reduce((s,p)=>s+p.gmvTotal,0);
+  const totalOrders = products.reduce((s,p)=>s+p.orders,0);
+  const channels = CHANNELS.map(ch=>{
+    let gmv=0, impr=0, clicks=0, atc=0;
+    products.forEach(p=>{ const c=p.channels[ch.id]; gmv+=c.gmv; impr+=c.impr; clicks+=c.clicks; atc+=c.atc; });
+    const ctr = impr>0 ? clicks/impr*100 : 0;
+    const atcRate = clicks>0 ? atc/clicks*100 : 0;
+    const gpm = impr>0 ? gmv/impr*1000 : 0;
+    const share = totalGMV>0 ? gmv/totalGMV*100 : 0;
+    return Object.assign({}, ch, { gmv, impr, clicks, atc, ctr, atcRate, gpm, share });
+  });
+  return { totalGMV, totalOrders, productCount: products.length, channels };
+}
+function metricsFor(c){
+  const ctr = c.impr>0 ? c.clicks/c.impr*100 : 0;
+  const atcRate = c.clicks>0 ? c.atc/c.clicks*100 : 0;
+  const gpm = c.impr>0 ? c.gmv/c.impr*1000 : 0;
+  return { ctr, atcRate, gpm };
+}
+function topNByTotalGmv(products, n){ return [...products].filter(p=>p.gmvTotal>0).sort((a,b)=>b.gmvTotal-a.gmvTotal).slice(0,n); }
+function bestProductForChannel(products, chId){
+  let best=null;
+  products.forEach(p=>{ const g=p.channels[chId].gmv; if(g>0 && (!best || g>best.channels[chId].gmv)) best=p; });
+  return best;
+}
+/* Benchmark per channel = simple average of Hiển thị/Traffic/CTR/ATC/Tỷ lệ ATC/GPM across
+   the top N products of that channel, ranked by that channel's Traffic. */
+const BENCHMARK_TOP_N = 40;
+function computeChannelBenchmarks(products){
+  const out = {};
+  CHANNELS.forEach(ch=>{
+    const ranked = [...products].filter(p=>p.channels[ch.id].clicks>0).sort((a,b)=>b.channels[ch.id].clicks-a.channels[ch.id].clicks);
+    const top = ranked.slice(0,BENCHMARK_TOP_N);
+    const n = top.length;
+    if(n===0){ out[ch.id] = null; return; }
+    let sumImpr=0,sumTraffic=0,sumCtr=0,sumAtc=0,sumAtcRate=0,sumGpm=0;
+    top.forEach(p=>{
+      const c = p.channels[ch.id]; const m = metricsFor(c);
+      sumImpr+=c.impr; sumTraffic+=c.clicks; sumCtr+=m.ctr; sumAtc+=c.atc; sumAtcRate+=m.atcRate; sumGpm+=m.gpm;
+    });
+    out[ch.id] = { n, impr:sumImpr/n, traffic:sumTraffic/n, ctr:sumCtr/n, atc:sumAtc/n, atcRate:sumAtcRate/n, gpm:sumGpm/n };
+  });
+  return out;
+}
+/* Classify every product (with impressions>0 in that channel) against the channel benchmark:
+   trafficGood  = traffic>=bench.traffic AND ctr>=bench.ctr
+   trafficPoor  = traffic<bench.traffic  AND ctr<bench.ctr
+   convGood     = atc>=bench.atc         AND atcRate>=bench.atcRate
+   convPoor     = atc<bench.atc          AND atcRate<bench.atcRate
+   Opportunity 1: trafficGood && convPoor  -> "Traffic tốt, chuyển đổi kém"
+   Opportunity 2: convGood && trafficPoor  -> "Chuyển đổi tốt, traffic kém" */
+function findPotentialProducts(products, benchmarks){
+  const result = {};
+  CHANNELS.forEach(ch=>{
+    const bench = benchmarks[ch.id];
+    const lowConvHighTraffic = [], lowTrafficHighConv = [];
+    if(bench){
+      products.forEach(p=>{
+        const c = p.channels[ch.id];
+        if(c.impr<=0) return;
+        const m = metricsFor(c);
+        const trafficGood = c.clicks>=bench.traffic && m.ctr>=bench.ctr;
+        const trafficPoor = c.clicks<bench.traffic && m.ctr<bench.ctr;
+        const convGood = c.atc>=bench.atc && m.atcRate>=bench.atcRate;
+        const convPoor = c.atc<bench.atc && m.atcRate<bench.atcRate;
+        if(trafficGood && convPoor) lowConvHighTraffic.push({p,c,m});
+        else if(convGood && trafficPoor) lowTrafficHighConv.push({p,c,m});
+      });
+    }
+    lowConvHighTraffic.sort((a,b)=>b.c.clicks-a.c.clicks);
+    lowTrafficHighConv.sort((a,b)=>b.m.atcRate-a.m.atcRate);
+    result[ch.id] = { lowConvHighTraffic, lowTrafficHighConv };
+  });
+  return result;
+}
+
+
+/* ---------------- State ---------------- */
+const state = { mode:"single", parsedFiles:[], charts:{} };
+
+/* ---------------- DOM refs ---------------- */
+const $ = (sel)=>document.querySelector(sel);
+const modeSwitch = $("#modeSwitch");
+const dropzone = $("#dropzone");
+const fileInput = $("#fileInput");
+const fileListEl = $("#fileList");
+const uploadError = $("#uploadError");
+const toolbarRow = $("#toolbarRow");
+const resetBtn = $("#resetBtn");
+const dashboard = $("#dashboard");
+
+/* ---------------- Library availability guard ---------------- */
+function checkLibraries(){
+  const missing = [];
+  if(typeof XLSX==="undefined") missing.push("XLSX (Excel reader)");
+  if(typeof Chart==="undefined") missing.push("Chart.js (charts)");
+  if(missing.length){
+    showError("Could not load library: "+missing.join(", ")+". Check your network connection and reload the page. If it still fails, the tables still work but the charts will be empty.");
+  }
+}
+checkLibraries();
+const dzTitle = $("#dzTitle");
+const dzSub = $("#dzSub");
+const modeDesc = $("#modeDesc");
+const uploadTitle = $("#uploadTitle");
+
+const MODE_TEXT = {
+  single: {
+    title: "Store activity source analysis",
+    desc: 'Upload 1 <code>product_list</code> file (.xlsx) to analyse GMV and funnel performance across 6 activity sources: Livestream Self-Channel, Video Self-Channel, Livestream Affiliate, Video Affiliate, Product Card, Showcase Affiliate.',
+    dzTitle: "Drag and drop an .xlsx file here, or click to choose",
+    dzSub: "Accepts 1 file product_list_YYYYMMDD.xlsx",
+    multiple: false
+  },
+  trend: {
+    title: "Activity source trend by period",
+    desc: "Upload 2–6 <code>product_list</code> files from recent months to see how GMV, each source and each product change over time.",
+    dzTitle: "Drag and drop 2–6 .xlsx files here, or click to choose",
+    dzSub: "Each file is one month of data. The tool sorts them by time.",
+    multiple: true
+  }
+};
+
+/* ---------------- Mode switching ---------------- */
+modeSwitch.addEventListener("click",(e)=>{
+  const btn = e.target.closest("button[data-mode]"); if(!btn) return;
+  const mode = btn.dataset.mode; if(mode===state.mode) return;
+  state.mode = mode;
+  [...modeSwitch.querySelectorAll("button")].forEach(b=>b.classList.toggle("active", b===btn));
+  fileInput.toggleAttribute("multiple", MODE_TEXT[mode].multiple);
+  uploadTitle.textContent = MODE_TEXT[mode].title;
+  modeDesc.innerHTML = MODE_TEXT[mode].desc;
+  dzTitle.textContent = MODE_TEXT[mode].dzTitle;
+  dzSub.textContent = MODE_TEXT[mode].dzSub;
+  resetAll();
+});
+
+/* ---------------- Upload handling ---------------- */
+dropzone.addEventListener("click",(e)=>{ if(e.target.id!=="fileInput") fileInput.click(); });
+dropzone.addEventListener("dragover",(e)=>{ e.preventDefault(); dropzone.classList.add("drag"); });
+dropzone.addEventListener("dragleave",()=> dropzone.classList.remove("drag"));
+dropzone.addEventListener("drop",(e)=>{ e.preventDefault(); dropzone.classList.remove("drag"); handleFiles(e.dataTransfer.files); });
+fileInput.addEventListener("change",(e)=> handleFiles(e.target.files));
+resetBtn.addEventListener("click", resetAll);
+
+function resetAll(){
+  state.parsedFiles = [];
+  fileListEl.innerHTML = "";
+  uploadError.hidden = true;
+  toolbarRow.hidden = true;
+  dashboard.hidden = true;
+  dashboard.innerHTML = "";
+  fileInput.value = "";
+  Object.values(state.charts).forEach(c=>c && c.destroy && c.destroy());
+  state.charts = {};
+}
+async function handleFiles(fileListRaw){
+  const files = Array.from(fileListRaw || []).filter(f=>/\.xlsx$/i.test(f.name));
+  if(files.length===0) return;
+  uploadError.hidden = true;
+  if(state.mode==="single"){
+    state.parsedFiles = []; fileListEl.innerHTML = "";
+    await ingestFile(files[0]);
+  }else{
+    let toAdd = files;
+    if(state.parsedFiles.length + toAdd.length > 6){
+      toAdd = toAdd.slice(0, Math.max(0, 6 - state.parsedFiles.length));
+      showError("Up to 6 periods are supported. Files over the limit were skipped.");
+    }
+    for(const f of toAdd){ await ingestFile(f); }
+  }
+  renderAll();
+}
+async function ingestFile(file){
+  const row = document.createElement("div");
+  row.className = "file-row";
+  row.innerHTML = '<span class="fname">'+esc(file.name)+'</span><span class="fstatus">Processing…</span>';
+  fileListEl.appendChild(row);
+  try{
+    const parsed = await parseFile(file);
+    state.parsedFiles.push(parsed);
+    row.querySelector(".fstatus").outerHTML =
+      '<span class="fmeta">'+esc(parsed.period.rangeLabel)+' · '+parsed.products.length+' SP</span>' +
+      '<span class="fstatus ok">✓ Processed</span>' +
+      '<button class="fremove" aria-label="Remove file" data-file="'+esc(file.name)+'">✕</button>';
+    row.querySelector(".fremove").addEventListener("click",()=>{
+      state.parsedFiles = state.parsedFiles.filter(p=>p!==parsed);
+      row.remove(); renderAll();
+    });
+  }catch(err){
+    row.querySelector(".fstatus").outerHTML = '<span class="fstatus err">✕ Error</span>';
+    showError(err.message || String(err));
+  }
+}
+function showError(msg){ uploadError.hidden = false; uploadError.textContent = msg; }
+
+/* ---------------- Rendering ---------------- */
+function renderAll(){
+  toolbarRow.hidden = state.parsedFiles.length===0;
+  if(state.parsedFiles.length===0){ dashboard.hidden = true; dashboard.innerHTML=""; return; }
+  Object.values(state.charts).forEach(c=>c && c.destroy && c.destroy());
+  state.charts = {};
+  dashboard.hidden = false;
+  if(state.mode==="single"){
+    renderSingle(state.parsedFiles[0]);
+  }else{
+    if(state.parsedFiles.length<2){
+      dashboard.innerHTML = '<div class="section"><div class="empty-note">Upload at least 2 files to see the trend by period.</div></div>';
+      return;
+    }
+    renderTrend(state.parsedFiles);
+  }
+}
+function dot(color){ return '<span class="dot" style="background:'+color+'"></span>'; }
+function sectionHead(letter,title,hint){
+  return '<div class="section-head"><div class="section-title-row"><span class="section-letter">'+letter+'</span><span class="section-title">'+title+'</span></div>'+
+    (hint?'<div class="section-hint">'+hint+'</div>':'')+'</div>';
+}
+function kpiCard(label,value,sub,subClass){
+  return '<div class="kpi-card"><div class="kpi-label">'+esc(label)+'</div><div class="kpi-value">'+value+'</div>'+
+    (sub?'<div class="kpi-sub'+(subClass?" "+subClass:"")+'">'+sub+'</div>':'')+'</div>';
+}
+function deltaHtml(d){
+  const cls = d>0.5?"up":d<-0.5?"down":"flat";
+  const arrow = d>0.5?"▲":d<-0.5?"▼":"→";
+  return '<span class="delta '+cls+'">'+arrow+' '+(d>=0?"+":"")+fmtPercent(d,1)+'</span>';
+}
+
+/* ======================================================================
+   MODE: THEO THÁNG (single period)
+   ====================================================================== */
+function potentialSubtable(title, hint, items){
+  let t = '<div style="margin-bottom:20px;"><div style="font-weight:700;font-size:13.5px;margin-bottom:2px;">'+title+'</div>';
+  t += '<div style="font-size:12px;color:var(--ink-faint);margin-bottom:10px;">'+hint+' · '+items.length+' products</div>';
+  if(items.length===0){ t += '<div class="empty-note">No products match this condition.</div></div>'; return t; }
+  t += '<div class="table-scroll"><table><thead><tr><th class="left">Product</th><th>Impressions</th><th>Traffic</th><th>CTR</th><th>ATC</th><th>ATC rate</th><th>GPM</th></tr></thead><tbody>';
+  items.forEach(({p,c,m})=>{
+    t += '<tr><td class="left name-cell">'+esc(p.name)+'</td><td>'+fmtNum(c.impr)+'</td><td>'+fmtNum(c.clicks)+'</td><td>'+fmtPercent(m.ctr)+'</td><td>'+fmtNum(c.atc)+'</td><td>'+fmtPercent(m.atcRate)+'</td><td>'+fmtNum(m.gpm,0)+'₫</td></tr>';
+  });
+  t += '</tbody></table></div></div>';
+  return t;
+}
+/* wires a channel-tab widget for the F/potential section; letterRef is the section letter shown in the hint text */
+function wirePotentialTabs(tabsElId, contentElId, benchmarks, potentials){
+  const contentEl = document.getElementById(contentElId);
+  function renderPotential(chId){
+    const bench = benchmarks[chId];
+    const data = potentials[chId];
+    if(!bench){ contentEl.innerHTML = '<div class="empty-note">Not enough data to compute a benchmark for this channel.</div>'; return; }
+    let t = potentialSubtable(
+      '🔥 Good traffic, weak conversion: optimise the product page/content',
+      'Traffic & CTR ≥ benchmark ('+fmtNum(bench.traffic,0)+' · '+fmtPercent(bench.ctr)+') but ATC & ATC rate < benchmark ('+fmtNum(bench.atc,0)+' · '+fmtPercent(bench.atcRate)+')',
+      data.lowConvHighTraffic
+    );
+    t += potentialSubtable(
+      '💡 Good conversion, weak traffic: potential if more traffic is pushed',
+      'ATC & ATC rate ≥ benchmark ('+fmtNum(bench.atc,0)+' · '+fmtPercent(bench.atcRate)+') but Traffic & CTR < benchmark ('+fmtNum(bench.traffic,0)+' · '+fmtPercent(bench.ctr)+')',
+      data.lowTrafficHighConv
+    );
+    contentEl.innerHTML = t;
+  }
+  document.getElementById(tabsElId).addEventListener("click",(e)=>{
+    const btn = e.target.closest(".tab-btn"); if(!btn) return;
+    document.querySelectorAll("#"+tabsElId+" .tab-btn").forEach(b=>b.classList.toggle("active", b===btn));
+    renderPotential(btn.dataset.ch);
+  });
+  renderPotential(CHANNELS[0].id);
+}
+
+function renderSingle(parsed){
+  const summary = summarize(parsed.products);
+  const sortedChannels = [...summary.channels].sort((a,b)=>b.gmv-a.gmv);
+  const maxGmv = Math.max(...sortedChannels.map(c=>c.gmv), 1);
+  const weightedGpm = (()=>{
+    const impr = summary.channels.reduce((s,c)=>s+c.impr,0);
+    const gmv = summary.channels.reduce((s,c)=>s+c.gmv,0);
+    return impr>0 ? gmv/impr*1000 : 0;
+  })();
+
+  let html = "";
+
+  /* ---- A. Tổng quan ---- */
+  html += '<div class="kpi-grid">';
+  html += kpiCard("Total GMV this period", fmtCurrency(summary.totalGMV), esc(parsed.period.rangeLabel));
+  html += kpiCard("Total orders", fmtNum(summary.totalOrders), summary.productCount+" products in catalogue");
+  const topCh = sortedChannels[0];
+  html += kpiCard("Top GMV source", topCh.short, fmtPercent(topCh.share,1)+" of total GMV");
+  html += kpiCard("Average GPM (6 sources)", fmtNum(weightedGpm,0)+"₫", "GMV / 1,000 impressions");
+  html += '</div>';
+
+  /* ---- B. Bảng hiệu suất 6 nguồn ---- */
+  html += '<div class="section">';
+  html += sectionHead("B","Performance of 6 activity sources","Total GMV (including indirect) and traffic funnel per source, across "+summary.productCount+" products.");
+  html += '<div class="chart-wrap" style="height:280px;"><canvas id="chGmvBar"></canvas></div>';
+  html += '<div class="channel-rank">';
+  sortedChannels.forEach(c=>{
+    html += '<div class="channel-rank-row">';
+    html += '<div class="channel-rank-name">'+dot(c.color)+esc(c.short)+'</div>';
+    html += '<div class="channel-rank-bar-bg"><div class="channel-rank-bar-fill" style="width:'+(c.gmv/maxGmv*100).toFixed(1)+'%;background:'+c.color+'"></div></div>';
+    html += '<div class="channel-rank-val">'+fmtPercent(c.share,1)+'</div>';
+    html += '</div>';
+  });
+  html += '</div>';
+  html += '<div class="table-scroll" style="margin-top:18px;"><table><thead><tr>';
+  html += '<th class="left">Source</th><th>GMV</th><th>% GMV</th><th>Impressions</th><th>Traffic</th><th>CTR</th><th>ATC</th><th>ATC rate</th><th>GPM</th>';
+  html += '</tr></thead><tbody>';
+  sortedChannels.forEach(c=>{
+    html += '<tr><td class="left">'+dot(c.color)+esc(c.label)+'</td>';
+    html += '<td>'+fmtCurrency(c.gmv)+'</td><td>'+fmtPercent(c.share,1)+'</td><td>'+fmtNum(c.impr)+'</td><td>'+fmtNum(c.clicks)+'</td>';
+    html += '<td>'+fmtPercent(c.ctr)+'</td><td>'+fmtNum(c.atc)+'</td><td>'+fmtPercent(c.atcRate)+'</td><td>'+fmtNum(c.gpm,0)+'₫</td></tr>';
+  });
+  html += '</tbody></table></div></div>';
+
+  /* ---- C. Top 5 SP theo GMV tổng — breakdown đa cổng ---- */
+  const top5 = topNByTotalGmv(parsed.products,5);
+  html += '<div class="section">';
+  html += sectionHead("C","Top 5 products by total GMV","For each product: full performance across all 6 channels, to see which channel carries revenue and which has traffic but weak conversion.");
+  html += '<div id="top5Blocks">';
+  top5.forEach((p,i)=>{
+    html += '<div class="product-card">';
+    html += '<div class="product-card-head"><div class="product-card-title"><span class="big-rank">'+(i+1)+'</span>';
+    html += '<div><div class="product-card-name">'+esc(p.name)+'</div><div class="product-card-meta">ID: '+esc(p.id)+' · '+fmtNum(p.orders)+' orders</div></div></div>';
+    html += '<div class="product-card-gmv"><div class="v">'+fmtCurrency(p.gmvTotal)+'</div><div class="l">Total GMV</div></div></div>';
+    html += '<div class="table-scroll"><table><thead><tr><th class="left">Channel</th><th>GMV</th><th>% of this product</th><th>Impressions</th><th>Traffic</th><th>CTR</th><th>ATC</th><th>ATC rate</th><th>GPM</th></tr></thead><tbody>';
+    CHANNELS.forEach(ch=>{
+      const c = p.channels[ch.id]; const m = metricsFor(c);
+      const shareInSp = p.gmvTotal>0 ? c.gmv/p.gmvTotal*100 : 0;
+      html += '<tr><td class="left">'+dot(ch.color)+esc(ch.short)+'</td><td>'+fmtCurrency(c.gmv)+'</td><td>'+fmtPercent(shareInSp,1)+'</td>';
+      html += '<td>'+fmtNum(c.impr)+'</td><td>'+fmtNum(c.clicks)+'</td><td>'+fmtPercent(m.ctr)+'</td><td>'+fmtNum(c.atc)+'</td><td>'+fmtPercent(m.atcRate)+'</td><td>'+fmtNum(m.gpm,0)+'₫</td></tr>';
+    });
+    html += '</tbody></table></div></div>';
+  });
+  if(top5.length===0) html += '<div class="empty-note">No product generated GMV in this period.</div>';
+  html += '</div></div>';
+
+  /* ---- D. SP dẫn đầu GMV mỗi cổng ---- */
+  html += '<div class="section">';
+  html += sectionHead("D","Top GMV product per channel","The product with the highest GMV in each channel, not the product's total GMV.");
+  html += '<div class="table-scroll"><table><thead><tr><th class="left">Channel</th><th class="left">Top product</th><th>GMV from this channel</th><th>CTR</th><th>ATC rate</th><th>GPM</th><th>% of channel GMV from this product</th></tr></thead><tbody>';
+  CHANNELS.forEach(ch=>{
+    const best = bestProductForChannel(parsed.products, ch.id);
+    const chSummary = summary.channels.find(c=>c.id===ch.id);
+    if(!best){ html += '<tr><td class="left">'+dot(ch.color)+esc(ch.label)+'</td><td colspan="6" class="left">No product with GMV yet</td></tr>'; return; }
+    const c = best.channels[ch.id]; const m = metricsFor(c);
+    const shareOfChannel = chSummary.gmv>0 ? c.gmv/chSummary.gmv*100 : 0;
+    html += '<tr><td class="left">'+dot(ch.color)+esc(ch.label)+'</td><td class="left name-cell">'+esc(best.name)+'</td>';
+    html += '<td>'+fmtCurrency(c.gmv)+'</td><td>'+fmtPercent(m.ctr)+'</td><td>'+fmtPercent(m.atcRate)+'</td><td>'+fmtNum(m.gpm,0)+'₫</td><td>'+fmtPercent(shareOfChannel,1)+'</td></tr>';
+  });
+  html += '</tbody></table></div></div>';
+
+  /* ---- E. Benchmark theo cổng (Top N SP theo Traffic) ---- */
+  const benchmarks = computeChannelBenchmarks(parsed.products);
+  html += '<div class="section">';
+  html += sectionHead("E","Performance benchmark by channel","Average Impressions/Traffic/CTR/ATC/ATC rate/GPM of the Top "+BENCHMARK_TOP_N+" products (by Traffic) in each channel, used as the comparison baseline in section F.");
+  html += '<div class="table-scroll"><table><thead><tr><th class="left">Channel</th><th>Avg impressions</th><th>Avg traffic</th><th>Avg CTR</th><th>Avg ATC</th><th>Avg ATC rate</th><th>Avg GPM</th><th>Products used for benchmark</th></tr></thead><tbody>';
+  CHANNELS.forEach(ch=>{
+    const b = benchmarks[ch.id];
+    if(!b){ html += '<tr><td class="left">'+dot(ch.color)+esc(ch.label)+'</td><td colspan="7" class="left">No product with GMV in this channel yet</td></tr>'; return; }
+    html += '<tr><td class="left">'+dot(ch.color)+esc(ch.label)+'</td><td>'+fmtNum(b.impr,0)+'</td><td>'+fmtNum(b.traffic,0)+'</td><td>'+fmtPercent(b.ctr)+'</td><td>'+fmtNum(b.atc,0)+'</td><td>'+fmtPercent(b.atcRate)+'</td><td>'+fmtNum(b.gpm,0)+'₫</td><td>'+b.n+' SP</td></tr>';
+  });
+  html += '</tbody></table></div></div>';
+
+  /* ---- F. Sản phẩm tiềm năng theo benchmark ---- */
+  const potentials = findPotentialProducts(parsed.products, benchmarks);
+  html += '<div class="section">';
+  html += sectionHead("F","Products with potential vs. benchmark","Each product is compared with the channel benchmark (E). A product is classified only when it is above/below the benchmark on both metrics of a group.");
+  html += '<div class="tabs" id="potentialTabs">';
+  CHANNELS.forEach((ch,i)=>{
+    html += '<button class="tab-btn'+(i===0?" active":"")+'" data-ch="'+ch.id+'">'+dot(ch.color)+esc(ch.short)+'</button>';
+  });
+  html += '</div><div id="potentialContent"></div></div>';
+
+  /* ---- G. Bảng toàn bộ SP (đã chuyển xuống cuối) ---- */
+  html += '<div class="section">';
+  html += sectionHead("G","All products","Search by product ID · click a column header to sort.");
+  html += '<div class="search-row"><input class="search-input" id="productSearch" placeholder="Search by product ID…"/></div>';
+  html += '<div class="table-scroll" id="fullTableWrap"></div>';
+  html += '</div>';
+
+  dashboard.innerHTML = html;
+
+  /* chart B */
+  const ctx = document.getElementById("chGmvBar").getContext("2d");
+  const resolvedColors = sortedChannels.map(c=>resolveColor(c.color));
+  try{
+  state.charts.gmvBar = new Chart(ctx, {
+    type:"bar",
+    data:{ labels: sortedChannels.map(c=>c.short), datasets:[{ data: sortedChannels.map(c=>c.gmv), backgroundColor: resolvedColors, borderRadius:6, maxBarThickness:40 }] },
+    options:{ indexAxis:"y", responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:(ctx)=> fmtCurrency(ctx.parsed.x) } } },
+      scales:{ x:{ ticks:{ callback:(v)=> fmtCompact(v), color: resolveColor("var(--ink-faint)") }, grid:{ color: resolveColor("var(--border)") } },
+                y:{ ticks:{ color: resolveColor("var(--ink)") }, grid:{ display:false } } } }
+  });
+  }catch(err){ console.error("Chart B (single) failed:", err); const cv=document.getElementById("chGmvBar"); if(cv&&cv.parentElement) cv.parentElement.innerHTML = "<div class='empty-note'>Could not load the chart (Chart.js failed or has not loaded yet). The table below is still correct.</div>"; }
+
+  /* full table E — search by ID, sortable */
+  let sortKey = "gmvTotal", sortDir = -1;
+  const fullTableWrap = document.getElementById("fullTableWrap");
+  function renderFullTable(){
+    const q = (document.getElementById("productSearch").value||"").trim().toLowerCase();
+    let rows = parsed.products.filter(p=> !q || p.id.toLowerCase().indexOf(q)!==-1 );
+    rows = [...rows].sort((a,b)=>{
+      const va = sortKey==="gmvTotal"?a.gmvTotal: sortKey==="orders"?a.orders : a.channels[sortKey].gmv;
+      const vb = sortKey==="gmvTotal"?b.gmvTotal: sortKey==="orders"?b.orders : b.channels[sortKey].gmv;
+      return (va-vb)*sortDir;
+    });
+    let t = '<table><thead><tr><th class="left">Product ID</th><th class="left">Product</th>';
+    t += '<th class="sortable" data-key="gmvTotal">Total GMV</th><th class="sortable" data-key="orders">Orders</th>';
+    CHANNELS.forEach(ch=> t += '<th class="sortable" data-key="'+ch.id+'">'+esc(ch.short)+'</th>');
+    t += '</tr></thead><tbody>';
+    rows.slice(0,300).forEach(p=>{
+      t += '<tr><td class="left">'+esc(p.id)+'</td><td class="left name-cell">'+esc(p.name)+'</td>';
+      t += '<td>'+fmtCurrency(p.gmvTotal)+'</td><td>'+fmtNum(p.orders)+'</td>';
+      CHANNELS.forEach(ch=> t += '<td>'+fmtCurrency(p.channels[ch.id].gmv)+'</td>');
+      t += '</tr>';
+    });
+    t += '</tbody></table>';
+    if(rows.length===0) t = '<div class="empty-note">No matching product ID.</div>';
+    fullTableWrap.innerHTML = t;
+    fullTableWrap.querySelectorAll("th.sortable").forEach(th=>{
+      th.addEventListener("click",()=>{
+        const key = th.dataset.key;
+        if(sortKey===key) sortDir*=-1; else { sortKey=key; sortDir=-1; }
+        renderFullTable();
+      });
+    });
+  }
+  document.getElementById("productSearch").addEventListener("input", renderFullTable);
+  renderFullTable();
+
+  /* tabs F — potential products */
+  wirePotentialTabs("potentialTabs", "potentialContent", benchmarks, potentials);
+}
+
+/* ======================================================================
+   MODE: THEO GIAI ĐOẠN (trend, 2–6 periods)
+   ====================================================================== */
+function renderTrend(parsedFiles){
+  const sorted = [...parsedFiles].sort((a,b)=> a.period.start - b.period.start).slice(-6);
+  const periods = sorted.map(p=>({ period:p.period, fileName:p.fileName, products:p.products, summary: summarize(p.products) }));
+  const latest = periods[periods.length-1];
+  const prev = periods.length>1 ? periods[periods.length-2] : null;
+  const first = periods[0];
+
+  let html = "";
+
+  /* ---- A. Xu hướng tổng quan ---- */
+  const totalDelta = prev && prev.summary.totalGMV>0 ? (latest.summary.totalGMV-prev.summary.totalGMV)/prev.summary.totalGMV*100 : null;
+  let bestIdx=0, worstIdx=0;
+  periods.forEach((p,i)=>{
+    if(i===0) return;
+    const prevP = periods[i-1];
+    if(prevP.summary.totalGMV<=0) return;
+    const d = (p.summary.totalGMV-prevP.summary.totalGMV)/prevP.summary.totalGMV*100;
+    if(bestIdx===0 || d > ((periods[bestIdx].summary.totalGMV-periods[bestIdx-1].summary.totalGMV)/periods[bestIdx-1].summary.totalGMV*100)) bestIdx=i;
+    if(worstIdx===0 || d < ((periods[worstIdx].summary.totalGMV-periods[worstIdx-1].summary.totalGMV)/periods[worstIdx-1].summary.totalGMV*100)) worstIdx=i;
+  });
+
+  html += '<div class="kpi-grid">';
+  html += kpiCard("GMV, latest period", fmtCurrency(latest.summary.totalGMV), esc(latest.period.rangeLabel));
+  html += kpiCard("Periods compared", periods.length+" periods", esc(first.period.label)+" → "+esc(latest.period.label));
+  if(totalDelta!==null){
+    html += kpiCard("GMV growth vs. previous period", (totalDelta>=0?"+":"")+fmtPercent(totalDelta,1), "vs. "+esc(prev.period.label), totalDelta>0.5?"good":totalDelta<-0.5?"bad":"");
+  }else{
+    html += kpiCard("GMV growth vs. previous period", "—", "needs data from the previous period");
+  }
+  html += kpiCard("Total orders, latest period", fmtNum(latest.summary.totalOrders), latest.summary.productCount+" products");
+  html += '</div>';
+
+  html += '<div class="section">';
+  html += sectionHead("A","GMV & orders trend by month","Bars: GMV per period. Line: total orders per period.");
+  html += '<div class="chart-wrap" style="height:280px;"><canvas id="chOverview"></canvas></div>';
+  html += '</div>';
+
+  /* ---- B. Xu hướng 6 nguồn qua các kỳ ---- */
+  html += '<div class="section">';
+  html += sectionHead("B","Performance trend of 6 sources over periods","GMV per source by month, and each source's % share over time.");
+  html += '<div class="chart-wrap" style="height:300px;"><canvas id="chChannelTrend"></canvas></div>';
+  html += '<div class="table-scroll" style="margin-top:20px;"><table><thead><tr><th class="left">Source</th>';
+  periods.forEach(p=> html += '<th>'+esc(p.period.label)+'</th>');
+  html += '<th>Trend (first → last period)</th></tr></thead><tbody>';
+  CHANNELS.forEach(ch=>{
+    html += '<tr><td class="left">'+dot(ch.color)+esc(ch.short)+'</td>';
+    periods.forEach(p=>{ const c = p.summary.channels.find(x=>x.id===ch.id); html += '<td>'+fmtCurrency(c.gmv)+'</td>'; });
+    const firstGmv = first.summary.channels.find(x=>x.id===ch.id).gmv;
+    const lastGmv = latest.summary.channels.find(x=>x.id===ch.id).gmv;
+    const d = firstGmv>0 ? (lastGmv-firstGmv)/firstGmv*100 : null;
+    html += '<td>'+(d===null?'—':deltaHtml(d))+'</td></tr>';
+  });
+  html += '</tbody></table></div>';
+  html += '<div class="table-scroll" style="margin-top:14px;"><table><thead><tr><th class="left">% GMV share</th>';
+  periods.forEach(p=> html += '<th>'+esc(p.period.label)+'</th>');
+  html += '</tr></thead><tbody>';
+  CHANNELS.forEach(ch=>{
+    html += '<tr><td class="left">'+dot(ch.color)+esc(ch.short)+'</td>';
+    periods.forEach(p=>{ const c = p.summary.channels.find(x=>x.id===ch.id); html += '<td>'+fmtPercent(c.share,1)+'</td>'; });
+    html += '</tr>';
+  });
+  html += '</tbody></table></div></div>';
+
+  /* ---- C. Top 5 SP theo GMV cộng dồn — dữ liệu theo từng tháng ---- */
+  const cumulative = {};
+  periods.forEach(p=> p.products.forEach(prod=>{ cumulative[prod.id] = (cumulative[prod.id]||0) + prod.gmvTotal; }));
+  const idToName = {};
+  periods.forEach(p=> p.products.forEach(prod=>{ if(!idToName[prod.id]) idToName[prod.id]=prod.name; }));
+  const top5Ids = Object.entries(cumulative).sort((a,b)=>b[1]-a[1]).slice(0,5).map(e=>e[0]);
+
+  html += '<div class="section">';
+  html += sectionHead("C","Top 5 products by cumulative GMV over the period","The 5 products are chosen by cumulative GMV over the whole period. The data below is split by month (not combined) to show the real trend.");
+  html += '<div class="tabs" id="top5TrendTabs">';
+  top5Ids.forEach((id,i)=>{
+    html += '<button class="tab-btn'+(i===0?" active":"")+'" data-id="'+esc(id)+'">#'+(i+1)+' '+esc((idToName[id]||"").slice(0,28))+((idToName[id]||"").length>28?"…":"")+'</button>';
+  });
+  html += '</div><div id="top5TrendContent"></div></div>';
+
+  /* ---- D. SP dẫn đầu mỗi cổng — kỳ gần nhất + xu hướng ---- */
+  html += '<div class="section">';
+  html += sectionHead("D","Top GMV product per channel, latest period","GMV of the top product over recent months, and whether the \"leader\" changed from the previous period.");
+  html += '<div class="table-scroll"><table><thead><tr><th class="left">Channel</th><th class="left">Top product ('+esc(latest.period.label)+')</th><th>GMV this period</th><th class="left">GMV trend over periods</th><th>Leader changed?</th></tr></thead><tbody>';
+  CHANNELS.forEach(ch=>{
+    const bestNow = bestProductForChannel(latest.products, ch.id);
+    if(!bestNow){ html += '<tr><td class="left">'+dot(ch.color)+esc(ch.label)+'</td><td colspan="4" class="left">No product with GMV yet</td></tr>'; return; }
+    const bestPrev = prev ? bestProductForChannel(prev.products, ch.id) : null;
+    const changed = bestPrev && bestPrev.id !== bestNow.id;
+    const trail = periods.map(p=>{
+      const prod = p.products.find(x=>x.id===bestNow.id);
+      return prod ? prod.channels[ch.id].gmv : 0;
+    });
+    const trailStr = trail.map(v=>fmtCompact(v)).join(" → ");
+    html += '<tr><td class="left">'+dot(ch.color)+esc(ch.label)+'</td><td class="left name-cell">'+esc(bestNow.name)+'</td>';
+    html += '<td>'+fmtCurrency(bestNow.channels[ch.id].gmv)+'</td><td class="left">'+esc(trailStr)+'</td>';
+    html += '<td>'+(bestPrev ? (changed?'<span class="badge">New leader</span>':'<span class="delta flat">Held</span>') : '<span class="delta flat">First period</span>')+'</td></tr>';
+  });
+  html += '</tbody></table></div></div>';
+
+  /* ---- E. Benchmark theo cổng (kỳ gần nhất, Top N theo Traffic) ---- */
+  const benchmarksLatest = computeChannelBenchmarks(latest.products);
+  html += '<div class="section">';
+  html += sectionHead("E","Performance benchmark by channel, latest period ("+esc(latest.period.label)+")","Average Impressions/Traffic/CTR/ATC/ATC rate/GPM of the Top "+BENCHMARK_TOP_N+" products (by Traffic) in each channel in the latest period, used as the comparison baseline in section F.");
+  html += '<div class="table-scroll"><table><thead><tr><th class="left">Channel</th><th>Avg impressions</th><th>Avg traffic</th><th>Avg CTR</th><th>Avg ATC</th><th>Avg ATC rate</th><th>Avg GPM</th><th>Products used for benchmark</th></tr></thead><tbody>';
+  CHANNELS.forEach(ch=>{
+    const b = benchmarksLatest[ch.id];
+    if(!b){ html += '<tr><td class="left">'+dot(ch.color)+esc(ch.label)+'</td><td colspan="7" class="left">No product with GMV in this channel yet</td></tr>'; return; }
+    html += '<tr><td class="left">'+dot(ch.color)+esc(ch.label)+'</td><td>'+fmtNum(b.impr,0)+'</td><td>'+fmtNum(b.traffic,0)+'</td><td>'+fmtPercent(b.ctr)+'</td><td>'+fmtNum(b.atc,0)+'</td><td>'+fmtPercent(b.atcRate)+'</td><td>'+fmtNum(b.gpm,0)+'₫</td><td>'+b.n+' SP</td></tr>';
+  });
+  html += '</tbody></table></div></div>';
+
+  /* ---- F. Sản phẩm tiềm năng theo benchmark — kỳ gần nhất ---- */
+  const potentialsLatest = findPotentialProducts(latest.products, benchmarksLatest);
+  html += '<div class="section">';
+  html += sectionHead("F","Products with potential vs. benchmark, latest period","Each product is compared with the channel benchmark (E) of the latest period. A product is classified only when it is above/below the benchmark on both metrics of a group.");
+  html += '<div class="tabs" id="potentialTabsTrend">';
+  CHANNELS.forEach((ch,i)=>{
+    html += '<button class="tab-btn'+(i===0?" active":"")+'" data-ch="'+ch.id+'">'+dot(ch.color)+esc(ch.short)+'</button>';
+  });
+  html += '</div><div id="potentialContentTrend"></div></div>';
+
+  /* ---- G. Bảng pivot SP x tháng ---- */
+  const allIds = Object.keys(cumulative);
+  html += '<div class="section">';
+  html += sectionHead("G","Product GMV by month","Search by product ID · % change from the first period ("+esc(first.period.label)+") to the last period ("+esc(latest.period.label)+").");
+  html += '<div class="search-row"><input class="search-input" id="pivotSearch" placeholder="Search by product ID…"/></div>';
+  html += '<div class="table-scroll" id="pivotTableWrap"></div>';
+  html += '</div>';
+
+  dashboard.innerHTML = html;
+
+  /* chart A: bar GMV + line orders */
+  const ctxA = document.getElementById("chOverview").getContext("2d");
+  try{
+  state.charts.overview = new Chart(ctxA, {
+    type:"bar",
+    data:{
+      labels: periods.map(p=>p.period.label),
+      datasets:[
+        { type:"bar", label:"Total GMV", data: periods.map(p=>p.summary.totalGMV), backgroundColor: resolveColor("var(--brand)"), borderRadius:5, yAxisID:"y" },
+        { type:"line", label:"Orders", data: periods.map(p=>p.summary.totalOrders), borderColor: resolveColor("var(--c-videoAff)"), backgroundColor: resolveColor("var(--c-videoAff)"), yAxisID:"y1", tension:.3, pointRadius:3 }
+      ]
+    },
+    options:{ responsive:true, maintainAspectRatio:false, interaction:{ mode:"index", intersect:false },
+      plugins:{ legend:{ position:"bottom", labels:{ color: resolveColor("var(--ink-soft)"), boxWidth:10, font:{size:11.5} } },
+        tooltip:{ callbacks:{ label:(c)=> c.dataset.label+": "+(c.dataset.label==="Orders"?fmtNum(c.parsed.y):fmtCurrency(c.parsed.y)) } } },
+      scales:{ x:{ ticks:{ color: resolveColor("var(--ink-faint)") }, grid:{ display:false } },
+        y:{ position:"left", ticks:{ callback:(v)=>fmtCompact(v), color: resolveColor("var(--ink-faint)") }, grid:{ color: resolveColor("var(--border)") } },
+        y1:{ position:"right", ticks:{ callback:(v)=>fmtCompact(v), color: resolveColor("var(--ink-faint)") }, grid:{ display:false } } } }
+  });
+  }catch(err){ console.error("Chart A (trend overview) failed:", err); const cv=document.getElementById("chOverview"); if(cv&&cv.parentElement) cv.parentElement.innerHTML = "<div class='empty-note'>Could not load the chart (Chart.js failed or has not loaded yet). The table below is still correct.</div>"; }
+
+  /* chart B: line per channel */
+  const ctxB = document.getElementById("chChannelTrend").getContext("2d");
+  const datasetsB = CHANNELS.map(ch=>({
+    label: ch.short, data: periods.map(p=> p.summary.channels.find(c=>c.id===ch.id).gmv),
+    borderColor: resolveColor(ch.color), backgroundColor: resolveColor(ch.color), tension:.3, pointRadius:3, borderWidth:2, fill:false
+  }));
+  try{
+  state.charts.channelTrend = new Chart(ctxB, {
+    type:"line",
+    data:{ labels: periods.map(p=>p.period.label), datasets: datasetsB },
+    options:{ responsive:true, maintainAspectRatio:false, interaction:{ mode:"index", intersect:false },
+      plugins:{ legend:{ position:"bottom", labels:{ color: resolveColor("var(--ink-soft)"), boxWidth:10, font:{size:11.5} } },
+        tooltip:{ callbacks:{ label:(c)=> c.dataset.label+": "+fmtCurrency(c.parsed.y) } } },
+      scales:{ x:{ ticks:{ color: resolveColor("var(--ink-faint)") }, grid:{ color: resolveColor("var(--border)") } },
+        y:{ ticks:{ callback:(v)=>fmtCompact(v), color: resolveColor("var(--ink-faint)") }, grid:{ color: resolveColor("var(--border)") } } } }
+  });
+  }catch(err){ console.error("Chart B (trend channel) failed:", err); const cv=document.getElementById("chChannelTrend"); if(cv&&cv.parentElement) cv.parentElement.innerHTML = "<div class='empty-note'>Could not load the chart (Chart.js failed or has not loaded yet). The table below is still correct.</div>"; }
+
+
+  /* top5 trend tabs (section C) */
+  const top5Content = document.getElementById("top5TrendContent");
+  let top5Chart = null;
+  function renderTop5TrendProduct(id){
+    if(top5Chart){ top5Chart.destroy(); top5Chart=null; }
+    const monthRows = periods.map(p=>{
+      const prod = p.products.find(x=>x.id===id);
+      const channelsData = {};
+      CHANNELS.forEach(ch=> channelsData[ch.id] = prod ? prod.channels[ch.id].gmv : 0);
+      const totalGmv = prod ? prod.gmvTotal : 0;
+      const totalImpr = CHANNELS.reduce((s,ch)=> s + (prod?prod.channels[ch.id].impr:0), 0);
+      const gpm = totalImpr>0 ? Object.values(channelsData).reduce((a,b)=>a+b,0)/totalImpr*1000 : 0;
+      return { label:p.period.label, channelsData, totalGmv, gpm };
+    });
+    let t = '<div class="chart-wrap" style="height:240px;margin-bottom:18px;"><canvas id="chTop5Product"></canvas></div>';
+    t += '<div class="table-scroll"><table><thead><tr><th class="left">Month</th>';
+    CHANNELS.forEach(ch=> t += '<th>'+esc(ch.short)+'</th>');
+    t += '<th>Total monthly GMV</th><th>Total GPM</th></tr></thead><tbody>';
+    monthRows.forEach(mr=>{
+      t += '<tr><td class="left">'+esc(mr.label)+'</td>';
+      CHANNELS.forEach(ch=> t += '<td>'+fmtCurrency(mr.channelsData[ch.id])+'</td>');
+      t += '<td>'+fmtCurrency(mr.totalGmv)+'</td><td>'+fmtNum(mr.gpm,0)+'₫</td></tr>';
+    });
+    t += '</tbody></table></div>';
+    top5Content.innerHTML = t;
+
+    const ctx = document.getElementById("chTop5Product").getContext("2d");
+    const datasets = CHANNELS.map(ch=>({
+      label: ch.short, data: monthRows.map(mr=>mr.channelsData[ch.id]),
+      borderColor: resolveColor(ch.color), backgroundColor: resolveColor(ch.color), tension:.3, pointRadius:2, borderWidth:2, fill:false
+    }));
+    try{
+    top5Chart = new Chart(ctx, {
+      type:"line",
+      data:{ labels: monthRows.map(mr=>mr.label), datasets },
+      options:{ responsive:true, maintainAspectRatio:false, interaction:{ mode:"index", intersect:false },
+        plugins:{ legend:{ position:"bottom", labels:{ color: resolveColor("var(--ink-soft)"), boxWidth:9, font:{size:10.5} } },
+          tooltip:{ callbacks:{ label:(c)=> c.dataset.label+": "+fmtCurrency(c.parsed.y) } } },
+        scales:{ x:{ ticks:{ color: resolveColor("var(--ink-faint)") }, grid:{ display:false } },
+          y:{ ticks:{ callback:(v)=>fmtCompact(v), color: resolveColor("var(--ink-faint)") }, grid:{ color: resolveColor("var(--border)") } } } }
+    });
+    }catch(err){ console.error("Chart C (top5 product) failed:", err); const cv=document.getElementById("chTop5Product"); if(cv&&cv.parentElement) cv.parentElement.innerHTML = "<div class='empty-note'>Could not load the chart (Chart.js failed or has not loaded yet). The table below is still correct.</div>"; }
+  }
+  document.getElementById("top5TrendTabs").addEventListener("click",(e)=>{
+    const btn = e.target.closest(".tab-btn"); if(!btn) return;
+    document.querySelectorAll("#top5TrendTabs .tab-btn").forEach(b=>b.classList.toggle("active", b===btn));
+    renderTop5TrendProduct(btn.dataset.id);
+  });
+  if(top5Ids.length>0) renderTop5TrendProduct(top5Ids[0]);
+  else top5Content.innerHTML = '<div class="empty-note">No product generated GMV in this period.</div>';
+
+  /* pivot table (section E) */
+  const pivotWrap = document.getElementById("pivotTableWrap");
+  function renderPivot(){
+    const q = (document.getElementById("pivotSearch").value||"").trim().toLowerCase();
+    let ids = allIds.filter(id=> !q || id.toLowerCase().indexOf(q)!==-1 );
+    ids.sort((a,b)=>cumulative[b]-cumulative[a]);
+    let t = '<table><thead><tr><th class="left">Product ID</th><th class="left">Product</th>';
+    periods.forEach(p=> t += '<th>'+esc(p.period.label)+'</th>');
+    t += '<th>% change</th></tr></thead><tbody>';
+    ids.slice(0,300).forEach(id=>{
+      const vals = periods.map(p=>{ const prod = p.products.find(x=>x.id===id); return prod?prod.gmvTotal:0; });
+      const f = vals[0], l = vals[vals.length-1];
+      const d = f>0 ? (l-f)/f*100 : (l>0? null : 0);
+      t += '<tr><td class="left">'+esc(id)+'</td><td class="left name-cell">'+esc(idToName[id]||"")+'</td>';
+      vals.forEach(v=> t += '<td>'+fmtCurrency(v)+'</td>');
+      t += '<td>'+(d===null?'<span class="delta up">New</span>':deltaHtml(d))+'</td></tr>';
+    });
+    t += '</tbody></table>';
+    if(ids.length===0) t = '<div class="empty-note">No matching product ID.</div>';
+    pivotWrap.innerHTML = t;
+  }
+  document.getElementById("pivotSearch").addEventListener("input", renderPivot);
+  renderPivot();
+
+  /* tabs F — potential products (latest period) */
+  wirePotentialTabs("potentialTabsTrend", "potentialContentTrend", benchmarksLatest, potentialsLatest);
+}
+
+})();
+
+</script>
+</body>
+</html>

@@ -1,0 +1,2260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shopee Livestream Channel: analysis board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#EEF0EE; --surface:#FFFFFF; --surface-2:#F5F6F4; --border:#D7DBD6;
+  --ink:#171A18; --ink-muted:#5B635E; --ink-faint:#8B928C;
+  --accent:#C8501E; --accent-ink:#FFFFFF; --accent-soft:#FBE9DF;
+  --derived:#146356; --derived-soft:#E3F0EC;
+  --alert:#A63A2E; --alert-soft:#F8E6E2;
+  --good:#2E7D4F; --good-soft:#E4F2E8;
+  --sans:'IBM Plex Sans',system-ui,sans-serif; --mono:'IBM Plex Mono',monospace;
+}
+:root:not([data-theme="light"]) {
+  @media (prefers-color-scheme: dark){
+    --bg:#141715; --surface:#1C201D; --surface-2:#222623;
+    --border:#333833; --ink:#E7EAE6; --ink-muted:#9BA39C; --ink-faint:#6E756E;
+    --accent:#FF7A45; --accent-ink:#14100C; --accent-soft:#3A2A1E;
+    --derived:#5FD6BC; --derived-soft:#1B302C;
+    --alert:#FF8A75; --alert-soft:#3A2320;
+    --good:#7CD69B; --good-soft:#1D3325;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141715; --surface:#1C201D; --surface-2:#222623;
+  --border:#333833; --ink:#E7EAE6; --ink-muted:#9BA39C; --ink-faint:#6E756E;
+  --accent:#FF7A45; --accent-ink:#14100C; --accent-soft:#3A2A1E;
+  --derived:#5FD6BC; --derived-soft:#1B302C;
+  --alert:#FF8A75; --alert-soft:#3A2320;
+  --good:#7CD69B; --good-soft:#1D3325;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:var(--sans);}
+body{min-height:100vh;}
+::selection{background:var(--accent-soft);}
+button{font-family:var(--sans);}
+.app{display:flex;min-height:100vh;}
+.rail{width:230px;flex:none;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;}
+.rail-head{padding:20px 18px 14px;border-bottom:1px solid var(--border);}
+.rail-head .mark{font-family:var(--mono);font-size:11px;letter-spacing:.04em;color:var(--ink-faint);}
+.rail-head h1{font-size:16px;line-height:1.3;margin:6px 0 0;font-weight:600;}
+.rail-nav{padding:10px 10px;flex:1;}
+.rail-btn{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:none;color:var(--ink-muted);padding:9px 10px;border-radius:6px;font-size:13.5px;cursor:pointer;margin-bottom:2px;}
+.rail-btn .n{font-family:var(--mono);font-size:11px;color:var(--ink-faint);width:16px;flex:none;}
+.rail-btn:hover{background:var(--surface-2);color:var(--ink);}
+.rail-btn.active{background:var(--accent-soft);color:var(--accent);font-weight:600;}
+.rail-btn.active .n{color:var(--accent);}
+.rail-btn[disabled]{opacity:.35;cursor:not-allowed;}
+.rail-btn[disabled]:hover{background:none;color:var(--ink-muted);}
+.rail-foot{padding:14px 18px;border-top:1px solid var(--border);font-size:11.5px;color:var(--ink-faint);line-height:1.5;}
+.main{flex:1;min-width:0;padding:26px 34px 60px;max-width:1180px;}
+.view{display:none;}
+.view.active{display:block;}
+h2.pagetitle{font-size:20px;margin:0 0 4px;font-weight:600;}
+.sub{color:var(--ink-muted);font-size:13.5px;margin:0 0 22px;max-width:640px;line-height:1.5;}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:18px 20px;margin-bottom:18px;}
+.panel h3{font-size:13px;text-transform:none;letter-spacing:0;margin:0 0 14px;font-weight:600;color:var(--ink);border-bottom:1px solid var(--border);padding-bottom:10px;}
+.grid{display:grid;gap:14px;}
+.g4{grid-template-columns:repeat(4,1fr);}
+.g3{grid-template-columns:repeat(3,1fr);}
+.g2{grid-template-columns:repeat(2,1fr);}
+@media(max-width:900px){.g4{grid-template-columns:repeat(2,1fr);}.g3{grid-template-columns:repeat(2,1fr);}}
+.kpi{border:1px solid var(--border);border-radius:4px;padding:12px 14px;background:var(--surface-2);}
+.kpi .lbl{font-size:11.5px;color:var(--ink-muted);margin-bottom:6px;}
+.kpi .val{font-family:var(--mono);font-size:19px;font-weight:600;}
+.kpi .val.na{color:var(--ink-faint);font-weight:400;font-size:15px;}
+.tag{display:inline-block;font-size:10px;font-family:var(--mono);padding:1px 6px;border-radius:3px;margin-left:6px;vertical-align:middle;}
+.tag.derived{background:var(--derived-soft);color:var(--derived);}
+.tag.raw{background:var(--surface-2);color:var(--ink-faint);border:1px solid var(--border);}
+.infodot{display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border-radius:50%;background:var(--surface-2);border:1px solid var(--border);color:var(--ink-faint);font-size:9px;line-height:1;margin-left:4px;cursor:help;position:relative;vertical-align:middle;font-family:var(--mono);font-weight:600;}
+.infodot::before{content:'i';}
+.infodot:hover, .infodot:focus{outline:none;border-color:var(--accent);color:var(--accent);}
+th .infodot{margin-left:3px;}
+.gtooltip{display:none;position:fixed;z-index:500;background:var(--ink);color:var(--bg);padding:8px 10px;border-radius:5px;font-size:11.5px;line-height:1.55;max-width:240px;white-space:normal;text-align:left;font-family:var(--sans);font-weight:400;box-shadow:0 4px 14px rgba(0,0,0,.3);pointer-events:none;}
+.tag.alert{background:var(--alert-soft);color:var(--alert);}
+.tag.good{background:var(--good-soft);color:var(--good);}
+table{width:100%;border-collapse:collapse;font-size:12.8px;}
+th{text-align:left;font-weight:600;color:var(--ink-muted);font-size:11.3px;padding:6px 10px;border-bottom:2px solid var(--border);white-space:nowrap;position:sticky;top:0;background:var(--surface);}
+td{padding:6px 10px;border-bottom:1px solid var(--border);white-space:nowrap;font-family:var(--mono);}
+td.text{font-family:var(--sans);white-space:normal;max-width:260px;}
+tr:hover td{background:var(--surface-2);}
+.tablewrap{overflow:auto;max-height:520px;border:1px solid var(--border);border-radius:4px;}
+.num{text-align:right;}
+.pos{color:var(--good);}
+.neg{color:var(--alert);}
+.upload-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+@media(max-width:900px){.upload-row{grid-template-columns:1fr;}}
+.dropzone{border:1.5px dashed var(--border);border-radius:5px;padding:16px 14px;text-align:center;cursor:pointer;background:var(--surface-2);transition:border-color .15s;}
+.dropzone:hover, .dropzone.drag{border-color:var(--accent);}
+.dropzone .ic{font-size:20px;margin-bottom:6px;}
+.dropzone .t1{font-size:12.5px;font-weight:600;}
+.dropzone .t2{font-size:11px;color:var(--ink-faint);margin-top:3px;}
+.dropzone.filled{border-style:solid;border-color:var(--derived);background:var(--derived-soft);}
+.dropzone.filled .t1{color:var(--derived);}
+.filelist{margin-top:14px;font-size:12.5px;}
+.filerow{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);}
+.filerow:last-child{border-bottom:none;}
+.filerow .name{color:var(--ink-muted);font-family:var(--mono);font-size:11.5px;}
+.btn{background:var(--ink);color:var(--bg);border:none;padding:9px 16px;border-radius:4px;font-size:13px;font-weight:600;cursor:pointer;}
+.btn:hover{opacity:.88;}
+.btn.accent{background:var(--accent);color:var(--accent-ink);}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.btn.ghost{background:none;border:1px solid var(--border);color:var(--ink);}
+.callout{border:1px solid var(--border);border-left:3px solid var(--accent);background:var(--surface-2);padding:10px 14px;font-size:12.5px;line-height:1.55;border-radius:0 4px 4px 0;margin-bottom:16px;color:var(--ink-muted);}
+.callout b{color:var(--ink);}
+.empty{padding:50px 20px;text-align:center;color:var(--ink-faint);font-size:13.5px;}
+.badgebar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+.badge{font-size:11.5px;padding:4px 10px;border-radius:20px;border:1px solid var(--border);color:var(--ink-muted);font-family:var(--mono);}
+.badge.on{border-color:var(--derived);color:var(--derived);background:var(--derived-soft);}
+.qtybox{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-muted);}
+.qtybox input{width:60px;font-family:var(--mono);border:1px solid var(--border);border-radius:4px;padding:4px 6px;background:var(--surface);color:var(--ink);}
+.insight-card{border:1px solid var(--border);border-radius:4px;margin-bottom:14px;overflow:hidden;}
+.insight-head{padding:10px 14px;background:var(--surface-2);font-weight:600;font-size:13.5px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);}
+.insight-body{padding:4px 0;}
+.ins-row{display:grid;grid-template-columns:110px 1fr;gap:10px;padding:8px 14px;border-bottom:1px solid var(--border);font-size:12.8px;}
+.ins-row:last-child{border-bottom:none;}
+.ins-row .k{font-family:var(--mono);font-size:11px;color:var(--ink-faint);padding-top:2px;}
+.ins-row .v{line-height:1.55;}
+.ins-row .v.inconclusive{color:var(--ink-faint);font-style:italic;}
+.aiwrap{border:1px solid var(--border);border-radius:4px;padding:20px 22px;background:var(--surface-2);min-height:120px;font-size:13.5px;line-height:1.7;}
+.aiwrap h4{font-size:14px;margin:16px 0 6px;}
+.aiwrap h4:first-child{margin-top:0;}
+.aiwrap ul{margin:4px 0;padding-left:20px;}
+.aiwrap strong{color:var(--ink);}
+.aiwrap.placeholder{color:var(--ink-faint);display:flex;align-items:center;justify-content:center;font-style:italic;}
+.chip-row{display:flex;gap:8px;margin-bottom:14px;}
+.svgchart{width:100%;height:auto;display:block;}
+.legend{display:flex;gap:16px;font-size:11.5px;color:var(--ink-muted);margin-top:8px;}
+.legend span{display:inline-flex;align-items:center;gap:5px;}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;}
+.two-col{display:grid;grid-template-columns:1.3fr 1fr;gap:18px;}
+@media(max-width:1000px){.two-col{grid-template-columns:1fr;}}
+.dq-issue{padding:8px 12px;border-radius:4px;font-size:12.5px;margin-bottom:6px;display:flex;justify-content:space-between;gap:10px;}
+.dq-issue.warn{background:var(--alert-soft);color:var(--alert);}
+.dq-issue.ok{background:var(--good-soft);color:var(--good);}
+.dq-issue.info{background:var(--surface-2);color:var(--ink-muted);border:1px solid var(--border);}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="rail">
+    <div class="rail-head">
+      <div class="mark">LIVESTREAM CHANNEL / V1</div>
+      <h1>Shopee Livestream Analytics</h1>
+    </div>
+    <div class="rail-nav" id="nav"></div>
+    <div class="rail-foot">Raw First: every figure follows the Shopee export 100%.<br>N/A when data is missing, no inference.</div>
+  </div>
+  <div class="main">
+    <div id="view-upload" class="view active"></div>
+    <div id="view-overview" class="view"></div>
+    <div id="view-session" class="view"></div>
+    <div id="view-product" class="view"></div>
+    <div id="view-segment" class="view"></div>
+    <div id="view-benchmark" class="view"></div>
+    <div id="view-export" class="view"></div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   0. STATE
+============================================================ */
+const STATE = {
+  files: { session:null, product:null, overview:null },
+  session: null,   // {headers, rows[]}
+  product: null,
+  overview: null,  // {rows[], blocks[]}
+  benchmark: null,
+  driver: null,
+  insights: null,
+  dq: null,
+  streamerIds: new Set(),
+  aiText: '',
+  aiSections: {},
+  _aiGenerated: false,
+  materialityPct: 15,
+  timeSlotEdges: [7, 10, 13, 16, 19, 22],
+  dayStageConfig: { enableDDay: true, memberDay: 15, miniSpike: 25 },
+  comboKeywords: ['combo', 'set', 'bộ'],
+  productTopFilter: 'all',
+  reportManual: {},
+  segmentDim: 'weekday'
+};
+
+const TABS = [
+  {id:'upload', label:'Load data', requires:null},
+  {id:'overview', label:'Channel overview', requires:'overview'},
+  {id:'session', label:'Livestream sessions', requires:'session'},
+  {id:'product', label:'Products', requires:'product'},
+  {id:'segment', label:'Group & trend analysis', requires:'session'},
+  {id:'benchmark', label:'Benchmark & Driver', requires:'any2'},
+  {id:'export', label:'Export Excel', requires:'any1'},
+];
+
+/* ============================================================
+   1. RAW PARSER — parse VN-formatted Shopee values
+============================================================ */
+const RawParser = {
+  stripBOM(s){ return typeof s==='string' ? s.replace(/^\uFEFF/,'') : s; },
+  toNum(raw){
+    if(raw===null||raw===undefined) return null;
+    let s = String(raw).trim();
+    if(s===''||s==='-'||s.toUpperCase()==='N/A') return null;
+    const isPercent = s.includes('%');
+    s = s.replace(/[₫%\s]/g,'');
+    s = s.replace(/\./g,'').replace(',', '.');
+    const n = parseFloat(s);
+    if(isNaN(n)) return null;
+    return isPercent ? n/100 : n;
+  },
+  isBlankButNotNumeric(raw){
+    // detect "garbage" values: non-empty, not '-', but unparseable
+    if(raw===null||raw===undefined) return false;
+    const s = String(raw).trim();
+    if(s===''||s==='-') return false;
+    return this.toNum(s) === null;
+  },
+  parseHMS(s){
+    if(!s) return null;
+    const m = String(s).trim().match(/^(\d+):(\d+):(\d+)$/);
+    if(!m) return null;
+    return (+m[1])*3600 + (+m[2])*60 + (+m[3]);
+  },
+  parseVNDuration(s){
+    if(!s) return null;
+    s = String(s).trim();
+    let h=0,m=0,sec=0,found=false;
+    let mh = s.match(/(\d+)\s*giờ/); if(mh){h=+mh[1];found=true;}
+    let mm = s.match(/(\d+)\s*phút/); if(mm){m=+mm[1];found=true;}
+    let ms = s.match(/(\d+)\s*giây/); if(ms){sec=+ms[1];found=true;}
+    if(!found) return this.parseHMS(s);
+    return h*3600+m*60+sec;
+  },
+  parseVNDateTime(s){
+    if(!s) return null;
+    const m = String(s).trim().match(/^(\d{2})-(\d{2})-(\d{4})\s+(\d{2}):(\d{2})$/);
+    if(!m) return null;
+    return new Date(+m[3], +m[2]-1, +m[1], +m[4], +m[5]);
+  },
+  parseVNDate(s){
+    if(!s) return null;
+    const m = String(s).trim().match(/^(\d{2})-(\d{2})-(\d{4})$/);
+    if(!m) return null;
+    return new Date(+m[3], +m[2]-1, +m[1]);
+  },
+  parseVNDateRange(s){
+    if(!s) return {start:null,end:null};
+    const parts = String(s).split(' - ');
+    if(parts.length!==2) return {start:null,end:null};
+    return { start:this.parseVNDate(parts[0].trim()), end:this.parseVNDate(parts[1].trim()) };
+  },
+  fmtSec(sec){
+    if(sec===null||sec===undefined||isNaN(sec)) return 'N/A';
+    const h=Math.floor(sec/3600), m=Math.floor((sec%3600)/60), s=Math.floor(sec%60);
+    if(h>0) return h+'g'+String(m).padStart(2,'0')+'p'+String(s).padStart(2,'0')+'s';
+    if(m>0) return m+'p'+String(s).padStart(2,'0')+'s';
+    return s+'s';
+  },
+  fmtInt(n){ if(n===null||n===undefined||isNaN(n)) return 'N/A'; return Math.round(n).toLocaleString('vi-VN'); },
+  fmtMoney(n){ if(n===null||n===undefined||isNaN(n)) return 'N/A'; return Math.round(n).toLocaleString('vi-VN')+'₫'; },
+  fmtPct(n,d){ if(n===null||n===undefined||isNaN(n)) return 'N/A'; return (n*100).toFixed(d===undefined?1:d)+'%'; },
+  fmtDec(n,d){ if(n===null||n===undefined||isNaN(n)) return 'N/A'; return n.toLocaleString('vi-VN',{maximumFractionDigits:d===undefined?2:d}); },
+
+  detectAOAType(aoa){
+    const scanRows = aoa.slice(0,3).map(r=>r.join('|')).join('|');
+    if(scanRows.includes('Tên buổi livestream')) return 'session';
+    if(scanRows.includes('Xếp hạng') && scanRows.includes('Các sản phẩm')) return 'product';
+    if(scanRows.includes('Số phiên Livestream') || scanRows.includes('Giao dịch')) return 'overview';
+    return 'unknown';
+  },
+
+  aoaFromFile(file, cb){
+    const reader = new FileReader();
+    const name = file.name.toLowerCase();
+    reader.onload = function(e){
+      try{
+        let wb;
+        if(name.endsWith('.csv')){
+          let text = e.target.result;
+          text = RawParser.stripBOM(text);
+          wb = XLSX.read(text, {type:'string'});
+        } else {
+          wb = XLSX.read(e.target.result, {type:'array'});
+        }
+        const sheetName = wb.SheetNames[0];
+        const sheet = wb.Sheets[sheetName];
+        const aoa = XLSX.utils.sheet_to_json(sheet, {header:1, raw:false, defval:''});
+        if(aoa.length && aoa[0].length) aoa[0][0] = RawParser.stripBOM(aoa[0][0]);
+        cb(null, {aoa, sheetName, fileName:file.name});
+      }catch(err){ cb(err); }
+    };
+    reader.onerror = function(){ cb(new Error('Could not read the file')); };
+    if(name.endsWith('.csv')) reader.readAsText(file, 'utf-8');
+    else reader.readAsArrayBuffer(file);
+  }
+};
+
+/* ============================================================
+   1b. METRIC DEFINITIONS — tooltip chú thích định nghĩa/công thức
+============================================================ */
+const METRIC_DEFS = {
+  'Viewers': 'Raw Shopee: total people who entered the livestream (Live List / Overview).',
+  'Engaged': 'Raw Shopee: engaged viewers, i.e. viewers who interacted (commented, liked…) while watching.',
+  'Engaged Rate': 'Derived = Engaged viewers ÷ Viewers. Share of viewers who interacted out of all viewers in the same session.',
+  'Comments': 'Raw Shopee: total comments in the livestream.',
+  'ATC': 'Add To Cart: raw Shopee, number of add-to-cart actions during the live.',
+  'Placed orders': 'Raw Shopee: orders placed (Order Placed) during the live. Kept separate from Confirmed orders under the Order vs Confirmed rule.',
+  'Confirmed orders': 'Raw Shopee: orders confirmed (Order Confirmed), usually lower than or equal to Placed orders.',
+  'Placed revenue': 'Raw Shopee: revenue on placed orders (cancellations/returns not removed).',
+  'Confirmed revenue': 'Raw Shopee: revenue on confirmed orders.',
+  'GMV/Hour': 'Derived = Revenue (Placed) ÷ Live duration (hours). Revenue performance per live hour.',
+  'GMV/Session': 'Derived = Σ Revenue (Placed) of the group ÷ Sessions in the group.',
+  'Click': 'Raw Shopee (Live Product List): product clicks during the live.',
+  'Click→Order': 'Derived = Orders (Placed) ÷ Product clicks. Not called CTR because Shopee does not export Product Impressions at product level.',
+  'Quadrant': '2×2 diagnosis: compares each product\'s Click and Click→Order Rate with the median of the list being viewed; no fixed absolute threshold.',
+  '% Doanh thu': 'This group\'s share of placed revenue out of total placed revenue for all groups in the table.',
+  'Driver candidate': 'Among the metrics considered (Traffic, Engagement, ATC, Orders, Revenue/Order), this is the metric that deviates most from the benchmark (channel average) in % and exceeds the configured materiality threshold.',
+  'WHAT': 'Which metric is changing: what the figures show, without inferring a cause.',
+  'BENCHMARK': 'How many % above/below the relevant benchmark (channel average for the period).',
+  'WHY': 'The driver explaining the change, based on the metric with the clearest deviation. If no metric exceeds the materiality threshold → write "Not enough data to conclude", no guessing.',
+  'IMPACT': 'Effect on Revenue/Orders/Units, e.g. share of total channel revenue.',
+  'ACTION': 'Next check based on the evidence above: a suggestion to verify, not a final conclusion.',
+  'Funnel step': 'Conversion rate between 2 consecutive funnel steps = later step ÷ earlier step (raw Shopee).',
+  'SKU type': 'Derived from the product name: if the name contains one of the configured keywords (default: combo, set, bộ) → Combo, otherwise → Single. Not a raw field; keywords can be adjusted to the shop\'s naming.',
+  'Customer split': 'Derived = Sales from New (or Existing) customers ÷ (New + Existing). Computed separately for Placed and Confirmed orders, since the two are never added together.',
+  'Weekly report': 'The first 5 metrics (Revenue, Orders, AOV, GMV/Hour, Hours) are computed from the Live List by week (Fri→Thu). The 5 Cost rows are manual inputs because Shopee raw does not export ads/livestream operating costs; fill them from the shop\'s accounting/marketing figures.',
+  'Weekly report plan': 'Whole-month column: the first 5 rows are computed directly from the full Live List in the period (not by adding the week columns, to avoid rounding errors); the 5 Cost rows = sum of the values entered per week.',
+  'ROI livestream': 'Derived = Livestream revenue (Placed) ÷ Livestream self channel cost (net) in the same column. Both values are needed (revenue on the Plan row, or the weekly computed revenue); if either is missing → N/A.',
+  'ATC rate ref': '">15–20% is good" is industry experience provided by the operators (not a standard computed from Shopee raw); use it for reference only.',
+};
+function dot(key){
+  const tip = METRIC_DEFS[key];
+  if(!tip) return '';
+  const safe = tip.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+  return `<span class="infodot" tabindex="0" data-tip="${safe}"></span>`;
+}
+
+/* ============================================================
+   2. NORMALIZER — turn raw AOA into row objects
+============================================================ */
+const Normalizer = {
+  normalizeSession(aoa, meta){
+    const headers = aoa[0];
+    const idx = h => headers.indexOf(h);
+    const rows = [];
+    for(let r=1;r<aoa.length;r++){
+      const row = aoa[r];
+      if(!row || row.every(c=>String(c).trim()==='')) continue;
+      const get = h => row[idx(h)];
+      const tf = RawParser.parseVNDateRange(get('Khung Thời Gian'));
+      rows.push({
+        _rawRow: row,
+        timeframe: get('Khung Thời Gian'), timeframeStart: tf.start, timeframeEnd: tf.end,
+        streamerId: get('Streamer ID'),
+        no: get('No.'),
+        name: get('Tên buổi livestream'),
+        startRaw: get('Thời gian bắt đầu'), startAt: RawParser.parseVNDateTime(get('Thời gian bắt đầu')),
+        durationRaw: get('Thời lượng'), durationSec: RawParser.parseHMS(get('Thời lượng')),
+        engagedViewers: RawParser.toNum(get('Số người xem tương tác')),
+        comments: RawParser.toNum(get('Tổng số Bình luận')),
+        atc: RawParser.toNum(get('ATC')),
+        avgWatchRaw: get('Thời lượng xem bình quân'), avgWatchSec: RawParser.parseHMS(get('Thời lượng xem bình quân')),
+        viewers: RawParser.toNum(get('Người xem')),
+        ordersPlaced: RawParser.toNum(get('Đơn hàng(Đơn đã đặt)')),
+        ordersConfirmed: RawParser.toNum(get('Đơn hàng(Đơn hàng được xác nhận)')),
+        unitsPlaced: RawParser.toNum(get('Sản phẩm đã bán(Đơn đã đặt)')),
+        unitsConfirmed: RawParser.toNum(get('Sản phẩm đã bán(Đơn hàng được xác nhận)')),
+        revenuePlaced: RawParser.toNum(get('Doanh thu(Đơn đã đặt)')),
+        revenueConfirmed: RawParser.toNum(get('Doanh thu(Đơn hàng được xác nhận)')),
+      });
+    }
+    return { headers, rows, fileName: meta.fileName, sheetName: meta.sheetName };
+  },
+
+  normalizeProduct(aoa, meta){
+    const headers = aoa[0];
+    const idx = h => headers.indexOf(h);
+    const rows = [];
+    for(let r=1;r<aoa.length;r++){
+      const row = aoa[r];
+      if(!row || row.every(c=>String(c).trim()==='')) continue;
+      const get = h => row[idx(h)];
+      const tf = RawParser.parseVNDateRange(get('Khung Thời Gian'));
+      rows.push({
+        _rawRow: row,
+        timeframe: get('Khung Thời Gian'), timeframeStart: tf.start, timeframeEnd: tf.end,
+        streamerId: get('Streamer ID'),
+        rank: RawParser.toNum(get('Xếp hạng')),
+        productName: get('Các sản phẩm'),
+        clicks: RawParser.toNum(get('Lượt click vào sản phẩm')),
+        atc: RawParser.toNum(get('ATC')),
+        ordersPlaced: RawParser.toNum(get('Đơn hàng(Đơn đã đặt)')),
+        ordersConfirmed: RawParser.toNum(get('Đơn hàng(Đơn hàng được xác nhận)')),
+        unitsPlaced: RawParser.toNum(get('Sản phẩm đã bán(Đơn đã đặt)')),
+        unitsConfirmed: RawParser.toNum(get('Sản phẩm đã bán(Đơn hàng được xác nhận)')),
+        revenuePlaced: RawParser.toNum(get('Doanh thu(Đơn đã đặt)')),
+        revenueConfirmed: RawParser.toNum(get('Doanh thu(Đơn hàng được xác nhận)')),
+      });
+    }
+    return { headers, rows, fileName: meta.fileName, sheetName: meta.sheetName };
+  },
+
+  splitBlocks(aoa){
+    const blocks = []; let cur = [];
+    for(const row of aoa){
+      const blank = !row || row.every(c=>String(c).trim()==='');
+      if(blank){ if(cur.length>=2) blocks.push(cur); cur=[]; }
+      else cur.push(row);
+    }
+    if(cur.length>=2) blocks.push(cur);
+    return blocks;
+  },
+
+  normalizeOverview(aoa, meta){
+    const blocks = this.splitBlocks(aoa);
+    const parsedBlocks = blocks.map(block=>{
+      const groupsRow = block[0], headerRow = block[1], dataRows = block.slice(2);
+      let last='';
+      const groups = groupsRow.map(g=>{ const s=String(g).trim(); if(s) last=s; return last; });
+      const isDuration = h => /thời lượng/i.test(h);
+      const cols = headerRow.map((h,i)=>({header:h, group: (i<2? '': groups[i]), colIdx:i, duration:isDuration(h)}))
+                             .filter(c=>c.header && String(c.header).trim()!=='');
+      const rows = dataRows.filter(r=>!r.every(c=>String(c).trim()==='')).map(r=>{
+        const tf = RawParser.parseVNDateRange(r[0]);
+        const metricsByGroup = {};
+        cols.forEach(c=>{
+          if(c.colIdx===0 || c.colIdx===1) return;
+          const raw = r[c.colIdx];
+          const num = c.duration ? RawParser.parseVNDuration(raw) : RawParser.toNum(raw);
+          if(!metricsByGroup[c.group]) metricsByGroup[c.group]=[];
+          metricsByGroup[c.group].push({header:c.header, raw, num, duration:c.duration});
+        });
+        return { timeframe:r[0], timeframeStart:tf.start, timeframeEnd:tf.end, streamerId:r[1], metricsByGroup, _rawRow:r };
+      });
+      const groupLabel = cols.find(c=>c.group)?.group || (groupsRow.find(g=>String(g).trim())||'').toString();
+      return { groupLabel, cols, rows };
+    });
+    return { blocks: parsedBlocks, fileName: meta.fileName, sheetName: meta.sheetName };
+  }
+};
+
+/* ============================================================
+   3. LIVE DATA MODEL — derived metrics (marked Derived)
+============================================================ */
+const LiveDataModel = {
+  classifySku(name, keywords){
+    if(!name) return 'Single';
+    const lower = String(name).toLowerCase();
+    for(const kw of keywords){
+      if(kw && lower.indexOf(String(kw).toLowerCase()) !== -1) return 'Combo';
+    }
+    return 'Single';
+  },
+  applySkuType(productData, keywords){
+    if(!productData) return productData;
+    productData.rows.forEach(r=> r.skuType = this.classifySku(r.productName, keywords));
+    return productData;
+  },
+  enrichSession(sessionData){
+    sessionData.rows.forEach(row=>{
+      const durH = row.durationSec ? row.durationSec/3600 : null;
+      row.derived = {
+        gmvPerHourPlaced: durH ? row.revenuePlaced/durH : null,
+        gmvPerHourConfirmed: durH ? row.revenueConfirmed/durH : null,
+        ordersPerHourPlaced: durH ? row.ordersPlaced/durH : null,
+        unitsPerHourPlaced: durH ? row.unitsPlaced/durH : null,
+        engagedViewerRate: (row.viewers) ? row.engagedViewers/row.viewers : null,
+        gmvPerViewerPlaced: row.viewers ? row.revenuePlaced/row.viewers : null,
+        gmvPerViewerConfirmed: row.viewers ? row.revenueConfirmed/row.viewers : null,
+      };
+    });
+    return sessionData;
+  },
+  enrichProduct(productData){
+    productData.rows.forEach(row=>{
+      row.derived = {
+        clickToOrderRatePlaced: row.clicks ? row.ordersPlaced/row.clicks : null,
+        clickToOrderRateConfirmed: row.clicks ? row.ordersConfirmed/row.clicks : null,
+        atcToClickRate: row.clicks ? row.atc/row.clicks : null,
+        revenuePerClickPlaced: row.clicks ? row.revenuePlaced/row.clicks : null,
+      };
+    });
+    // median split for 2x2 diagnostic
+    const withClicks = productData.rows.filter(r=>r.clicks!==null && r.derived.clickToOrderRatePlaced!==null);
+    function median(arr){ if(!arr.length) return null; const s=[...arr].sort((a,b)=>a-b); const mid=Math.floor(s.length/2); return s.length%2? s[mid] : (s[mid-1]+s[mid])/2; }
+    const medClick = median(withClicks.map(r=>r.clicks));
+    const medConv = median(withClicks.map(r=>r.derived.clickToOrderRatePlaced));
+    productData.medianClick = medClick; productData.medianConv = medConv;
+    productData.rows.forEach(row=>{
+      if(row.clicks===null || row.derived.clickToOrderRatePlaced===null || medClick===null){ row.quadrant=null; return; }
+      const hiClick = row.clicks >= medClick;
+      const hiConv = row.derived.clickToOrderRatePlaced >= medConv;
+      row.quadrant = hiClick && hiConv ? 'HH' : hiClick && !hiConv ? 'HL' : !hiClick && hiConv ? 'LH' : 'LL';
+    });
+    return productData;
+  }
+};
+
+/* ============================================================
+   4. BENCHMARK ENGINE — same-period / full-channel average
+============================================================ */
+const LiveBenchmarkEngine = {
+  mean(arr){ const v=arr.filter(x=>x!==null && x!==undefined && !isNaN(x)); if(!v.length) return null; return v.reduce((a,b)=>a+b,0)/v.length; },
+  build(sessionData, productData){
+    const bm = { session:{}, product:{} };
+    if(sessionData && sessionData.rows.length){
+      const R = sessionData.rows;
+      bm.session = {
+        viewers: this.mean(R.map(r=>r.viewers)),
+        engagedViewers: this.mean(R.map(r=>r.engagedViewers)),
+        engagedViewerRate: this.mean(R.map(r=>r.derived.engagedViewerRate)),
+        atc: this.mean(R.map(r=>r.atc)),
+        comments: this.mean(R.map(r=>r.comments)),
+        ordersPlaced: this.mean(R.map(r=>r.ordersPlaced)),
+        revenuePlaced: this.mean(R.map(r=>r.revenuePlaced)),
+        revenueConfirmed: this.mean(R.map(r=>r.revenueConfirmed)),
+        avgWatchSec: this.mean(R.map(r=>r.avgWatchSec)),
+        gmvPerHourPlaced: this.mean(R.map(r=>r.derived.gmvPerHourPlaced)),
+        revenuePerOrderPlaced: this.mean(R.filter(r=>r.ordersPlaced).map(r=>r.revenuePlaced/r.ordersPlaced)),
+        n: R.length
+      };
+    }
+    if(productData && productData.rows.length){
+      const R = productData.rows;
+      bm.product = {
+        clicks: this.mean(R.map(r=>r.clicks)),
+        atc: this.mean(R.map(r=>r.atc)),
+        ordersPlaced: this.mean(R.map(r=>r.ordersPlaced)),
+        revenuePlaced: this.mean(R.map(r=>r.revenuePlaced)),
+        clickToOrderRatePlaced: this.mean(R.map(r=>r.derived.clickToOrderRatePlaced)),
+        n: R.length
+      };
+    }
+    return bm;
+  },
+  variance(actual, benchmark){
+    if(actual===null||actual===undefined||benchmark===null||benchmark===undefined||isNaN(actual)||isNaN(benchmark)) return {abs:null, pct:null};
+    const abs = actual-benchmark;
+    const pct = benchmark!==0 ? abs/benchmark : null;
+    return {abs, pct};
+  }
+};
+
+/* ============================================================
+   5. DRIVER ENGINE — GMV driver candidates vs benchmark
+============================================================ */
+const LiveDriverEngine = {
+  build(sessionData, productData, bm, materialityPct){
+    const out = {sessionTop:[], sessionBottom:[], productTop:[], productBottom:[]};
+    const mat = materialityPct/100;
+    if(sessionData && sessionData.rows.length && bm.session.n){
+      const withRev = sessionData.rows.filter(r=>r.revenuePlaced!==null).sort((a,b)=>b.revenuePlaced-a.revenuePlaced);
+      const top = withRev.slice(0,3), bottom = withRev.slice(-3).reverse();
+      const metricDefs = [
+        {key:'viewers', label:'Traffic (Viewers)'},
+        {key:'engagedViewerRate', label:'Engagement Rate', derived:true},
+        {key:'atc', label:'ATC'},
+        {key:'ordersPlaced', label:'Orders (Placed)'},
+      ];
+      const decorate = (r)=>{
+        const evals = metricDefs.map(m=>{
+          const actual = m.derived ? r.derived[m.key] : r[m.key];
+          const benchVal = bm.session[m.key];
+          const v = LiveBenchmarkEngine.variance(actual, benchVal);
+          return {...m, actual, bench:benchVal, ...v};
+        });
+        // add revenue-per-order (AOV proxy)
+        const rpo = r.ordersPlaced ? r.revenuePlaced/r.ordersPlaced : null;
+        const rpoV = LiveBenchmarkEngine.variance(rpo, bm.session.revenuePerOrderPlaced);
+        evals.push({key:'revenuePerOrderPlaced', label:'Revenue/Order (AOV proxy)', derived:true, actual:rpo, bench:bm.session.revenuePerOrderPlaced, ...rpoV});
+        const withPct = evals.filter(e=>e.pct!==null);
+        withPct.sort((a,b)=>Math.abs(b.pct)-Math.abs(a.pct));
+        const primary = withPct.length && Math.abs(withPct[0].pct) >= mat ? withPct[0] : null;
+        const revVar = LiveBenchmarkEngine.variance(r.revenuePlaced, bm.session.revenuePlaced);
+        return {row:r, evals, primary, revVar};
+      };
+      out.sessionTop = top.map(decorate);
+      out.sessionBottom = bottom.map(decorate);
+    }
+    if(productData && productData.rows.length && bm.product.n){
+      const withRev = productData.rows.filter(r=>r.revenuePlaced!==null).sort((a,b)=>b.revenuePlaced-a.revenuePlaced);
+      const top = withRev.slice(0,3), bottom = withRev.slice(-3).reverse();
+      const metricDefs = [
+        {key:'clicks', label:'Product Clicks'},
+        {key:'clickToOrderRatePlaced', label:'Click→Order Rate', derived:true},
+        {key:'atc', label:'ATC'},
+      ];
+      const decorate = (r)=>{
+        const evals = metricDefs.map(m=>{
+          const actual = m.derived ? r.derived[m.key] : r[m.key];
+          const benchVal = bm.product[m.key];
+          const v = LiveBenchmarkEngine.variance(actual, benchVal);
+          return {...m, actual, bench:benchVal, ...v};
+        });
+        const withPct = evals.filter(e=>e.pct!==null);
+        withPct.sort((a,b)=>Math.abs(b.pct)-Math.abs(a.pct));
+        const primary = withPct.length && Math.abs(withPct[0].pct) >= mat ? withPct[0] : null;
+        return {row:r, evals, primary};
+      };
+      out.productTop = top.map(decorate);
+      out.productBottom = bottom.map(decorate);
+    }
+    return out;
+  }
+};
+
+/* ============================================================
+   5b. SEGMENT ENGINE — nhóm theo chiều thời gian/độ dài, dùng TỔNG có trọng số
+   (không lấy trung bình cộng của tỷ lệ từng phiên, tránh sai số thống kê)
+============================================================ */
+const LiveSegmentEngine = {
+  weekdayVN(d){ return ['CN','Th 2','Th 3','Th 4','Th 5','Th 6','Th 7'][d.getDay()]; },
+  weekdayOrder: ['Th 2','Th 3','Th 4','Th 5','Th 6','Th 7','CN'],
+  weekOfMonth(d){
+    return this.weekOfMonthInfo(d).label;
+  },
+  weekOfMonthInfo(d){
+    const y = d.getFullYear(), m = d.getMonth();
+    const daysInMonth = new Date(y, m+1, 0).getDate();
+    const firstDow = new Date(y, m, 1).getDay(); // 0=CN..6=T7
+    const offsetToThu = (4 - firstDow + 7) % 7; // 4 = Thứ 5
+    const firstThuDay = 1 + offsetToThu; // ngày cuối của Tuần 1 (Thứ 5 gần nhất từ ngày 1)
+    const day = d.getDate();
+    let idx, startDay, endDay;
+    if(day <= firstThuDay){
+      idx = 1; startDay = 1; endDay = firstThuDay;
+    } else {
+      const daysAfter = day - firstThuDay;
+      idx = Math.ceil(daysAfter/7) + 1;
+      startDay = firstThuDay + 1 + (idx-2)*7;
+      endDay = Math.min(startDay + 6, daysInMonth);
+    }
+    const mm = this.pad2(m+1);
+    return { idx, startDay, endDay, label: `Week ${idx} [${this.pad2(startDay)}/${mm}–${this.pad2(endDay)}/${mm}]` };
+  },
+  pad2(n){ return String(n).padStart(2,'0'); },
+  timeSlotBuckets(edges){
+    const e = [...edges].sort((a,b)=>a-b);
+    const n = e.length;
+    return e.map((start,i)=>{
+      const end = e[(i+1)%n];
+      return { start, end, label: `${this.pad2(start)}:00–${this.pad2(end)}:00` };
+    });
+  },
+  timeSlotLabels(edges){
+    return this.timeSlotBuckets(edges).map(b=>b.label);
+  },
+  timeSlot(d, edges){
+    if(!d) return null;
+    const h = d.getHours() + d.getMinutes()/60;
+    const buckets = this.timeSlotBuckets(edges);
+    for(const b of buckets){
+      if(b.start < b.end){
+        if(h >= b.start && h < b.end) return b.label;
+      } else {
+        // khung xuyên đêm (vd 22:00–07:00)
+        if(h >= b.start || h < b.end) return b.label;
+      }
+    }
+    return buckets.length ? buckets[buckets.length-1].label : null;
+  },
+  dayStageOrder: ['D-2','D-1','D-Day','Mini Spike -1','Mini Spike','Memberday','Daily'],
+  addDays(d, n){ return new Date(d.getFullYear(), d.getMonth(), d.getDate()+n); },
+  sameDate(a,b){ return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); },
+  dDayOf(year, monthIndex0){ return new Date(year, monthIndex0, monthIndex0+1); }, // ngày = tháng, vd 9/9, 10/10
+  dayStage(d, cfg){
+    if(!d) return null;
+    const day = d.getDate();
+    if(cfg.enableDDay){
+      const thisDDay = this.dDayOf(d.getFullYear(), d.getMonth());
+      const nextMonthIdx = d.getMonth()===11 ? 0 : d.getMonth()+1;
+      const nextYear = d.getMonth()===11 ? d.getFullYear()+1 : d.getFullYear();
+      const nextDDay = this.dDayOf(nextYear, nextMonthIdx);
+      if(this.sameDate(d, thisDDay)) return 'D-Day';
+      if(this.sameDate(d, this.addDays(thisDDay,-1)) || this.sameDate(d, this.addDays(nextDDay,-1))) return 'D-1';
+      if(this.sameDate(d, this.addDays(thisDDay,-2)) || this.sameDate(d, this.addDays(nextDDay,-2))) return 'D-2';
+    }
+    if(cfg.memberDay && day === cfg.memberDay) return 'Memberday';
+    if(cfg.miniSpike){
+      if(day === cfg.miniSpike) return 'Mini Spike';
+      const msDate = new Date(d.getFullYear(), d.getMonth(), cfg.miniSpike);
+      if(this.sameDate(d, this.addDays(msDate,-1))) return 'Mini Spike -1';
+    }
+    return 'Daily';
+  },
+  dimFns: {
+    weekday: r => r.startAt ? LiveSegmentEngine.weekdayVN(r.startAt) : null,
+    weekOfMonth: r => r.startAt ? LiveSegmentEngine.weekOfMonth(r.startAt) : null,
+    timeSlot: r => LiveSegmentEngine.timeSlot(r.startAt, STATE.timeSlotEdges),
+    dayStage: r => LiveSegmentEngine.dayStage(r.startAt, STATE.dayStageConfig),
+  },
+  dimLabels: { weekday:'Day of week', weekOfMonth:'Week of month', timeSlot:'Live time slot', dayStage:'Day stage (D-Day/Memberday/Mini Spike)' },
+  buildDayStageBenchmarks(sessionRows, dayStageConfig){
+    const groups = {};
+    sessionRows.forEach(r=>{
+      const stage = this.dayStage(r.startAt, dayStageConfig) || 'Daily';
+      if(!groups[stage]) groups[stage] = [];
+      groups[stage].push(r);
+    });
+    const out = {};
+    Object.keys(groups).forEach(stage=>{
+      const g = groups[stage];
+      const rev = g.reduce((a,r)=>a+(r.revenuePlaced||0),0);
+      const hours = g.reduce((a,r)=>a+(r.durationSec?r.durationSec/3600:0),0);
+      out[stage] = { sessions: g.length, hours, avgGmvPerHour: hours ? rev/hours : null, avgRevenuePerSession: g.length ? rev/g.length : null };
+    });
+    return out;
+  },
+  build(sessionRows, dimKey){
+    const dimFn = this.dimFns[dimKey];
+    const groups = {}; const order = [];
+    sessionRows.forEach(r=>{
+      let k = dimFn(r);
+      k = (k===null||k===undefined||k==='') ? 'N/A' : k;
+      if(!groups[k]){ groups[k]=[]; order.push(k); }
+      groups[k].push(r);
+    });
+    let rows = order.map(k=>{
+      const g = groups[k];
+      const hours = g.reduce((a,r)=>a+(r.durationSec?r.durationSec/3600:0),0);
+      const viewers = g.reduce((a,r)=>a+(r.viewers||0),0);
+      const engaged = g.reduce((a,r)=>a+(r.engagedViewers||0),0);
+      const atc = g.reduce((a,r)=>a+(r.atc||0),0);
+      const ordersPlaced = g.reduce((a,r)=>a+(r.ordersPlaced||0),0);
+      const ordersConfirmed = g.reduce((a,r)=>a+(r.ordersConfirmed||0),0);
+      const unitsPlaced = g.reduce((a,r)=>a+(r.unitsPlaced||0),0);
+      const revenuePlaced = g.reduce((a,r)=>a+(r.revenuePlaced||0),0);
+      const revenueConfirmed = g.reduce((a,r)=>a+(r.revenueConfirmed||0),0);
+      return {
+        dim:k, sessions:g.length, hours, viewers, engaged, atc,
+        ordersPlaced, ordersConfirmed, unitsPlaced, revenuePlaced, revenueConfirmed,
+        engagedViewerRate: viewers? engaged/viewers : null,
+        gmvPerHourPlaced: hours? revenuePlaced/hours : null,
+        gmvPerSessionPlaced: g.length? revenuePlaced/g.length : null,
+        aovPlaced: ordersPlaced? revenuePlaced/ordersPlaced : null,
+      };
+    });
+    const totalRev = rows.reduce((a,r)=>a+(r.revenuePlaced||0),0);
+    rows.forEach(r=> r.revShare = totalRev? r.revenuePlaced/totalRev : null);
+    if(dimKey==='weekday'){
+      rows.sort((a,b)=> this.weekdayOrder.indexOf(a.dim) - this.weekdayOrder.indexOf(b.dim));
+    } else if(dimKey==='timeSlot'){
+      const order2 = LiveSegmentEngine.timeSlotLabels(STATE.timeSlotEdges);
+      rows.sort((a,b)=> order2.indexOf(a.dim) - order2.indexOf(b.dim));
+    } else if(dimKey==='weekOfMonth'){
+      const wnum = s => parseInt((s.match(/^Tuần (\d+)/)||[])[1],10)||0;
+      rows.sort((a,b)=> wnum(a.dim) - wnum(b.dim));
+    } else if(dimKey==='dayStage'){
+      rows.sort((a,b)=> this.dayStageOrder.indexOf(a.dim) - this.dayStageOrder.indexOf(b.dim));
+    } else {
+      rows.sort((a,b)=> (b.revenuePlaced||0)-(a.revenuePlaced||0));
+    }
+    return rows;
+  },
+  buildDailyTrend(sessionRows){
+    const groups = {};
+    sessionRows.forEach(r=>{
+      if(!r.startAt) return;
+      const key = r.startAt.toISOString().slice(0,10);
+      if(!groups[key]) groups[key]=[];
+      groups[key].push(r);
+    });
+    const days = Object.keys(groups).sort();
+    return days.map(d=>{
+      const g = groups[d];
+      return {
+        date:d, sessions:g.length,
+        revenuePlaced: g.reduce((a,r)=>a+(r.revenuePlaced||0),0),
+        ordersPlaced: g.reduce((a,r)=>a+(r.ordersPlaced||0),0),
+        viewers: g.reduce((a,r)=>a+(r.viewers||0),0),
+      };
+    });
+  },
+  buildSkuTypeSummary(productRows){
+    const groups = {Single:[], Combo:[]};
+    productRows.forEach(r=>{ const t = r.skuType || 'Single'; if(!groups[t]) groups[t]=[]; groups[t].push(r); });
+    const order = ['Single','Combo'].filter(t=> groups[t] && groups[t].length);
+    const rows = order.map(t=>{
+      const g = groups[t];
+      const clicks = g.reduce((a,r)=>a+(r.clicks||0),0);
+      const atc = g.reduce((a,r)=>a+(r.atc||0),0);
+      const ordersPlaced = g.reduce((a,r)=>a+(r.ordersPlaced||0),0);
+      const ordersConfirmed = g.reduce((a,r)=>a+(r.ordersConfirmed||0),0);
+      const unitsPlaced = g.reduce((a,r)=>a+(r.unitsPlaced||0),0);
+      const revenuePlaced = g.reduce((a,r)=>a+(r.revenuePlaced||0),0);
+      const revenueConfirmed = g.reduce((a,r)=>a+(r.revenueConfirmed||0),0);
+      return {
+        type:t, skuCount:g.length, clicks, atc, ordersPlaced, ordersConfirmed, unitsPlaced,
+        revenuePlaced, revenueConfirmed,
+        clickToOrderRatePlaced: clicks? ordersPlaced/clicks : null,
+      };
+    });
+    const totalRev = rows.reduce((a,r)=>a+(r.revenuePlaced||0),0);
+    rows.forEach(r=> r.revShare = totalRev? r.revenuePlaced/totalRev : null);
+    return rows;
+  }
+};
+
+/* ============================================================
+   6. INSIGHT ENGINE (rule-based, deterministic) — WHAT/BENCHMARK/WHY/IMPACT/ACTION
+============================================================ */
+const LiveInsightEngine = {
+  build(sessionData, productData, overviewData, bm, driver, totalRevenue){
+    const cards = [];
+    const P = RawParser;
+    if(driver.sessionTop.length){
+      driver.sessionTop.forEach((d,i)=>{
+        const contribPct = totalRevenue ? d.row.revenuePlaced/totalRevenue : null;
+        cards.push({
+          title: `Session doanh thu cao #${i+1}: ${d.row.name||'(unnamed)'}`,
+          type:'session-top',
+          what: `Revenue (placed) ${P.fmtMoney(d.row.revenuePlaced)}, highest in the group.`,
+          benchmark: `Compared with the channel average ${P.fmtMoney(bm.session.revenuePlaced)}: difference ${d.revVar.pct!==null?P.fmtPct(d.revVar.pct):'N/A'}.`,
+          why: d.primary ? `Main driver with the clearest deviation: ${d.primary.label} = ${typeof d.primary.actual==='number'? (d.primary.key.includes('Rate')? P.fmtPct(d.primary.actual): P.fmtDec(d.primary.actual,1)) : d.primary.actual} (benchmark ${typeof d.primary.bench==='number'?P.fmtDec(d.primary.bench,1):'N/A'}, off by ${P.fmtPct(d.primary.pct)}).` : 'Not enough data to conclude a cause (no metric deviates from the benchmark beyond the materiality threshold).',
+          impact: contribPct!==null ? `Contributes ${P.fmtPct(contribPct)} of total channel revenue (placed) in the period.` : 'Not enough data to compute the contribution share.',
+          action: d.primary ? `Check this session's operating conditions (time slot, script, lead product) related to ${d.primary.label} to judge whether it can be repeated.` : 'Not enough evidence to recommend a specific action.',
+        });
+      });
+    }
+    if(driver.sessionBottom.length){
+      const d = driver.sessionBottom[0];
+      const contribPct = totalRevenue ? d.row.revenuePlaced/totalRevenue : null;
+      cards.push({
+        title: `Lowest-revenue session: ${d.row.name||'(unnamed)'}`,
+        type:'session-bottom',
+        what: `Revenue (placed) ${P.fmtMoney(d.row.revenuePlaced)}, lowest in the group.`,
+        benchmark: `Compared with the channel average ${P.fmtMoney(bm.session.revenuePlaced)}: difference ${d.revVar.pct!==null?P.fmtPct(d.revVar.pct):'N/A'}.`,
+        why: d.primary ? `Main driver with the clearest deviation: ${d.primary.label} = ${typeof d.primary.actual==='number'? (d.primary.key.includes('Rate')? P.fmtPct(d.primary.actual): P.fmtDec(d.primary.actual,1)) : d.primary.actual} (benchmark ${typeof d.primary.bench==='number'?P.fmtDec(d.primary.bench,1):'N/A'}, off by ${P.fmtPct(d.primary.pct)}).` : 'Not enough data to conclude a cause.',
+        impact: contribPct!==null ? `Only contributes ${P.fmtPct(contribPct)} of total channel revenue (placed).` : 'Not enough data to compute the contribution share.',
+        action: 'Review the timing/script of this live before repeating a similar setup.',
+      });
+    }
+    if(productData && productData.rows.length){
+      const hh = productData.rows.filter(r=>r.quadrant==='HH').sort((a,b)=>b.revenuePlaced-a.revenuePlaced)[0];
+      const hl = productData.rows.filter(r=>r.quadrant==='HL').sort((a,b)=>b.clicks-a.clicks)[0];
+      if(hh){
+        cards.push({
+          title:`Effective product: ${hh.productName}`,
+          type:'product-hh',
+          what:`Click ${P.fmtInt(hh.clicks)}, Click→Order Rate ${P.fmtPct(hh.derived.clickToOrderRatePlaced)} : both ≥ the list median.`,
+          benchmark:`Median Click ${P.fmtInt(productData.medianClick)}, Median Conversion ${P.fmtPct(productData.medianConv)}.`,
+          why:'High Click / High Conversion: the product has good interest and monetises well (Product Diagnostic Framework).',
+          impact:`Placed revenue contributes ${P.fmtMoney(hh.revenuePlaced)}.`,
+          action:'Prioritise this product\'s slot/time in upcoming lives; it is a hero-product candidate.',
+        });
+      }
+      if(hl){
+        cards.push({
+          title:`Product to check: ${hl.productName}`,
+          type:'product-hl',
+          what:`Click ${P.fmtInt(hl.clicks)} (≥ median) but Click→Order Rate ${P.fmtPct(hl.derived.clickToOrderRatePlaced)} (< median ${P.fmtPct(productData.medianConv)}).`,
+          benchmark:`Median Click ${P.fmtInt(productData.medianClick)}, Median Conversion ${P.fmtPct(productData.medianConv)}.`,
+          why:'High Click / Low Conversion: interest exists but conversion is low. The framework says check offer/price/CTA; current raw data lacks the fields to pinpoint the cause.',
+          impact:`ATC recorded ${P.fmtInt(hl.atc)} on ${P.fmtInt(hl.clicks)} clicks; placed orders only ${P.fmtInt(hl.ordersPlaced)}.`,
+          action:'Check price/voucher/closing script when featuring this product; not enough raw data to conclude the root cause.',
+        });
+      }
+    }
+    if(!cards.length){
+      cards.push({title:'Not enough data', type:'none', what:'Not enough data to conclude.', benchmark:'', why:'', impact:'', action:''});
+    }
+    return cards;
+  }
+};
+
+/* ============================================================
+   7. DATA QUALITY ENGINE
+============================================================ */
+const DataQualityEngine = {
+  build(sessionData, productData, overviewData){
+    const files = [];
+    if(sessionData) files.push({type:'Live List (Session)', fileName:sessionData.fileName, sheet:sessionData.sheetName, rows:sessionData.rows.length});
+    if(productData) files.push({type:'Live Product List', fileName:productData.fileName, sheet:productData.sheetName, rows:productData.rows.length});
+    if(overviewData) files.push({type:'Livestream Overview', fileName:overviewData.fileName, sheet:overviewData.sheetName, rows: overviewData.blocks[0]?overviewData.blocks[0].rows.length:0});
+
+    const issues = [];
+    const dateRanges = [];
+
+    if(sessionData){
+      const missing = sessionData.rows.filter(r=>!r.name || r.startAt===null).length;
+      if(missing) issues.push({level:'warn', msg:`Live List: ${missing} rows are missing the live name, or the start time could not be parsed.`});
+      const invalidDur = sessionData.rows.filter(r=>r.durationRaw && r.durationSec===null).length;
+      if(invalidDur) issues.push({level:'warn', msg:`Live List: ${invalidDur} rows have a Duration not in HH:MM:SS format.`});
+      const zeroDur = sessionData.rows.filter(r=>r.durationSec===null || r.durationSec===0).length;
+      if(zeroDur) issues.push({level:'warn', msg:`Live List: ${zeroDur} sessions have Duration = 0 or unreadable → GMV/Hour cannot be computed for them.`});
+      const negRev = sessionData.rows.filter(r=>r.revenuePlaced!==null && r.revenuePlaced<0).length;
+      if(negRev) issues.push({level:'warn', msg:`Live List: ${negRev} sessions have negative Revenue (Placed); check the raw data before aggregating.`});
+      const seen = new Set(); let dup=0;
+      sessionData.rows.forEach(r=>{ const k=r.name+'|'+r.startRaw; if(seen.has(k)) dup++; seen.add(k); });
+      if(dup) issues.push({level:'warn', msg:`Live List: ${dup} duplicate rows (name + start time).`});
+      else issues.push({level:'ok', msg:'Live List: no duplicate rows found.'});
+      const starts = sessionData.rows.map(r=>r.startAt).filter(Boolean);
+      if(starts.length) dateRanges.push({file:'Live List', min:new Date(Math.min(...starts)), max:new Date(Math.max(...starts))});
+    }
+    if(productData){
+      const missing = productData.rows.filter(r=>!r.productName || r.clicks===null).length;
+      if(missing) issues.push({level:'warn', msg:`Product List: ${missing} rows missing product name or clicks.`});
+      const seen = new Set(); let dup=0;
+      productData.rows.forEach(r=>{ const k=r.productName+'|'+r.timeframe; if(seen.has(k)) dup++; seen.add(k); });
+      if(dup) issues.push({level:'warn', msg:`Product List: ${dup} duplicate rows (product name + time frame).`});
+      else issues.push({level:'ok', msg:'Product List: no duplicate rows found.'});
+    }
+    if(overviewData && overviewData.blocks[0]){
+      issues.push({level:'info', msg:`Overview: found ${overviewData.blocks.length} data blocks in the file. The main block is used for Channel Overview; extra blocks (if any) are breakdowns by store type.`});
+    }
+
+    // cross-file consistency
+    if(sessionData && overviewData && overviewData.blocks[0]){
+      const ov = overviewData.blocks[0].rows[0];
+      if(ov){
+        const findMetric = (name)=>{ for(const g in ov.metricsByGroup){ const m = ov.metricsByGroup[g].find(x=>x.header===name); if(m) return m; } return null; };
+        const sessCountMetric = findMetric('Số phiên Livestream');
+        if(sessCountMetric && sessCountMetric.num!==null){
+          const delta = sessionData.rows.length - sessCountMetric.num;
+          if(delta===0) issues.push({level:'ok', msg:`Sessions: Live List (${sessionData.rows.length}) matches Overview (${sessCountMetric.num}).`});
+          else issues.push({level:'warn', msg:`Sessions: Live List has ${sessionData.rows.length} rows, Overview reports ${sessCountMetric.num} sessions (off by ${delta>0?'+':''}${delta}).`});
+        }
+        const revMetric = findMetric('Doanh thu(Đơn đã đặt)');
+        if(revMetric && revMetric.num!==null){
+          const sumRev = sessionData.rows.reduce((a,r)=>a+(r.revenuePlaced||0),0);
+          const delta = sumRev - revMetric.num;
+          const pct = revMetric.num? delta/revMetric.num : null;
+          issues.push({level: Math.abs(pct||0)<0.01?'ok':'info', msg:`Placed revenue: Live List total ${RawParser.fmtMoney(sumRev)} vs Overview ${RawParser.fmtMoney(revMetric.num)} (off by ${pct!==null?RawParser.fmtPct(pct):'N/A'}).`});
+        }
+      }
+    }
+    return { files, issues, dateRanges };
+  }
+};
+
+/* ============================================================
+   8. EXPORT ENGINE
+============================================================ */
+const EXPORT_FORMATS = { money:'#,##0"₫"', int:'#,##0', pct:'0.0%', dec2:'#,##0.00' };
+function applyColFormats(ws, dataRowCount, colFormatMap){
+  Object.keys(colFormatMap).forEach(ciStr=>{
+    const ci = parseInt(ciStr,10);
+    const fmt = EXPORT_FORMATS[colFormatMap[ciStr]];
+    if(!fmt) return;
+    for(let ri=1; ri<=dataRowCount; ri++){
+      const addr = XLSX.utils.encode_cell({r:ri, c:ci});
+      const cell = ws[addr];
+      if(cell && typeof cell.v === 'number') cell.z = fmt;
+    }
+  });
+}
+function applyRowFormats(ws, valueColIndex, rowFormatMap){
+  Object.keys(rowFormatMap).forEach(riStr=>{
+    const ri = parseInt(riStr,10);
+    const fmt = EXPORT_FORMATS[rowFormatMap[riStr]];
+    if(!fmt) return;
+    const addr = XLSX.utils.encode_cell({r:ri, c:valueColIndex});
+    const cell = ws[addr];
+    if(cell && typeof cell.v === 'number') cell.z = fmt;
+  });
+}
+const ExportEngine = {
+  build(){
+    const wb = XLSX.utils.book_new();
+    const S = STATE;
+
+    if(S.overview && S.overview.blocks[0]){
+      const rows = [];
+      const ovRow = S.overview.blocks[0].rows[0];
+      if(ovRow){
+        rows.push(['Time frame', ovRow.timeframe]);
+        rows.push(['Streamer ID', ovRow.streamerId]);
+        rows.push([]);
+        Object.keys(ovRow.metricsByGroup).forEach(g=>{
+          rows.push([g]);
+          ovRow.metricsByGroup[g].forEach(m=> rows.push(['', m.header, m.raw]));
+          rows.push([]);
+        });
+      }
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), 'Overview');
+    }
+    if(S.session){
+      const head = ['No.','Livestream name','Start','Duration','Viewers','Engaged Viewers','Engaged Viewer Rate (Derived)','Comments','ATC','Placed orders','Confirmed orders','Units placed','Units confirmed','Placed revenue','Confirmed revenue','GMV/Hour placed (Derived)'];
+      const body = S.session.rows.map(r=>[r.no,r.name,r.startRaw,r.durationRaw,r.viewers,r.engagedViewers,r.derived.engagedViewerRate,r.comments,r.atc,r.ordersPlaced,r.ordersConfirmed,r.unitsPlaced,r.unitsConfirmed,r.revenuePlaced,r.revenueConfirmed,r.derived.gmvPerHourPlaced]);
+      const ws = XLSX.utils.aoa_to_sheet([head,...body]);
+      applyColFormats(ws, body.length, {4:'int',5:'int',6:'pct',7:'int',8:'int',9:'int',10:'int',11:'int',12:'int',13:'money',14:'money',15:'money'});
+      XLSX.utils.book_append_sheet(wb, ws, 'Session Performance');
+    }
+    if(S.product){
+      const head = ['Rank','Products','SKU type','Click','ATC','Placed orders','Confirmed orders','Units placed','Units confirmed','Placed revenue','Confirmed revenue','Click→Order Rate (Derived)','Quadrant'];
+      const body = S.product.rows.map(r=>[r.rank,r.productName,r.skuType,r.clicks,r.atc,r.ordersPlaced,r.ordersConfirmed,r.unitsPlaced,r.unitsConfirmed,r.revenuePlaced,r.revenueConfirmed,r.derived.clickToOrderRatePlaced,r.quadrant]);
+      const ws = XLSX.utils.aoa_to_sheet([head,...body]);
+      applyColFormats(ws, body.length, {0:'int',3:'int',4:'int',5:'int',6:'int',7:'int',8:'int',9:'money',10:'money',11:'pct'});
+      XLSX.utils.book_append_sheet(wb, ws, 'Product Performance');
+
+      const skuSummary = LiveSegmentEngine.buildSkuTypeSummary(S.product.rows);
+      const shead = ['SKU type','SKUs','Click','ATC','Placed orders','Confirmed orders','Units placed','Placed revenue','Confirmed revenue','% Doanh thu','Click→Order Rate (Derived)'];
+      const sbody = skuSummary.map(s=>[s.type,s.skuCount,s.clicks,s.atc,s.ordersPlaced,s.ordersConfirmed,s.unitsPlaced,s.revenuePlaced,s.revenueConfirmed,s.revShare,s.clickToOrderRatePlaced]);
+      const wsSku = XLSX.utils.aoa_to_sheet([shead,...sbody]);
+      applyColFormats(wsSku, sbody.length, {1:'int',2:'int',3:'int',4:'int',5:'int',6:'int',7:'money',8:'money',9:'pct',10:'pct'});
+      XLSX.utils.book_append_sheet(wb, wsSku, 'SKU_Type_Summary');
+    }
+    if(S.benchmark && S.benchmark.session.n){
+      const bm = S.benchmark.session;
+      const bmFormat = { viewers:'int', engagedViewers:'int', engagedViewerRate:'pct', atc:'int', comments:'int',
+        ordersPlaced:'int', revenuePlaced:'money', revenueConfirmed:'money', avgWatchSec:'int',
+        gmvPerHourPlaced:'money', revenuePerOrderPlaced:'money' };
+      const head = ['Metric','Channel Benchmark (avg)'];
+      const keys = Object.keys(bm).filter(k=>k!=='n');
+      const body = keys.map(k=>[k, bm[k]]);
+      const ws = XLSX.utils.aoa_to_sheet([head,...body,[],['n sessions', bm.n]]);
+      const rowFmt = {}; keys.forEach((k,i)=>{ if(bmFormat[k]) rowFmt[i+1]=bmFormat[k]; });
+      applyRowFormats(ws, 1, rowFmt);
+      XLSX.utils.book_append_sheet(wb, ws, 'Benchmark');
+    }
+    if(S.insights){
+      const head = ['Title','WHAT','BENCHMARK','WHY','IMPACT','ACTION'];
+      const body = S.insights.map(c=>[c.title,c.what,c.benchmark,c.why,c.impact,c.action]);
+      const rows = [head,...body];
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), 'Insights');
+    }
+    if(S.aiSections){
+      const secTitles = {overview:'02. Channel overview', session:'03. Livestream sessions', product:'04. Products',
+        segment_weekday:'05. Group analysis: Day of week', segment_weekOfMonth:'05. Group analysis: Week of month',
+        segment_timeSlot:'05. Group analysis: Live time slot', segment_dayStage:'05. Group analysis: Day stage'};
+      const keysOrder = ['overview','session','product','segment_weekday','segment_weekOfMonth','segment_timeSlot','segment_dayStage'];
+      const rows = [['Tab / Analysis dimension','AI Insight & Action']];
+      keysOrder.forEach(k=>{ if(S.aiSections[k]) rows.push([secTitles[k], S.aiSections[k]]); });
+      if(rows.length>1) XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), 'AI_Insight');
+    }
+    if(S.session){
+      ['weekday','weekOfMonth','timeSlot','dayStage'].forEach(dimKey=>{
+        const rows = LiveSegmentEngine.build(S.session.rows, dimKey);
+        const head = [LiveSegmentEngine.dimLabels[dimKey],'Sessions','Live hours','Viewers','Engaged Viewer Rate (Derived)','ATC','Placed orders','Confirmed orders','Units placed','Placed revenue','Confirmed revenue','% Doanh thu','GMV/Hour (Derived)','GMV/Session (Derived)'];
+        const body = rows.map(r=>[r.dim,r.sessions,r.hours,r.viewers,r.engagedViewerRate,r.atc,r.ordersPlaced,r.ordersConfirmed,r.unitsPlaced,r.revenuePlaced,r.revenueConfirmed,r.revShare,r.gmvPerHourPlaced,r.gmvPerSessionPlaced]);
+        const sheetName = {weekday:'Segment_Thu_Trong_Tuan', weekOfMonth:'Segment_Tuan_Trong_Thang', timeSlot:'Segment_Khung_Gio_Live', dayStage:'Segment_Giai_Doan_Ngay'}[dimKey];
+        const ws = XLSX.utils.aoa_to_sheet([head,...body]);
+        applyColFormats(ws, body.length, {2:'dec2',3:'int',4:'pct',5:'int',6:'int',7:'int',8:'int',9:'money',10:'money',11:'pct',12:'money',13:'money'});
+        XLSX.utils.book_append_sheet(wb, ws, sheetName);
+      });
+      const trend = LiveSegmentEngine.buildDailyTrend(S.session.rows);
+      const thead = ['Date','Sessions','Viewers','Placed orders','Placed revenue'];
+      const tbody = trend.map(d=>[d.date,d.sessions,d.viewers,d.ordersPlaced,d.revenuePlaced]);
+      const wsTrend = XLSX.utils.aoa_to_sheet([thead,...tbody]);
+      applyColFormats(wsTrend, tbody.length, {1:'int',2:'int',3:'int',4:'money'});
+      XLSX.utils.book_append_sheet(wb, wsTrend, 'Daily_Trend');
+    }
+    const playbook = [
+      ['Lever','Signal to watch','Suggested check'],
+      ['Traffic','Viewers / PCU below the channel benchmark','Review live time slots, live frequency, and channels driving traffic into the live room'],
+      ['Engagement','Engaged Viewer Rate or Comments below benchmark','Review the engagement script, comment response speed, MC/host'],
+      ['Conversion','ATC or Orders/Viewers below benchmark','Review price, voucher, closing CTA, timing of product introduction'],
+      ['AOV / Monetization','Revenue/Order (AOV proxy) below benchmark','Review combo/bundle, upsell, high-value products in the live'],
+      ['Product','High clicks but low Click→Order Rate (quadrant HL)','Review the price/offer/CTA of that exact product'],
+    ];
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(playbook), 'Action_Playbook');
+
+    if(S.session){
+      const weekRows = LiveSegmentEngine.build(S.session.rows, 'weekOfMonth');
+      const cols = weekRows.map((w,i)=>({key:'w'+(i+1), label:w.dim, data:w}));
+      const rm = S.reportManual;
+      const reportLabel = (typeof reportColumnLabel==='function') ? reportColumnLabel() : 'Report';
+      const head = ['Category','Metric', reportLabel, ...cols.map(c=>c.label)];
+      const rows = [];
+      const getManual = (rowKey,colKey)=>{ const v = rm[rowKey] ? rm[rowKey][colKey] : null; return (v===undefined) ? null : v; };
+      const sumWeeks = (rowKey)=>{ const vals = cols.map(c=>getManual(rowKey,c.key)).filter(v=>v!==null && v!==undefined && !isNaN(v)); return vals.length ? vals.reduce((a,b)=>a+parseFloat(b),0) : null; };
+      const totalRevenue = S.session.rows.reduce((a,r)=>a+(r.revenuePlaced||0),0);
+      const totalOrders = S.session.rows.reduce((a,r)=>a+(r.ordersPlaced||0),0);
+      const totalHours = S.session.rows.reduce((a,r)=>a+(r.durationSec?r.durationSec/3600:0),0);
+      const reportAgg = { revenue: totalRevenue, orders: totalOrders, aov: totalOrders?totalRevenue/totalOrders:null, gmvHour: totalHours?totalRevenue/totalHours:null, hours: totalHours };
+      rows.push(['Live self channel','Livestream self channel revenue (Placed)', reportAgg.revenue, ...cols.map(c=>c.data.revenuePlaced)]);
+      rows.push(['','Livestream self channel orders (Placed)', reportAgg.orders, ...cols.map(c=>c.data.ordersPlaced)]);
+      rows.push(['','Livestream self channel AOV (Placed) (Derived)', reportAgg.aov, ...cols.map(c=>c.data.aovPlaced)]);
+      rows.push(['','Average GMV/hour livestream (Placed) (Derived)', reportAgg.gmvHour, ...cols.map(c=>c.data.gmvPerHourPlaced)]);
+      rows.push(['','Livestream self channel hours', reportAgg.hours, ...cols.map(c=>c.data.hours)]);
+      ['costNet','costHostlive','costTungXu','costSetup','costMinigame'].forEach(k=>{
+        const labels = {costNet:'Livestream self channel cost (net)', costHostlive:'Host cost', costTungXu:'Coin giveaway cost', costSetup:'Livestream setup cost', costMinigame:'Minigame cost'};
+        rows.push(['', labels[k], sumWeeks(k), ...cols.map(c=>getManual(k,c.key))]);
+      });
+      const roiOf = (revenue, cost)=> (revenue!==null && revenue!==undefined && cost!==null && cost!==undefined && cost!==0) ? revenue/cost : null;
+      rows.push(['','ROI livestream self channel (Derived)', roiOf(reportAgg.revenue, sumWeeks('costNet')), ...cols.map(c=> roiOf(c.data.revenuePlaced, getManual('costNet', c.key)))]);
+      const wsReport = XLSX.utils.aoa_to_sheet([head, ...rows]);
+      const moneyCols = {}; for(let i=2;i<head.length;i++) moneyCols[i]='money';
+      applyColFormats(wsReport, rows.length, moneyCols);
+      XLSX.utils.book_append_sheet(wb, wsReport, 'Weekly_Report');
+    }
+
+    if(S.dq){
+      const rows = [['File','Sheet','Rows'], ...S.dq.files.map(f=>[f.type+' — '+f.fileName, f.sheet, f.rows]), [], ['Data Quality Issues'], ...S.dq.issues.map(i=>[i.level.toUpperCase(), i.msg])];
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), 'Data Quality');
+    }
+    const calc = [
+      ['Calculation Logic — Livestream Channel V1'],
+      [],
+      ['Principle: Raw First. Metrics come from Shopee raw data, no inference, N/A when missing.'],
+      [],
+      ['Derived Metric','Formula','Condition'],
+      ['GMV/Hour (Placed)','Revenue(Placed) / Duration (hours)','Duration > 0'],
+      ['Orders/Hour','Orders(Placed) / Duration (hours)','Duration > 0'],
+      ['Engaged Viewer Rate','Engaged viewers / Viewers','Viewers > 0'],
+      ['GMV per Viewer','Revenue(Placed) / Viewers','Viewers > 0, same session scope'],
+      ['Click→Order Rate (Product)','Orders(Placed) / Product clicks','Clicks > 0, same product row'],
+      ['Benchmark','Mean of all sessions/products in the uploaded period','Same period / full-channel benchmark per Blueprint section 13'],
+      ['Product Quadrant','Compare Click & Click→Order Rate with the list median','No fixed absolute threshold'],
+      ['Materiality threshold (driver)', `${STATE.materialityPct}% (set by the user)`, 'Used to filter driver candidates, not a Good/Low business threshold'],
+      ['Weekly report: AOV', 'Σ Revenue(Placed) per week / Σ Orders(Placed) per week', 'Weighted, not an average of per-session AOV'],
+      ['Weekly report: Costs (net/host/coins/setup/minigame)', 'Manual input', 'Shopee raw has no cost data; the user fills it in'],
+      ['Weekly report: ROI', 'Livestream revenue(Placed) / Livestream cost (net), same column (Plan or each week)', 'N/A if either value is missing, or Cost = 0'],
+    ];
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(calc), 'Calculation Logic');
+    return wb;
+  }
+};
+
+/* ============================================================
+   9. UI RENDERING
+============================================================ */
+let currentTab = 'upload';
+
+function anyDataLoaded(n){
+  const count = [STATE.session, STATE.product, STATE.overview].filter(Boolean).length;
+  if(n==='any1') return count>=1;
+  if(n==='any2') return count>=2;
+  return true;
+}
+function tabEnabled(t){
+  if(!t.requires) return true;
+  if(t.requires==='session') return !!STATE.session;
+  if(t.requires==='product') return !!STATE.product;
+  if(t.requires==='overview') return !!STATE.overview || !!STATE.session;
+  return anyDataLoaded(t.requires);
+}
+
+function renderNav(){
+  const nav = document.getElementById('nav');
+  nav.innerHTML = '';
+  TABS.forEach((t,i)=>{
+    const btn = document.createElement('button');
+    btn.className = 'rail-btn'+(t.id===currentTab?' active':'');
+    const enabled = tabEnabled(t);
+    btn.disabled = !enabled;
+    btn.innerHTML = `<span class="n">${String(i+1).padStart(2,'0')}</span><span>${t.label}</span>`;
+    btn.onclick = ()=>{ if(enabled){ currentTab=t.id; renderAll(); } };
+    nav.appendChild(btn);
+  });
+}
+
+function switchView(){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+currentTab).classList.add('active');
+}
+
+/* ---------- Upload View ---------- */
+function renderUpload(){
+  const el = document.getElementById('view-upload');
+  const S = STATE;
+  const fileInfo = (d, label)=> d ? `<span class="badge on">✓ ${label}: ${d.rows? d.rows.length : (d.blocks&&d.blocks[0]?d.blocks[0].rows.length:0)} rows</span>` : `<span class="badge">${label}: not loaded</span>`;
+  el.innerHTML = `
+    <h2 class="pagetitle">Load livestream data</h2>
+    <p class="sub">Upload exactly 3 raw export files from Shopee Seller Center. The tool detects each file type from its column structure; no naming order needed.</p>
+    <div class="callout"><b>Raw First principle:</b> every figure shown follows the Shopee export 100%. Derived metrics are always labelled <span class="tag derived">DERIVED</span>. Missing data → shown as N/A, no inference.</div>
+    <div class="panel">
+      <h3>1 · Data sources</h3>
+      <div class="upload-row">
+        <label class="dropzone ${S.session?'filled':''}" id="dz-session">
+          <div class="ic">📄</div>
+          <div class="t1">${S.session?'Live List: loaded':'Live List (Session)'}</div>
+          <div class="t2">${S.session? S.session.fileName : '.xlsx: performance of each live'}</div>
+          <input type="file" accept=".xlsx,.xls,.csv" multiple style="display:none" id="input-session">
+        </label>
+        <label class="dropzone ${S.product?'filled':''}" id="dz-product">
+          <div class="ic">📦</div>
+          <div class="t1">${S.product?'Live Product List: loaded':'Live Product List'}</div>
+          <div class="t2">${S.product? S.product.fileName : '.xlsx: product performance in live'}</div>
+          <input type="file" accept=".xlsx,.xls,.csv" multiple style="display:none" id="input-product">
+        </label>
+        <label class="dropzone ${S.overview?'filled':''}" id="dz-overview">
+          <div class="ic">📊</div>
+          <div class="t1">${S.overview?'Livestream Overview: loaded':'Livestream Overview'}</div>
+          <div class="t2">${S.overview? S.overview.fileName : '.csv: full funnel & channel aggregate'}</div>
+          <input type="file" accept=".xlsx,.xls,.csv" multiple style="display:none" id="input-overview">
+        </label>
+      </div>
+      <p class="sub" style="margin:10px 0 0;">You can drag or choose all 3 files at once into any box; the tool detects and sorts them, no need to drop each into its own box.</p>
+      <div class="badgebar" style="margin-top:16px;">
+        ${fileInfo(S.session,'Session')} ${fileInfo(S.product,'Product')} ${fileInfo(S.overview,'Overview')}
+      </div>
+      <div id="upload-error" style="color:var(--alert);font-size:12.5px;margin-top:8px;"></div>
+    </div>
+    <div class="panel" id="upload-status-panel" style="${(S.session||S.product||S.overview)?'':'display:none'}">
+      <h3>2 · Detection status</h3>
+      <div class="filelist">
+        ${S.session? `<div class="filerow"><span>Live List — ${S.session.rows.length} lives</span><span class="name">${S.session.fileName}</span></div>`:''}
+        ${S.product? `<div class="filerow"><span>Live Product List — ${S.product.rows.length} products</span><span class="name">${S.product.fileName}</span></div>`:''}
+        ${S.overview? `<div class="filerow"><span>Livestream Overview — ${S.overview.blocks.length} data blocks</span><span class="name">${S.overview.fileName}</span></div>`:''}
+      </div>
+      <p class="sub" style="margin-top:14px;margin-bottom:0;">Enough data to open the analysis tabs in the left bar. Streamer IDs detected: <b style="color:var(--ink)">${[...STATE.streamerIds].join(', ')||'—'}</b> ${STATE.streamerIds.size>1?'(several streamers: can be split by streamer)':'(1 streamer: no split needed)'}.</p>
+    </div>
+    ${dqSectionHTML()}
+  `;
+  ['session','product','overview'].forEach(kind=>{
+    const dz = document.getElementById('dz-'+kind);
+    const input = document.getElementById('input-'+kind);
+    dz.addEventListener('dragover', e=>{e.preventDefault(); dz.classList.add('drag');});
+    dz.addEventListener('dragleave', ()=>dz.classList.remove('drag'));
+    dz.addEventListener('drop', e=>{
+      e.preventDefault(); dz.classList.remove('drag');
+      Array.from(e.dataTransfer.files || []).forEach(f=> handleFile(f));
+    });
+    input.addEventListener('change', e=>{
+      Array.from(e.target.files || []).forEach(f=> handleFile(f));
+      input.value = '';
+    });
+  });
+}
+
+function handleFile(file){
+  document.getElementById('upload-error').textContent = '';
+  RawParser.aoaFromFile(file, (err, res)=>{
+    if(err){ document.getElementById('upload-error').textContent = 'File read error: '+err.message; return; }
+    const type = RawParser.detectAOAType(res.aoa);
+    if(type==='unknown'){ document.getElementById('upload-error').textContent = `Could not detect the file type of "${file.name}". Check that it is a Shopee Livestream export file.`; return; }
+    try{
+      if(type==='session'){ STATE.session = LiveDataModel.enrichSession(Normalizer.normalizeSession(res.aoa, res)); STATE.session.rows.forEach(r=>STATE.streamerIds.add(r.streamerId)); }
+      if(type==='product'){ STATE.product = LiveDataModel.enrichProduct(Normalizer.normalizeProduct(res.aoa, res)); STATE.product.rows.forEach(r=>STATE.streamerIds.add(r.streamerId)); }
+      if(type==='overview'){ STATE.overview = Normalizer.normalizeOverview(res.aoa, res); STATE.overview.blocks.forEach(b=>b.rows.forEach(r=>STATE.streamerIds.add(r.streamerId))); }
+      recompute();
+      renderAll();
+    }catch(e){
+      document.getElementById('upload-error').textContent = 'Data processing error: '+e.message;
+    }
+  });
+}
+
+function recompute(){
+  if(STATE.product) LiveDataModel.applySkuType(STATE.product, STATE.comboKeywords);
+  STATE.benchmark = LiveBenchmarkEngine.build(STATE.session, STATE.product);
+  STATE.driver = LiveDriverEngine.build(STATE.session, STATE.product, STATE.benchmark, STATE.materialityPct);
+  const totalRevenue = STATE.overview && STATE.overview.blocks[0] && STATE.overview.blocks[0].rows[0]
+    ? (()=>{ for(const g in STATE.overview.blocks[0].rows[0].metricsByGroup){ const m=STATE.overview.blocks[0].rows[0].metricsByGroup[g].find(x=>x.header==='Doanh thu(Đơn đã đặt)'); if(m) return m.num; } return null; })()
+    : (STATE.session ? STATE.session.rows.reduce((a,r)=>a+(r.revenuePlaced||0),0) : null);
+  STATE.insights = LiveInsightEngine.build(STATE.session, STATE.product, STATE.overview, STATE.benchmark, STATE.driver, totalRevenue);
+  STATE.dq = DataQualityEngine.build(STATE.session, STATE.product, STATE.overview);
+}
+
+/* ---------- Overview View ---------- */
+function renderOverview(){
+  const el = document.getElementById('view-overview');
+  if(!STATE.overview && !STATE.session){ el.innerHTML = emptyState('Channel overview', 'Load the Livestream Overview file (or Live List) to see channel-wide KPIs.'); return; }
+
+  let html = `<h2 class="pagetitle">Channel overview</h2>`;
+
+  if(STATE.overview && STATE.overview.blocks[0] && STATE.overview.blocks[0].rows[0]){
+    const row = STATE.overview.blocks[0].rows[0];
+    html += `<p class="sub">Time frame: <b>${row.timeframe}</b> · Streamer ID: <b>${row.streamerId}</b> · Source: ${STATE.overview.fileName}</p>`;
+
+    const groupOrder = Object.keys(row.metricsByGroup);
+    const CUSTOMER_HEADERS = [
+      'Doanh số từ Khách hàng Mới(Đơn đã đặt)','Doanh số từ Khách hàng Cũ(Đơn đã đặt)',
+      'Doanh số từ Khách hàng Mới(Đơn hàng được xác nhận)','Doanh số từ Khách hàng Cũ(Đơn hàng được xác nhận)'
+    ];
+    groupOrder.forEach(g=>{
+      const metrics = row.metricsByGroup[g];
+      if(g.indexOf('Nguồn Truy Cập') !== -1 && g.indexOf('Tất cả') !== -1){
+        html += renderTrafficFunnelPanel(g, metrics);
+        return;
+      }
+      const customerMetrics = metrics.filter(m=> CUSTOMER_HEADERS.indexOf(m.header)!==-1);
+      const mainMetrics = metrics.filter(m=> CUSTOMER_HEADERS.indexOf(m.header)===-1);
+      html += `<div class="panel"><h3>${g}</h3><div class="grid g4">`;
+      mainMetrics.forEach(m=>{
+        html += `<div class="kpi"><div class="lbl">${m.header}</div><div class="val ${m.raw==='-'||m.num===null?'na':''}">${m.raw==='' ? 'N/A' : m.raw}</div></div>`;
+      });
+      html += `</div></div>`;
+      if(customerMetrics.length) html += renderCustomerPanel(customerMetrics);
+    });
+  } else {
+    html += `<p class="sub">No Livestream Overview file yet. Below is a summary report computed from the Live List.</p>`;
+  }
+
+  if(STATE.session){
+    html += renderWeeklyReportTable();
+  }
+
+  html += aiSectionBlock('overview', 'Channel overview');
+
+  el.innerHTML = html;
+  if(STATE.session) wireWeeklyReportInputs();
+  document.querySelectorAll('.ai-trigger-btn').forEach(b=> b.onclick = runAIInsightV2);
+}
+
+function reportColumnLabel(){
+  let start=null, end=null;
+  if(STATE.overview && STATE.overview.blocks[0] && STATE.overview.blocks[0].rows[0]){
+    start = STATE.overview.blocks[0].rows[0].timeframeStart;
+    end = STATE.overview.blocks[0].rows[0].timeframeEnd;
+  }
+  if((!start || !end) && STATE.session){
+    const starts = STATE.session.rows.map(r=>r.startAt).filter(Boolean);
+    if(starts.length){ start = new Date(Math.min(...starts)); end = new Date(Math.max(...starts)); }
+  }
+  if(!start || !end) return 'Report';
+  return `Report Month ${start.getMonth()+1}`;
+}
+
+function renderWeeklyReportTable(){
+  const weekRows = LiveSegmentEngine.build(STATE.session.rows, 'weekOfMonth');
+  const P = RawParser;
+  const cols = weekRows.map((w,i)=>({key:'w'+(i+1), label:w.dim, data:w}));
+  STATE._reportCols = cols;
+  const rm = STATE.reportManual;
+  const reportLabel = reportColumnLabel();
+
+  // Report (tháng) = tổng hợp trực tiếp từ toàn bộ session trong kỳ, không phải cộng dồn cột tuần hiển thị (để không lệch do làm tròn)
+  const allSessions = STATE.session.rows;
+  const totalRevenue = allSessions.reduce((a,r)=>a+(r.revenuePlaced||0),0);
+  const totalOrders = allSessions.reduce((a,r)=>a+(r.ordersPlaced||0),0);
+  const totalHours = allSessions.reduce((a,r)=>a+(r.durationSec?r.durationSec/3600:0),0);
+  const reportAgg = {
+    revenue: totalRevenue,
+    orders: totalOrders,
+    aov: totalOrders? totalRevenue/totalOrders : null,
+    gmvHour: totalHours? totalRevenue/totalHours : null,
+    hours: totalHours,
+  };
+
+  const computedRows = [
+    {key:'revenue', label:'Livestream self channel revenue (Placed)', get:w=>w.revenuePlaced, fmt:v=>P.fmtMoney(v)},
+    {key:'orders', label:'Livestream self channel orders (Placed)', get:w=>w.ordersPlaced, fmt:v=>P.fmtInt(v)},
+    {key:'aov', label:'Livestream self channel AOV (Placed)', get:w=>w.aovPlaced, fmt:v=>P.fmtMoney(v), derived:true},
+    {key:'gmvHour', label:'Average GMV/hour livestream (Placed)', get:w=>w.gmvPerHourPlaced, fmt:v=>P.fmtMoney(v), derived:true},
+    {key:'hours', label:'Livestream self channel hours', get:w=>w.hours, fmt:v=>P.fmtDec(v,1)},
+  ];
+  const manualCostRows = [
+    {key:'costNet', label:'Livestream self channel cost (net)'},
+    {key:'costHostlive', label:'Host cost'},
+    {key:'costTungXu', label:'Coin giveaway cost'},
+    {key:'costSetup', label:'Livestream setup cost'},
+    {key:'costMinigame', label:'Minigame cost'},
+  ];
+  const totalRows = computedRows.length + manualCostRows.length + 1;
+
+  function inputCell(rowKey, colKey){
+    const stored = rm[rowKey] ? rm[rowKey][colKey] : undefined;
+    const val = (stored!==undefined && stored!==null) ? stored : '';
+    return `<td class="num"><input type="number" class="report-input" data-row="${rowKey}" data-col="${colKey}" value="${val}" placeholder="—" style="width:100px;text-align:right;background:var(--surface);color:var(--ink);border:1px solid var(--border);border-radius:4px;padding:4px 6px;font-family:var(--mono);font-size:12px;"></td>`;
+  }
+  function costReportCell(rowKey){
+    return `<td class="num" id="report-cell-${rowKey}">—</td>`;
+  }
+
+  let html = `<div class="panel">
+    <h3>Weekly report: Live Self Channel${dot('Weekly report')}</h3>
+    <p class="sub" style="margin-bottom:14px;">The first 5 metrics are computed from the Live List by "Week of month" (Fri→Thu, see the Group analysis tab); the "${reportLabel}" column = whole-month total. Weekly Cost cells are manual inputs since Shopee raw has no cost data; the "${reportLabel}" column for Cost rows sums the entered weeks. ROI is computed when the data is complete.</p>
+    <div class="tablewrap"><table id="weekly-report-table"><thead><tr>
+      <th>CATEGORY</th><th>KEY METRICS</th><th class="num">${reportLabel}${dot('Weekly report plan')}</th>
+      ${cols.map(c=>`<th class="num">${c.label}</th>`).join('')}
+    </tr></thead><tbody>`;
+
+  computedRows.forEach((r,i)=>{
+    const v = r.get;
+    const aggVal = reportAgg[r.key];
+    html += `<tr>${i===0?`<td rowspan="${totalRows}" style="font-weight:600;vertical-align:top;">Live self channel</td>`:''}
+      <td class="text">${r.label}${r.derived?'<span class="tag derived">D</span>':''}</td>
+      <td class="num">${aggVal!==null && aggVal!==undefined ? r.fmt(aggVal) : 'N/A'}</td>
+      ${cols.map(c=>{ const val = v(c.data); return `<td class="num">${val!==null && val!==undefined ? r.fmt(val) : 'N/A'}</td>`; }).join('')}
+    </tr>`;
+  });
+  manualCostRows.forEach(r=>{
+    html += `<tr><td class="text">${r.label}</td>
+      ${costReportCell(r.key)}
+      ${cols.map(c=>inputCell(r.key,c.key)).join('')}
+    </tr>`;
+  });
+  html += `<tr><td class="text"><b>ROI livestream self channel</b>${dot('ROI livestream')}</td>
+    <td class="num" id="roi-cell-report">—</td>
+    ${cols.map(c=>`<td class="num" id="roi-cell-${c.key}">—</td>`).join('')}
+  </tr>`;
+  html += `</tbody></table></div></div>`;
+  STATE._reportAgg = reportAgg;
+  return html;
+}
+
+function wireWeeklyReportInputs(){
+  document.querySelectorAll('.report-input').forEach(inp=>{
+    inp.oninput = ()=>{
+      const rowKey = inp.dataset.row, colKey = inp.dataset.col;
+      if(!STATE.reportManual[rowKey]) STATE.reportManual[rowKey] = {};
+      const raw = inp.value;
+      const v = raw==='' ? null : parseFloat(raw);
+      STATE.reportManual[rowKey][colKey] = (v===null || isNaN(v)) ? null : v;
+      updateWeeklyReportROI();
+    };
+  });
+  updateWeeklyReportROI();
+}
+
+function weeklyCostReportSum(rowKey){
+  const cols = STATE._reportCols || [];
+  const rm = STATE.reportManual;
+  const vals = cols.map(c=> rm[rowKey] ? rm[rowKey][c.key] : null).filter(v=> v!==null && v!==undefined && !isNaN(v));
+  if(!vals.length) return null;
+  return vals.reduce((a,b)=>a+parseFloat(b),0);
+}
+
+function updateWeeklyReportROI(){
+  const cols = STATE._reportCols || [];
+  const reportAgg = STATE._reportAgg || {};
+  const rm = STATE.reportManual;
+
+  ['costNet','costHostlive','costTungXu','costSetup','costMinigame'].forEach(rowKey=>{
+    const cell = document.getElementById('report-cell-'+rowKey);
+    if(!cell) return;
+    const sum = weeklyCostReportSum(rowKey);
+    cell.textContent = sum===null ? 'N/A' : RawParser.fmtMoney(sum);
+  });
+
+  const calc = (colKey)=>{
+    let revenue, cost;
+    if(colKey==='report'){
+      revenue = reportAgg.revenue;
+      cost = weeklyCostReportSum('costNet');
+    } else {
+      const col = cols.find(c=>c.key===colKey);
+      revenue = col ? col.data.revenuePlaced : null;
+      const costV = rm.costNet ? rm.costNet[colKey] : null;
+      cost = (costV!==null && costV!==undefined) ? parseFloat(costV) : null;
+    }
+    if(revenue===null || revenue===undefined || isNaN(revenue) || cost===null || cost===undefined || isNaN(cost) || cost===0) return null;
+    return revenue/cost;
+  };
+  const setCell = (colKey, elId)=>{
+    const cell = document.getElementById(elId);
+    if(!cell) return;
+    const v = calc(colKey);
+    cell.textContent = v===null ? 'N/A' : v.toFixed(2)+'x';
+  };
+  setCell('report','roi-cell-report');
+  cols.forEach(c=> setCell(c.key, 'roi-cell-'+c.key));
+}
+
+function renderCustomerPanel(metrics, parentGroupLabel){
+  const find = h => metrics.find(m=>m.header===h);
+  const newP = find('Doanh số từ Khách hàng Mới(Đơn đã đặt)');
+  const oldP = find('Doanh số từ Khách hàng Cũ(Đơn đã đặt)');
+  const newC = find('Doanh số từ Khách hàng Mới(Đơn hàng được xác nhận)');
+  const oldC = find('Doanh số từ Khách hàng Cũ(Đơn hàng được xác nhận)');
+  let html = `<div class="panel"><h3>New / Existing customers${parentGroupLabel? ` <span class="tag raw">${parentGroupLabel}</span>` : ''}</h3><div class="grid g4">`;
+  metrics.forEach(m=>{
+    html += `<div class="kpi"><div class="lbl">${m.header}</div><div class="val ${m.raw==='-'||m.num===null?'na':''}">${m.raw==='' ? 'N/A' : m.raw}</div></div>`;
+  });
+  html += `</div>${renderCustomerSplit(newP,oldP,newC,oldC)}</div>`;
+  return html;
+}
+
+function renderCustomerSplit(newP, oldP, newC, oldC){
+  if(!(newP && oldP) && !(newC && oldC)) return '';
+  const P = RawParser;
+  const pair = (n,o)=>{
+    if(n===null||n===undefined||o===null||o===undefined) return null;
+    const total = (n||0)+(o||0);
+    return total ? {pn: n/total, po: o/total} : null;
+  };
+  const sPlaced = newP&&oldP ? pair(newP.num, oldP.num) : null;
+  const sConfirmed = newC&&oldC ? pair(newC.num, oldC.num) : null;
+  let html = `<div class="legend" style="margin-top:14px;flex-wrap:wrap;gap:22px;">`;
+  if(sPlaced) html += `<span><b style="font-family:var(--mono);color:var(--ink);">${P.fmtPct(sPlaced.pn)}</b> New customers &nbsp;·&nbsp; <b style="font-family:var(--mono);color:var(--ink);">${P.fmtPct(sPlaced.po)}</b> Existing customers <span class="tag raw">by revenue, placed orders</span>${dot('Customer split')}</span>`;
+  if(sConfirmed) html += `<span><b style="font-family:var(--mono);color:var(--ink);">${P.fmtPct(sConfirmed.pn)}</b> New customers &nbsp;·&nbsp; <b style="font-family:var(--mono);color:var(--ink);">${P.fmtPct(sConfirmed.po)}</b> Existing customers <span class="tag raw">by revenue, confirmed orders</span>${dot('Customer split')}</span>`;
+  html += `</div>`;
+  return html;
+}
+function renderTrafficFunnelPanel(g, metrics){
+  const find = h => metrics.find(m=>m.header===h);
+  const order = ['Lượt xem Live','Người xem live','Số người xem tương tác'];
+  const items = order.map(h=>find(h)).filter(Boolean);
+  let html = `<div class="panel"><h3>${g}</h3><div class="grid g3">`;
+  items.forEach(m=>{
+    html += `<div class="kpi"><div class="lbl">${m.header}</div><div class="val ${m.raw==='-'||m.num===null?'na':''}">${m.raw===''?'N/A':m.raw}</div></div>`;
+  });
+  html += `</div>`;
+  if(items.length>=2){
+    html += `<div class="legend" style="margin-top:14px;flex-wrap:wrap;gap:20px;">`;
+    for(let i=0;i<items.length-1;i++){
+      const a = items[i], b = items[i+1];
+      const pct = (a.num!==null && a.num!==undefined && a.num!==0 && b.num!==null && b.num!==undefined)
+        ? RawParser.fmtPct(b.num/a.num) : 'N/A';
+      html += `<span><b style="color:var(--ink);font-family:var(--mono);font-size:13px;">${pct}</b> &nbsp;${a.header} → ${b.header}${dot('Funnel step')}</span>`;
+    }
+    html += `</div>`;
+  }
+  html += `</div>`;
+  return html;
+}
+
+function emptyState(title, msg){
+  return `<h2 class="pagetitle">${title}</h2><div class="panel empty">${msg}</div>`;
+}
+
+/* ---------- Session View ---------- */
+function renderSession(){
+  const el = document.getElementById('view-session');
+  if(!STATE.session){ el.innerHTML = emptyState('Livestream sessions','Load the Live List file to see each live\'s performance.'); return; }
+  const rows = [...STATE.session.rows].sort((a,b)=> (b.startAt?.getTime()||0)-(a.startAt?.getTime()||0));
+  const P = RawParser;
+  let html = `<h2 class="pagetitle">Livestream session performance</h2>
+  <p class="sub">${rows.length} lives · Source: ${STATE.session.fileName}. Columns labelled <span class="tag derived">DERIVED</span> are metrics derived from raw data, not original export fields.</p>`;
+
+  // charts trước
+  html += `<div class="panel"><h3>Revenue (Placed) by live</h3>${sessionRevenueSVG(rows)}</div>`;
+
+  const trend = LiveSegmentEngine.buildDailyTrend(STATE.session.rows);
+  html += `<div class="panel"><h3>Trend by day (based on start time)</h3>${trendSVG(trend)}
+    <div class="tablewrap" style="margin-top:12px;"><table><thead><tr><th>Date</th><th class="num">Sessions</th><th class="num">Viewers</th><th class="num">Placed orders</th><th class="num">Placed revenue</th></tr></thead><tbody>
+    ${trend.map(d=>`<tr><td>${d.date}</td><td class="num">${P.fmtInt(d.sessions)}</td><td class="num">${P.fmtInt(d.viewers)}</td><td class="num">${P.fmtInt(d.ordersPlaced)}</td><td class="num">${P.fmtMoney(d.revenuePlaced)}</td></tr>`).join('')}
+    </tbody></table></div>
+  </div>`;
+
+  // data raw sau
+  html += `<div class="panel"><h3>Detail table by live (raw data)</h3><div class="tablewrap"><table><thead><tr>
+    <th>No.</th><th>Live name</th><th>Start</th><th>Duration</th>
+    <th class="num">Viewers${dot('Viewers')}</th><th class="num">Engaged${dot('Engaged')}</th><th class="num">Engaged Rate<span class="tag derived">D</span>${dot('Engaged Rate')}</th>
+    <th class="num">Comments${dot('Comments')}</th><th class="num">ATC${dot('ATC')}</th><th class="num">Placed orders${dot('Placed orders')}</th><th class="num">Confirmed orders${dot('Confirmed orders')}</th>
+    <th class="num">Placed revenue${dot('Placed revenue')}</th><th class="num">Confirmed revenue${dot('Confirmed revenue')}</th><th class="num">GMV/Hour<span class="tag derived">D</span>${dot('GMV/Hour')}</th>
+  </tr></thead><tbody>`;
+  rows.forEach(r=>{
+    html += `<tr>
+      <td>${r.no}</td><td class="text">${r.name||'N/A'}</td><td>${r.startRaw||'N/A'}</td><td>${r.durationRaw||'N/A'}</td>
+      <td class="num">${P.fmtInt(r.viewers)}</td><td class="num">${P.fmtInt(r.engagedViewers)}</td><td class="num">${P.fmtPct(r.derived.engagedViewerRate)}</td>
+      <td class="num">${P.fmtInt(r.comments)}</td><td class="num">${P.fmtInt(r.atc)}</td><td class="num">${P.fmtInt(r.ordersPlaced)}</td><td class="num">${P.fmtInt(r.ordersConfirmed)}</td>
+      <td class="num">${P.fmtMoney(r.revenuePlaced)}</td><td class="num">${P.fmtMoney(r.revenueConfirmed)}</td><td class="num">${P.fmtMoney(r.derived.gmvPerHourPlaced)}</td>
+    </tr>`;
+  });
+  html += `</tbody></table></div></div>`;
+
+  html += aiSectionBlock('session', 'Livestream sessions');
+
+  el.innerHTML = html;
+  document.querySelectorAll('.ai-trigger-btn').forEach(b=> b.onclick = runAIInsightV2);
+}
+
+function sessionRevenueSVG(rows){
+  const data = [...rows].reverse();
+  const W = 1080, H = 240, padL=50, padB=42, padT=10;
+  const max = Math.max(...data.map(r=>r.revenuePlaced||0), 1);
+  const bw = (W-padL-10)/data.length;
+  const dayStageBm = LiveSegmentEngine.buildDayStageBenchmarks(STATE.session.rows, STATE.dayStageConfig);
+  const bm = dayStageBm['Daily'] ? dayStageBm['Daily'].avgRevenuePerSession : null;
+  let bars = data.map((r,i)=>{
+    const h = ((r.revenuePlaced||0)/max)*(H-padT-padB);
+    const x = padL + i*bw + bw*0.15;
+    const y = H-padB-h;
+    return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${(bw*0.7).toFixed(1)}" height="${h.toFixed(1)}" fill="var(--accent)" opacity="0.85"><title>${r.name}: ${RawParser.fmtMoney(r.revenuePlaced)}</title></rect>`;
+  }).join('');
+  const labels = data.map((r,i)=>{
+    const x = padL + i*bw + bw/2;
+    const y = H-padB+14;
+    const lbl = r.startAt ? String(r.startAt.getDate()) : '?';
+    return `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="end" font-size="9.5" fill="var(--ink-faint)" font-family="var(--mono)" transform="rotate(-35 ${x.toFixed(1)} ${y.toFixed(1)})">${lbl}</text>`;
+  }).join('');
+  let bmLine = '';
+  if(bm){
+    const y = H-padB-((bm/max)*(H-padT-padB));
+    bmLine = `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W-10}" y2="${y.toFixed(1)}" stroke="var(--derived)" stroke-width="1.5" stroke-dasharray="4,3"/><text x="${W-10}" y="${(y-5).toFixed(1)}" text-anchor="end" font-size="10.5" fill="var(--derived)" font-family="var(--mono)">Benchmark (Daily) ${RawParser.fmtMoney(bm)}</text>`;
+  }
+  return `<svg class="svgchart" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+    <line x1="${padL}" y1="${H-padB}" x2="${W-10}" y2="${H-padB}" stroke="var(--border)"/>
+    ${bars}${labels}${bmLine}
+  </svg>
+  <div class="legend"><span><span class="dot" style="background:var(--accent)"></span>Revenue (Placed) per live</span><span><span class="dot" style="background:var(--derived)"></span>Benchmark = average GMV/session of Daily sessions (D-Day/Mini Spike/Memberday excluded)</span></div>`;
+}
+
+/* ---------- Product View ---------- */
+function renderProduct(){
+  const el = document.getElementById('view-product');
+  if(!STATE.product){ el.innerHTML = emptyState('Products','Load the Live Product List file to see product performance.'); return; }
+  const allRows = [...STATE.product.rows].sort((a,b)=>(a.rank||999)-(b.rank||999));
+  const filter = STATE.productTopFilter;
+  const rows = filter==='all'
+    ? allRows
+    : [...STATE.product.rows].sort((a,b)=>(b.revenuePlaced||0)-(a.revenuePlaced||0)).slice(0, filter);
+  const P = RawParser;
+  const quadLabel = {HH:'High Click / High Conv', HL:'High Click / Low Conv', LH:'Low Click / High Conv', LL:'Low Click / Low Conv'};
+  const quadClass = {HH:'good', HL:'alert', LH:'raw', LL:'raw'};
+  const typeClass = {Single:'raw', Combo:'derived'};
+  const skuSummary = LiveSegmentEngine.buildSkuTypeSummary(STATE.product.rows);
+  const filterOptions = [['all','All'],[10,'Top 10'],[20,'Top 20'],[50,'Top 50']].filter(([v])=> v==='all' || v<allRows.length);
+
+  let html = `<h2 class="pagetitle">Product performance</h2>
+  <p class="sub">${allRows.length} products · Source: ${STATE.product.fileName}. The diagnostic quadrant always uses the Click/Conversion median of <b>all ${allRows.length} products</b> (unaffected by the filter below) so classification thresholds do not shift.</p>
+  <div class="panel">
+    <h3>Summary by SKU type (Single/Combo)${dot('SKU type')}</h3>
+    <div class="qtybox" style="margin-bottom:14px;flex-wrap:wrap;gap:10px;">Combo keywords in product names (comma-separated): <input type="text" id="combo-kw-input" value="${STATE.comboKeywords.join(', ')}" style="width:220px;"> <button class="btn ghost" id="apply-combo-kw">Apply</button></div>
+    <div class="tablewrap"><table><thead><tr>
+      <th>SKU type</th><th class="num">SKUs</th><th class="num">Click${dot('Click')}</th><th class="num">ATC${dot('ATC')}</th><th class="num">Placed orders${dot('Placed orders')}</th>
+      <th class="num">Click→Order<span class="tag derived">D</span>${dot('Click→Order')}</th><th class="num">Placed revenue${dot('Placed revenue')}</th><th class="num">% Doanh thu${dot('% Doanh thu')}</th>
+    </tr></thead><tbody>
+    ${skuSummary.map(s=>`<tr><td><span class="tag ${typeClass[s.type]}">${s.type}</span></td><td class="num">${s.skuCount}</td><td class="num">${P.fmtInt(s.clicks)}</td><td class="num">${P.fmtInt(s.atc)}</td>
+      <td class="num">${P.fmtInt(s.ordersPlaced)}</td><td class="num">${P.fmtPct(s.clickToOrderRatePlaced)}</td><td class="num">${P.fmtMoney(s.revenuePlaced)}</td><td class="num">${P.fmtPct(s.revShare)}</td></tr>`).join('')}
+    </tbody></table></div>
+  </div>
+  <div class="two-col">
+    <div class="panel"><h3>Detail table</h3>
+      <div class="chip-row" style="margin-bottom:12px;">Filter by placed revenue:&nbsp;
+        ${filterOptions.map(([v,label])=>`<button class="btn ${String(v)===String(filter)?'accent':'ghost'}" data-topfilter="${v}">${label}</button>`).join('')}
+      </div>
+      <div class="tablewrap"><table><thead><tr>
+      <th>#</th><th>Product</th><th>SKU type</th><th class="num">Click${dot('Click')}</th><th class="num">ATC${dot('ATC')}</th><th class="num">Placed orders${dot('Placed orders')}</th>
+      <th class="num">Click→Order<span class="tag derived">D</span>${dot('Click→Order')}</th><th class="num">Placed revenue${dot('Placed revenue')}</th><th>Quadrant${dot('Quadrant')}</th>
+    </tr></thead><tbody>`;
+  rows.forEach(r=>{
+    html += `<tr>
+      <td>${r.rank}</td><td class="text">${r.productName}</td><td><span class="tag ${typeClass[r.skuType]}">${r.skuType}</span></td><td class="num">${P.fmtInt(r.clicks)}</td><td class="num">${P.fmtInt(r.atc)}</td>
+      <td class="num">${P.fmtInt(r.ordersPlaced)}</td><td class="num">${P.fmtPct(r.derived.clickToOrderRatePlaced)}</td><td class="num">${P.fmtMoney(r.revenuePlaced)}</td>
+      <td>${r.quadrant? `<span class="tag ${quadClass[r.quadrant]}">${quadLabel[r.quadrant]}</span>` : 'N/A'}</td>
+    </tr>`;
+  });
+  html += `</tbody></table></div></div>
+    <div class="panel"><h3>2×2 Diagnostic (Click vs Conversion)</h3>${productScatterSVG(rows)}</div>
+  </div>`;
+  html += aiSectionBlock('product', 'Products');
+  el.innerHTML = html;
+  document.querySelectorAll('.ai-trigger-btn').forEach(b=> b.onclick = runAIInsightV2);
+  const applyKw = document.getElementById('apply-combo-kw');
+  if(applyKw) applyKw.onclick = ()=>{
+    const raw = document.getElementById('combo-kw-input').value;
+    const kws = raw.split(',').map(s=>s.trim()).filter(Boolean);
+    STATE.comboKeywords = kws.length ? kws : STATE.comboKeywords;
+    recompute();
+    renderAll();
+  };
+  el.querySelectorAll('[data-topfilter]').forEach(btn=>{
+    btn.onclick = ()=>{
+      const v = btn.getAttribute('data-topfilter');
+      STATE.productTopFilter = v==='all' ? 'all' : parseInt(v,10);
+      renderAll();
+    };
+  });
+}
+
+function productScatterSVG(rows){
+  const data = rows.filter(r=>r.clicks!==null && r.derived.clickToOrderRatePlaced!==null);
+  if(!data.length) return '<div class="empty">Not enough data to draw.</div>';
+  const W=460,H=380,pad=40;
+  const maxX = Math.max(...data.map(r=>r.clicks))*1.08;
+  const maxY = Math.max(...data.map(r=>r.derived.clickToOrderRatePlaced))*1.15;
+  const medX = STATE.product.medianClick, medY = STATE.product.medianConv;
+  const sx = x => pad + (x/maxX)*(W-pad*1.5);
+  const sy = y => H-pad - (y/maxY)*(H-pad*1.5);
+  const colors = {HH:'var(--good)', HL:'var(--alert)', LH:'var(--ink-faint)', LL:'var(--ink-faint)'};
+  const pts = data.map(r=>`<circle cx="${sx(r.clicks).toFixed(1)}" cy="${sy(r.derived.clickToOrderRatePlaced).toFixed(1)}" r="5" fill="${colors[r.quadrant]||'var(--ink-faint)'}" opacity="0.85"><title>${r.productName} — Click ${r.clicks}, Conv ${(r.derived.clickToOrderRatePlaced*100).toFixed(1)}%</title></circle>`).join('');
+  return `<svg class="svgchart" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+    <line x1="${pad}" y1="${H-pad}" x2="${W-8}" y2="${H-pad}" stroke="var(--border)"/>
+    <line x1="${pad}" y1="8" x2="${pad}" y2="${H-pad}" stroke="var(--border)"/>
+    <line x1="${sx(medX).toFixed(1)}" y1="8" x2="${sx(medX).toFixed(1)}" y2="${H-pad}" stroke="var(--border)" stroke-dasharray="3,3"/>
+    <line x1="${pad}" y1="${sy(medY).toFixed(1)}" x2="${W-8}" y2="${sy(medY).toFixed(1)}" stroke="var(--border)" stroke-dasharray="3,3"/>
+    <text x="${pad+4}" y="18" font-size="10" fill="var(--ink-faint)" font-family="var(--mono)">Median Conv →</text>
+    <text x="${W-10}" y="${H-pad-6}" text-anchor="end" font-size="10" fill="var(--ink-faint)" font-family="var(--mono)">Click →</text>
+    ${pts}
+  </svg>
+  <div class="legend">
+    <span><span class="dot" style="background:var(--good)"></span>High/High</span>
+    <span><span class="dot" style="background:var(--alert)"></span>High Click/Low Conv</span>
+    <span><span class="dot" style="background:var(--ink-faint)"></span>Low Click</span>
+  </div>`;
+}
+
+/* ---------- Segment & Trend View (Phân tích Nhóm & Xu hướng) ---------- */
+function renderSegment(){
+  const el = document.getElementById('view-segment');
+  if(!STATE.session){ el.innerHTML = emptyState('Group & trend analysis','Load the Live List file to see group analysis.'); return; }
+  const P = RawParser;
+  const dim = STATE.segmentDim;
+  const rows = LiveSegmentEngine.build(STATE.session.rows, dim);
+  const dimLabel = LiveSegmentEngine.dimLabels[dim];
+
+  let html = `<h2 class="pagetitle">Group & trend analysis</h2>
+  <p class="sub">Groups are aggregated with <b>weighted totals</b> (Σ revenue / Σ hours...) before computing rates, not by averaging per-session rates, to avoid small sessions skewing the figures. Groups here only use time fields available in the raw data (<code>Thời gian bắt đầu</code>); "Day stage" follows a common sales calendar and can be adjusted to the real calendar.</p>
+  <div class="panel">
+    <h3>Choose an analysis dimension</h3>
+    <div class="chip-row">
+      ${Object.keys(LiveSegmentEngine.dimLabels).map(k=>`<button class="btn ${k===dim?'accent':'ghost'}" data-dim="${k}">${LiveSegmentEngine.dimLabels[k]}</button>`).join('')}
+    </div>
+    ${dim==='timeSlot' ? `<div class="qtybox" style="margin-top:12px;">Time slot boundaries (0–24h, comma-separated): <input type="text" id="timeslot-input" value="${STATE.timeSlotEdges.join(', ')}" style="width:200px;"> <button class="btn ghost" id="apply-timeslots">Apply</button></div>` : ''}
+    ${dim==='dayStage' ? `<div class="qtybox" style="margin-top:12px;flex-wrap:wrap;gap:14px;">
+      <span>D-Day = day equal to the month number (e.g. 9/9, 10/10); D-1/D-2 are counted back from D-Day.</span>
+      <span>Memberday: <input type="number" id="memberday-input" value="${STATE.dayStageConfig.memberDay}" min="1" max="31" style="width:60px;"></span>
+      <span>Mini Spike: <input type="number" id="minispike-input" value="${STATE.dayStageConfig.miniSpike}" min="1" max="31" style="width:60px;"></span>
+      <button class="btn ghost" id="apply-daystage">Apply</button>
+    </div>` : ''}
+  </div>
+  <div class="panel"><h3>${dimLabel} : weighted totals</h3><div class="tablewrap"><table><thead><tr>
+    <th>${dimLabel}</th><th class="num">Sessions</th><th class="num">Live hours</th><th class="num">Viewers</th>
+    <th class="num">Engaged Rate<span class="tag derived">D</span>${dot('Engaged Rate')}</th><th class="num">ATC</th><th class="num">Placed orders</th>
+    <th class="num">Placed revenue</th><th class="num">% Doanh thu${dot('% Doanh thu')}</th><th class="num">GMV/Hour<span class="tag derived">D</span>${dot('GMV/Hour')}</th><th class="num">GMV/Session<span class="tag derived">D</span>${dot('GMV/Session')}</th>
+  </tr></thead><tbody>`;
+  rows.forEach(r=>{
+    html += `<tr><td>${r.dim}</td><td class="num">${r.sessions}</td><td class="num">${P.fmtDec(r.hours,1)}</td><td class="num">${P.fmtInt(r.viewers)}</td>
+      <td class="num">${P.fmtPct(r.engagedViewerRate)}</td><td class="num">${P.fmtInt(r.atc)}</td><td class="num">${P.fmtInt(r.ordersPlaced)}</td>
+      <td class="num">${P.fmtMoney(r.revenuePlaced)}</td><td class="num">${P.fmtPct(r.revShare)}</td><td class="num">${P.fmtMoney(r.gmvPerHourPlaced)}</td><td class="num">${P.fmtMoney(r.gmvPerSessionPlaced)}</td>
+    </tr>`;
+  });
+  html += `</tbody></table></div>
+    <h4 style="font-size:12.5px;color:var(--ink-muted);margin:18px 0 8px;">Average GMV per live hour by ${dimLabel}${dot('GMV/Hour')}</h4>
+    ${segmentGmvSVG(rows, dimLabel)}
+  </div>`;
+
+  html += aiSectionBlock('segment_'+dim, dimLabel + ' : Group & trend analysis');
+
+  html += `<div class="panel"><h3>General reference playbook by lever</h3>
+  <p class="sub" style="margin-bottom:12px;">A general lookup table (not an insight computed from the current data); use it when you need extra things to check per lever.</p>
+  <div class="tablewrap"><table><thead><tr><th>Lever</th><th>Signal to watch</th><th>Suggested check</th></tr></thead><tbody>
+    <tr><td class="text">Traffic</td><td class="text">Viewers / PCU below the channel benchmark</td><td class="text">Review live time slots, live frequency, and channels driving traffic into the live room</td></tr>
+    <tr><td class="text">Engagement</td><td class="text">Engaged Viewer Rate or Comments below benchmark</td><td class="text">Review the engagement script, comment response speed, MC/host</td></tr>
+    <tr><td class="text">Conversion</td><td class="text">ATC or Orders/Viewers below benchmark</td><td class="text">Review price, voucher, closing CTA, timing of product introduction</td></tr>
+    <tr><td class="text">AOV / Monetization</td><td class="text">Revenue/Order (AOV proxy) below benchmark</td><td class="text">Review combo/bundle, upsell, high-value products in the live</td></tr>
+    <tr><td class="text">Product</td><td class="text">High clicks but low Click→Order Rate (quadrant HL)</td><td class="text">Review the price/offer/CTA of that exact product; see the Products tab</td></tr>
+  </tbody></table></div></div>`;
+
+  el.innerHTML = html;
+  document.querySelectorAll('.ai-trigger-btn').forEach(b=> b.onclick = runAIInsightV2);
+  el.querySelectorAll('[data-dim]').forEach(btn=> btn.onclick = ()=>{ STATE.segmentDim = btn.dataset.dim; renderAll(); });
+  const applyBtn = document.getElementById('apply-timeslots');
+  if(applyBtn) applyBtn.onclick = ()=>{
+    const raw = document.getElementById('timeslot-input').value;
+    const edges = raw.split(',').map(s=>parseFloat(s.trim())).filter(n=>!isNaN(n) && n>=0 && n<=24).sort((a,b)=>a-b);
+    if(edges.length){
+      STATE.timeSlotEdges = edges;
+      renderAll();
+    }
+  };
+  const applyDS = document.getElementById('apply-daystage');
+  if(applyDS) applyDS.onclick = ()=>{
+    const md = parseInt(document.getElementById('memberday-input').value,10);
+    const ms = parseInt(document.getElementById('minispike-input').value,10);
+    STATE.dayStageConfig = {
+      enableDDay: true,
+      memberDay: (!isNaN(md) && md>=1 && md<=31) ? md : STATE.dayStageConfig.memberDay,
+      miniSpike: (!isNaN(ms) && ms>=1 && ms<=31) ? ms : STATE.dayStageConfig.miniSpike,
+    };
+    renderAll();
+  };
+}
+
+function segmentGmvSVG(rows, dimLabel){
+  const data = rows.filter(r=> r.gmvPerHourPlaced!==null && r.gmvPerHourPlaced!==undefined);
+  if(!data.length) return '<div class="empty">Not enough data to draw.</div>';
+  const W=1080, H=240, padL=60, padB=54, padT=10;
+  const max = Math.max(...data.map(r=>r.gmvPerHourPlaced||0), 1);
+  const bw = (W-padL-10)/data.length;
+  const bars = data.map((r,i)=>{
+    const h = ((r.gmvPerHourPlaced||0)/max)*(H-padT-padB);
+    const x = padL + i*bw + bw*0.15;
+    const y = H-padB-h;
+    return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${(bw*0.7).toFixed(1)}" height="${h.toFixed(1)}" fill="var(--accent)" opacity="0.85"><title>${r.dim}: ${RawParser.fmtMoney(r.gmvPerHourPlaced)} / hour (${r.sessions} sessions, ${RawParser.fmtDec(r.hours,1)} hours)</title></rect>`;
+  }).join('');
+  const labels = data.map((r,i)=>{
+    const x = padL + i*bw + bw/2;
+    const y = H-padB+14;
+    const lbl = r.dim.length>16 ? r.dim.slice(0,15)+'…' : r.dim;
+    return `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="end" font-size="9.5" fill="var(--ink-faint)" font-family="var(--mono)" transform="rotate(-35 ${x.toFixed(1)} ${y.toFixed(1)})">${lbl}</text>`;
+  }).join('');
+  return `<svg class="svgchart" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+    <line x1="${padL}" y1="${H-padB}" x2="${W-10}" y2="${H-padB}" stroke="var(--border)"/>
+    ${bars}${labels}
+  </svg>
+  <div class="legend"><span><span class="dot" style="background:var(--accent)"></span>Average GMV/Hour (Placed) by ${dimLabel}</span></div>`;
+}
+
+function trendSVG(days){
+  if(!days.length) return '<div class="empty">No valid day data yet.</div>';
+  const W = 1080, H = 240, padL=50, padB=42, padT=10;
+  const max = Math.max(...days.map(d=>d.revenuePlaced||0), 1);
+  const bw = (W-padL-10)/days.length;
+  const bm = days.length ? days.reduce((a,d)=>a+(d.revenuePlaced||0),0)/days.length : null;
+  const bars = days.map((d,i)=>{
+    const h = ((d.revenuePlaced||0)/max)*(H-padT-padB);
+    const x = padL + i*bw + bw*0.15;
+    const y = H-padB-h;
+    return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${(bw*0.7).toFixed(1)}" height="${h.toFixed(1)}" fill="var(--accent)" opacity="0.85"><title>${d.date}: ${RawParser.fmtMoney(d.revenuePlaced)} (${d.sessions} sessions)</title></rect>`;
+  }).join('');
+  const labels = days.map((d,i)=>{
+    const x = padL + i*bw + bw/2;
+    const y = H-padB+14;
+    const day = parseInt(d.date.slice(8,10),10) || d.date;
+    return `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="end" font-size="9.5" fill="var(--ink-faint)" font-family="var(--mono)" transform="rotate(-35 ${x.toFixed(1)} ${y.toFixed(1)})">${day}</text>`;
+  }).join('');
+  let bmLine = '';
+  if(bm){
+    const y = H-padB-((bm/max)*(H-padT-padB));
+    bmLine = `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W-10}" y2="${y.toFixed(1)}" stroke="var(--derived)" stroke-width="1.5" stroke-dasharray="4,3"/><text x="${W-10}" y="${(y-5).toFixed(1)}" text-anchor="end" font-size="10.5" fill="var(--derived)" font-family="var(--mono)">Benchmark ${RawParser.fmtMoney(bm)}</text>`;
+  }
+  return `<svg class="svgchart" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+    <line x1="${padL}" y1="${H-padB}" x2="${W-10}" y2="${H-padB}" stroke="var(--border)"/>
+    ${bars}${labels}${bmLine}
+  </svg>
+  <div class="legend"><span><span class="dot" style="background:var(--accent)"></span>Revenue (Placed) by day</span><span><span class="dot" style="background:var(--derived)"></span>Benchmark = average of days with a live</span></div>`;
+}
+
+/* ---------- Benchmark View ---------- */
+function renderBenchmark(){
+  const el = document.getElementById('view-benchmark');
+  if(!STATE.benchmark || (!STATE.benchmark.session.n && !STATE.benchmark.product.n)){ el.innerHTML = emptyState('Benchmark & Driver','Load at least the Live List or Product List to compute benchmarks.'); return; }
+  const P = RawParser;
+  let html = `<h2 class="pagetitle">Benchmark & GMV Driver</h2>
+  <p class="sub">Benchmark = mean of all sessions/products in the uploaded period (Same period / Full channel, per Blueprint section 13). No fixed absolute threshold for Good/Low.</p>
+  <div class="panel">
+    <h3>Settings</h3>
+    <div class="qtybox">Materiality threshold for the "driver candidate" label:
+      <input type="number" id="materiality-input" value="${STATE.materialityPct}" min="1" max="100"> %
+      <button class="btn ghost" id="apply-materiality">Apply</button>
+    </div>
+  </div>`;
+
+  if(STATE.benchmark.session.n){
+    html += `<div class="panel"><h3>Session — Top & Bottom Doanh thu vs Benchmark</h3>${driverTable(STATE.driver.sessionTop,'session',true)}${driverTable(STATE.driver.sessionBottom,'session',false)}</div>`;
+  }
+  if(STATE.benchmark.product.n){
+    html += `<div class="panel"><h3>Products: Top & Bottom revenue vs benchmark</h3>${driverTable(STATE.driver.productTop,'product',true)}${driverTable(STATE.driver.productBottom,'product',false)}</div>`;
+  }
+  el.innerHTML = html;
+  const applyBtn = document.getElementById('apply-materiality');
+  if(applyBtn) applyBtn.onclick = ()=>{
+    const v = parseFloat(document.getElementById('materiality-input').value);
+    if(!isNaN(v) && v>0){ STATE.materialityPct = v; recompute(); renderAll(); }
+  };
+}
+
+function driverTable(list, kind, isTop){
+  if(!list.length) return '';
+  const P = RawParser;
+  const nameOf = d => kind==='session' ? (d.row.name||'N/A') : d.row.productName;
+  let html = `<h4 style="font-size:12.5px;color:var(--ink-muted);margin:14px 0 8px;">${isTop?'Top 3 highest revenue':'Bottom 3 lowest revenue'}</h4>
+  <div class="tablewrap"><table><thead><tr><th>${kind==='session'?'Live':'Product'}</th><th class="num">Placed revenue</th><th>Driver candidate with the clearest deviation${dot('Driver candidate')}</th></tr></thead><tbody>`;
+  list.forEach(d=>{
+    const driverTxt = d.primary
+      ? `${d.primary.label}: ${P.fmtDec(d.primary.actual,2)} vs bench ${P.fmtDec(d.primary.bench,2)} <span class="tag ${d.primary.pct>0?'good':'alert'}">${d.primary.pct>0?'+':''}${P.fmtPct(d.primary.pct)}</span>`
+      : `<span style="color:var(--ink-faint);font-style:italic;">Not enough data to conclude</span>`;
+    html += `<tr><td class="text">${nameOf(d)}</td><td class="num">${P.fmtMoney(d.row.revenuePlaced)}</td><td class="text">${driverTxt}</td></tr>`;
+  });
+  html += `</tbody></table></div>`;
+  return html;
+}
+
+/* ---------- AI Insight computation — gắn theo từng Tab (02/03/04/05) ---------- */
+function computeOverviewInsightData(){
+  const S = STATE;
+  if(!S.overview || !S.overview.blocks[0] || !S.overview.blocks[0].rows[0]) return null;
+  const row = S.overview.blocks[0].rows[0];
+  const pick = groupSubstr => { for(const g in row.metricsByGroup){ if(g.indexOf(groupSubstr)!==-1) return row.metricsByGroup[g]; } return []; };
+  const findIn = (groupSubstr, header) => { const arr = pick(groupSubstr); const m = arr.find(x=>x.header===header); return m||null; };
+  const toPairs = arr => arr.map(m=>({metric:m.header, value:m.raw}));
+  const funnelMetrics = toPairs(pick('Tỷ lệ chuyển đổi - Phễu Chuyển Đổi'));
+  const perfMetrics = toPairs(pick('Tỷ lệ chuyển đổi - Hiệu suất'));
+  const engagementMetrics = toPairs(pick('Sự tương tác'));
+  const promoMetrics = toPairs(pick('Khuyến mãi'));
+  const trafficGroup = pick('Nguồn Truy Cập');
+  const find2 = h => trafficGroup.find(m=>m.header===h);
+  const a=find2('Lượt xem Live'), b=find2('Người xem live'), c=find2('Số người xem tương tác');
+  const viewToViewerRate = (a&&b&&a.num) ? b.num/a.num : null;
+  const viewerToEngagedRate = (b&&c&&b.num) ? c.num/b.num : null;
+  const newP = findIn('Giao dịch','Doanh số từ Khách hàng Mới(Đơn đã đặt)');
+  const oldP = findIn('Giao dịch','Doanh số từ Khách hàng Cũ(Đơn đã đặt)');
+  const customerSplit = (newP && oldP && (newP.num+oldP.num)) ? { newSharePlaced: newP.num/(newP.num+oldP.num), oldSharePlaced: oldP.num/(newP.num+oldP.num) } : null;
+  return { timeframe: row.timeframe, viewToViewerRate, viewerToEngagedRate, funnelMetrics, perfMetrics, engagementMetrics, promoMetrics, customerSplit };
+}
+
+function computeSessionInsightData(){
+  const S = STATE;
+  if(!S.session || !S.session.rows.length) return null;
+  const rows = S.session.rows;
+  const totalRevenue = rows.reduce((a,r)=>a+(r.revenuePlaced||0),0);
+  const withRev = rows.filter(r=>r.revenuePlaced!=null).sort((a,b)=>b.revenuePlaced-a.revenuePlaced);
+  const best = withRev[0] || null, worst = withRev.length? withRev[withRev.length-1] : null;
+  const dayStageBm = LiveSegmentEngine.buildDayStageBenchmarks(rows, S.dayStageConfig);
+  const dailyBenchmark = dayStageBm['Daily'] ? dayStageBm['Daily'].avgGmvPerHour : null;
+  const dailyBenchmarkSessions = dayStageBm['Daily'] ? dayStageBm['Daily'].sessions : 0;
+  const aboveCount = (dailyBenchmark!=null) ? rows.filter(r=> r.derived.gmvPerHourPlaced!=null && r.derived.gmvPerHourPlaced>=dailyBenchmark).length : null;
+  const abovePct = (aboveCount!=null && rows.length) ? aboveCount/rows.length : null;
+  const bestShare = (best && totalRevenue) ? best.revenuePlaced/totalRevenue : null;
+  const factorOf = r => {
+    if(!r) return null;
+    const stage = LiveSegmentEngine.dayStage(r.startAt, S.dayStageConfig);
+    const stageBm = dayStageBm[stage] ? dayStageBm[stage].avgGmvPerHour : null;
+    return {
+      name: r.name, revenuePlaced: r.revenuePlaced, hours: r.durationSec? r.durationSec/3600 : null,
+      gmvPerHourPlaced: r.derived.gmvPerHourPlaced, startRaw: r.startRaw,
+      weekday: r.startAt? LiveSegmentEngine.weekdayVN(r.startAt): null,
+      timeSlot: LiveSegmentEngine.timeSlot(r.startAt, S.timeSlotEdges),
+      dayStage: stage, ownDayStageBenchmarkGmvPerHour: stageBm,
+      vsOwnDayStageBenchmarkPct: (stageBm && r.derived.gmvPerHourPlaced!=null) ? (r.derived.gmvPerHourPlaced-stageBm)/stageBm : null,
+    };
+  };
+  const byWeekday = LiveSegmentEngine.build(rows,'weekday');
+  const byTimeSlot = LiveSegmentEngine.build(rows,'timeSlot');
+  const topWeekday = [...byWeekday].sort((a,b)=>(b.gmvPerHourPlaced||0)-(a.gmvPerHourPlaced||0))[0]||null;
+  const topTimeSlot = [...byTimeSlot].sort((a,b)=>(b.gmvPerHourPlaced||0)-(a.gmvPerHourPlaced||0))[0]||null;
+  const byDayStage = LiveSegmentEngine.build(rows,'dayStage').map(s=>({dim:s.dim, sessions:s.sessions, hours:s.hours, gmvPerHourPlaced:s.gmvPerHourPlaced, revenuePlaced:s.revenuePlaced, engagedViewerRate:s.engagedViewerRate,
+    vsDailyBenchmarkPct: (dailyBenchmark && s.gmvPerHourPlaced!=null) ? (s.gmvPerHourPlaced-dailyBenchmark)/dailyBenchmark : null }));
+  const viewers = rows.reduce((a,r)=>a+(r.viewers||0),0);
+  const engaged = rows.reduce((a,r)=>a+(r.engagedViewers||0),0);
+  const comments = rows.reduce((a,r)=>a+(r.comments||0),0);
+  const watchWeighted = rows.reduce((a,r)=>a+((r.avgWatchSec||0)*(r.viewers||0)),0);
+  const avgWatch = viewers? watchWeighted/viewers : null;
+  const withRate = rows.filter(r=>r.derived.engagedViewerRate!=null).sort((a,b)=>b.derived.engagedViewerRate-a.derived.engagedViewerRate);
+  const k = Math.min(3, withRate.length);
+  const top = withRate.slice(0,k), bottom = withRate.slice(withRate.length-k);
+  const convOf = arr=>{ const v=arr.reduce((a,r)=>a+(r.viewers||0),0); const o=arr.reduce((a,r)=>a+(r.ordersPlaced||0),0); return v? o/v : null; };
+  const avgOf = arr=> arr.length? arr.reduce((a,r)=>a+r.derived.engagedViewerRate,0)/arr.length : null;
+  return { totalRevenue, totalSessions: rows.length, best: factorOf(best), worst: factorOf(worst),
+    benchmarkNote: 'All benchmark comparisons here use GMV/HOUR (not GMV/session) because sessions differ in length; comparing per session favours long lives. "dailyBenchmark" = average GMV/hour computed ONLY on Daily sessions (D-Day/D-1/D-2/Mini Spike/Mini Spike -1/Memberday excluded). "abovePct" counts sessions (any day type) whose GMV/hour reaches ≥ this dailyBenchmark. Each session in best/worst also has "ownDayStageBenchmarkGmvPerHour", the GMV/hour standard of that session\'s own day type (e.g. a D-Day session is compared with the D-Day GMV/hour benchmark, not the Daily one). Note: best/worst are still chosen by revenuePlaced (absolute contribution), while per-hour performance uses the accompanying gmvPerHourPlaced field.',
+    dailyBenchmark, dailyBenchmarkSessions, aboveCount, abovePct, bestShare,
+    topWeekday: topWeekday?{dim:topWeekday.dim, gmvPerHourPlaced:topWeekday.gmvPerHourPlaced}:null,
+    topTimeSlot: topTimeSlot?{dim:topTimeSlot.dim, gmvPerHourPlaced:topTimeSlot.gmvPerHourPlaced}:null,
+    byDayStage,
+    engagedViewerRate: viewers? engaged/viewers : null, avgWatch, comments,
+    topEngageRate: avgOf(top), bottomEngageRate: avgOf(bottom), topConvRate: convOf(top), bottomConvRate: convOf(bottom) };
+}
+
+function computeProductInsightData(){
+  const S = STATE;
+  if(!S.product || !S.product.rows.length) return null;
+  const rows = [...S.product.rows].sort((a,b)=>(b.revenuePlaced||0)-(a.revenuePlaced||0));
+  const top5 = rows.slice(0,5).map(r=>({productName:r.productName, revenuePlaced:r.revenuePlaced, ordersPlaced:r.ordersPlaced, clickToOrderRatePlaced:r.derived.clickToOrderRatePlaced, quadrant:r.quadrant}));
+  const improve = S.product.rows.filter(r=>r.quadrant==='HL').sort((a,b)=>(b.clicks||0)-(a.clicks||0)).slice(0,5)
+    .map(r=>({productName:r.productName, clicks:r.clicks, atc:r.atc, ordersPlaced:r.ordersPlaced, clickToOrderRatePlaced:r.derived.clickToOrderRatePlaced}));
+  const totalClicks = S.product.rows.reduce((a,r)=>a+(r.clicks||0),0);
+  const totalAtcP = S.product.rows.reduce((a,r)=>a+(r.atc||0),0);
+  const totalOrdersP = S.product.rows.reduce((a,r)=>a+(r.ordersPlaced||0),0);
+  const productAtcToOrderRate = totalAtcP? totalOrdersP/totalAtcP : null;
+  let sessionAtcToOrderRate = null;
+  if(S.session && S.session.rows.length){
+    const atc = S.session.rows.reduce((a,r)=>a+(r.atc||0),0);
+    const ord = S.session.rows.reduce((a,r)=>a+(r.ordersPlaced||0),0);
+    sessionAtcToOrderRate = atc? ord/atc : null;
+  }
+  const skuMix = LiveSegmentEngine.buildSkuTypeSummary(S.product.rows).map(s=>({type:s.type, revShare:s.revShare, skuCount:s.skuCount}));
+  return { totalProducts: S.product.rows.length, top5, improve, productAtcToOrderRate, sessionAtcToOrderRate, skuMix };
+}
+
+function computeSegmentDimInsightData(dimKey){
+  const S = STATE;
+  if(!S.session || !S.session.rows.length) return null;
+  const allRows = S.session.rows;
+  const dayStageBm = LiveSegmentEngine.buildDayStageBenchmarks(allRows, S.dayStageConfig);
+  const dailyBenchmark = dayStageBm['Daily'] ? dayStageBm['Daily'].avgGmvPerHour : null;
+  const dailyBenchmarkSessions = dayStageBm['Daily'] ? dayStageBm['Daily'].sessions : 0;
+
+  if(dimKey === 'dayStage'){
+    const segRows = LiveSegmentEngine.build(allRows, 'dayStage');
+    const ranked = [...segRows].sort((a,b)=>(b.gmvPerHourPlaced||0)-(a.gmvPerHourPlaced||0)).map((r,i)=>({
+      priority: i+1, dim: r.dim, sessions: r.sessions, hours: r.hours, viewers: r.viewers, engagedViewerRate: r.engagedViewerRate,
+      atc: r.atc, ordersPlaced: r.ordersPlaced, revenuePlaced: r.revenuePlaced,
+      gmvPerHourPlaced: r.gmvPerHourPlaced,
+      vsDailyBenchmarkPct: (dailyBenchmark && r.gmvPerHourPlaced!=null) ? (r.gmvPerHourPlaced-dailyBenchmark)/dailyBenchmark : null,
+    }));
+    return {
+      dimLabel: LiveSegmentEngine.dimLabels.dayStage,
+      benchmarkNote: 'Ranking and comparison use GMV/HOUR (not GMV/session) because sessions differ in length; comparing per session favours long lives. Each day type is compared with "dailyBenchmark" = average GMV/hour computed ONLY on Daily sessions (normal days, all campaign types excluded), not with the channel average, which campaign days push up.',
+      dailyBenchmark, dailyBenchmarkSessions, ranked,
+    };
+  }
+
+  // weekday / weekOfMonth / timeSlot: chuẩn chính là chỉ dùng phiên Daily, xếp hạng và so sánh theo GMV/Giờ
+  const dailyOnlyRows = allRows.filter(r=> LiveSegmentEngine.dayStage(r.startAt, S.dayStageConfig)==='Daily');
+  const segDailyOnly = LiveSegmentEngine.build(dailyOnlyRows, dimKey);
+  const ranked = [...segDailyOnly].sort((a,b)=>(b.gmvPerHourPlaced||0)-(a.gmvPerHourPlaced||0)).map((r,i)=>({
+    priority: i+1, dim: r.dim, sessions: r.sessions, hours: r.hours, viewers: r.viewers, engagedViewerRate: r.engagedViewerRate,
+    atc: r.atc, ordersPlaced: r.ordersPlaced, revenuePlaced: r.revenuePlaced,
+    gmvPerHourPlaced: r.gmvPerHourPlaced,
+    vsBenchmarkPct: (dailyBenchmark && r.gmvPerHourPlaced!=null) ? (r.gmvPerHourPlaced-dailyBenchmark)/dailyBenchmark : null,
+  }));
+
+  const segAll = LiveSegmentEngine.build(allRows, dimKey);
+  const rankedIncludingAllSessionsForReference = [...segAll].sort((a,b)=>(b.gmvPerHourPlaced||0)-(a.gmvPerHourPlaced||0)).map((r,i)=>({
+    priority: i+1, dim: r.dim, sessions: r.sessions, gmvPerHourPlaced: r.gmvPerHourPlaced,
+  }));
+  const topDailyOnly = ranked[0] || null;
+  const topIncludingAllSessions = rankedIncludingAllSessionsForReference[0] || null;
+  const confoundedByCampaignDay = !!(topDailyOnly && topIncludingAllSessions && topDailyOnly.dim !== topIncludingAllSessions.dim);
+
+  return {
+    dimLabel: LiveSegmentEngine.dimLabels[dimKey],
+    benchmarkNote: 'Ranking and comparison use GMV/HOUR (not GMV/session) because sessions differ in length. The "ranked" table uses ONLY Daily sessions (D-Day/D-1/D-2/Mini Spike/Mini Spike -1/Memberday excluded) and compares with "dailyBenchmark" = average GMV/hour of the Daily group alone, not the channel average, which campaign days skew. "rankedIncludingAllSessionsForReference" is only for checking whether campaign days add noise (see the confoundedByCampaignDay field).',
+    dailyBenchmark, dailyBenchmarkSessions, ranked,
+    topDailyOnly, topIncludingAllSessions, confoundedByCampaignDay,
+    rankedIncludingAllSessionsForReference,
+  };
+}
+
+/* ---------- Shared AI trigger + block (nhúng vào cuối mỗi tab / mỗi chiều phân tích) ---------- */
+function aiSectionBlock(key, label){
+  const has = STATE.aiSections && STATE.aiSections[key];
+  return `<div class="panel">
+    <h3>✨ AI Insight — ${label}</h3>
+    <button class="btn accent ai-trigger-btn">${STATE._aiGenerated? '🔄 Regenerate AI Insight (applies to all tabs & every analysis dimension)' : '✨ Generate AI Insight (applies to all tabs & every analysis dimension)'}</button>
+    <div class="aiwrap ${has?'':'placeholder'}" id="ai-block-${key}" style="margin-top:12px;">${has? mdLite(STATE.aiSections[key]) : 'Not generated yet: click the button above (from any tab).'}</div>
+  </div>`;
+}
+
+function mdLite(text){
+  let h = text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/^### (.*)$/gm,'<h4>$1</h4>')
+    .replace(/^## (.*)$/gm,'<h4>$1</h4>')
+    .replace(/^# (.*)$/gm,'<h4>$1</h4>')
+    .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+    .replace(/^- (.*)$/gm,'<li>$1</li>')
+    .replace(/(<li>.*<\/li>\n?)+/g, m=>'<ul>'+m+'</ul>')
+    .replace(/\n\n/g,'</p><p>')
+    .replace(/\n/g,'<br>');
+  return '<p>'+h+'</p>';
+}
+
+const SECTION_KEY_MAP = {
+  OVERVIEW:'overview', SESSION:'session', PRODUCT:'product',
+  SEGMENT_WEEKDAY:'segment_weekday', SEGMENT_WEEKOFMONTH:'segment_weekOfMonth',
+  SEGMENT_TIMESLOT:'segment_timeSlot', SEGMENT_DAYSTAGE:'segment_dayStage',
+};
+function parseSectionedAIResponse(text){
+  const out = {}; Object.values(SECTION_KEY_MAP).forEach(k=> out[k]='');
+  const re = /###\s*SECTION_([A-Z_]+)\s*\n?([\s\S]*?)(?=###\s*SECTION_[A-Z_]+|$)/g;
+  let m; let found = false;
+  while((m = re.exec(text))){
+    const key = SECTION_KEY_MAP[m[1]];
+    if(key){ out[key] = m[2].trim(); found = true; }
+  }
+  if(!found) out.overview = text.trim();
+  return out;
+}
+
+async function runAIInsightV2(){
+  const btns = document.querySelectorAll('.ai-trigger-btn');
+  const keys = Object.values(SECTION_KEY_MAP);
+  const data = {
+    overview: computeOverviewInsightData(),
+    session: computeSessionInsightData(),
+    product: computeProductInsightData(),
+    segment_weekday: computeSegmentDimInsightData('weekday'),
+    segment_weekOfMonth: computeSegmentDimInsightData('weekOfMonth'),
+    segment_timeSlot: computeSegmentDimInsightData('timeSlot'),
+    segment_dayStage: computeSegmentDimInsightData('dayStage'),
+  };
+  STATE._insightData = data;
+  const sample = window.claude ? await window.claude.use('sample') : null;
+  if(!sample){
+    keys.forEach(k=>{
+      const elb = document.getElementById('ai-block-'+k);
+      if(elb){ elb.classList.remove('placeholder'); elb.innerHTML = mdLite('**AI Insight is not available in this view**: it needs the Claude viewer with "sample" permission. The Data Summary above each tab is complete because it is computed by formula, not by AI.'); }
+    });
+    return;
+  }
+  btns.forEach(b=>{ b.disabled = true; b.textContent = 'Generating...'; });
+  keys.forEach(k=>{
+    const elb = document.getElementById('ai-block-'+k);
+    if(elb){ elb.classList.remove('placeholder'); elb.textContent = 'Analysing...'; }
+  });
+
+  const prompt = `You are a Shopee Livestream operations expert, helping write the Insight & Action part of an internal report, placed directly under each matching tab / analysis dimension. Do NOT merge several dimensions into one generic statement.
+
+MANDATORY RULES (must not be broken):
+- Use only the figures in each DATA SUMMARY section below. Do NOT invent figures, do NOT recalculate, do NOT add metrics beyond the data provided.
+- If a section has null/N/A values or an empty array, you MUST state "not enough data to conclude" in that exact part, without guessing.
+- GENERAL SAMPLE-SIZE RULE: in any section with a "sessions" field, if the group chosen as "best"/"priority 1" has sessions ≤ 2, you MUST clearly warn that the sample is too small to conclude with confidence (e.g. "based on only X sessions, so reliability is limited"), without firm claims. Applies to byDayStage (SESSION section) and "ranked" (the 4 SEGMENT_* sections).
+- PRODUCT SECTION: when comparing productAtcToOrderRate with sessionAtcToOrderRate, only state the gap and suggest what to check; do not assert a cause without further evidence.
+- 4 SEGMENT_* SECTIONS (WEEKDAY / WEEKOFMONTH / TIMESLOT / DAYSTAGE): each section MUST focus on that dimension only. State which item (in the "ranked" field, already sorted by "priority" from best by GMV/HOUR) is on top, its specific metrics (sessions, hours, gmvPerHourPlaced, engagedViewerRate, atc, ordersPlaced...), and the % comparison with the benchmark (fields "vsBenchmarkPct"/"vsDailyBenchmarkPct": positive is above benchmark, negative below). ALWAYS use GMV/Hour (gmvPerHourPlaced) when discussing performance, NEVER GMV/session or total revenue to compare groups, because sessions differ in length and per-session comparison favours groups with long lives. Also give the priority order of the next 2-3 items if meaningful.
+- GENERAL BENCHMARK RULE (SESSION section and all 4 SEGMENT_* sections): every "vsBenchmarkPct"/"vsDailyBenchmarkPct"/"vsOwnDayStageBenchmarkPct" field compares on GMV/HOUR (gmvPerHourPlaced), with "dailyBenchmark" = average GMV/hour computed ONLY on Daily sessions (normal days, D-Day/D-1/D-2/Mini Spike/Mini Spike -1/Memberday excluded). Do NOT use GMV/session or the channel average to compare performance, because sessions differ in length and per-session comparison favours longer sessions/groups. Read the "benchmarkNote" field in the data to understand the calculation before writing the Insight.
+- SEGMENT_WEEKDAY / SEGMENT_WEEKOFMONTH / SEGMENT_TIMESLOT ONLY: the "ranked" field is computed ONLY on Daily sessions (the main, reliable basis for scheduling normal lives); use it to answer "which item is best". The "rankedIncludingAllSessionsForReference" field is only for checking campaign-day noise. If "confoundedByCampaignDay" = true, you MUST say that including campaign days would change the "best" result (skewed by campaign days), but the reliable figure for daily operations remains "topDailyOnly". If = false, confirm the result is consistent and not affected.
+- SEGMENT_DAYSTAGE ONLY: this is the only section that uses all sessions (every day type) in "ranked", because the goal is to compare DAY TYPES with each other; each type is compared with dailyBenchmark to show the "lift" or drop versus normal days.
+- Write in English, in an internal operations tone, short and to the point, without repeating figures already in the Data Summary.
+- For EACH section, write exactly 2 lines: one starting with "💡 Insight:" and one starting with "🚀 Action:". Nothing else: no headings, no extra bullets.
+
+DATA SUMMARY: TAB "Channel overview":
+${JSON.stringify(data.overview, null, 2)}
+
+DATA SUMMARY: TAB "Livestream sessions" (benchmark by day stage Daily/D-Day/Mini Spike, and engagement):
+${JSON.stringify(data.session, null, 2)}
+
+DATA SUMMARY: TAB "Products":
+${JSON.stringify(data.product, null, 2)}
+
+DATA SUMMARY: Group analysis, dimension "Day of week" (campaign-day noise controlled):
+${JSON.stringify(data.segment_weekday, null, 2)}
+
+DATA SUMMARY: Group analysis, dimension "Week of month":
+${JSON.stringify(data.segment_weekOfMonth, null, 2)}
+
+DATA SUMMARY: Group analysis, dimension "Live time slot":
+${JSON.stringify(data.segment_timeSlot, null, 2)}
+
+DATA SUMMARY: Group analysis, dimension "Day stage (D-Day/Memberday/Mini Spike)":
+${JSON.stringify(data.segment_dayStage, null, 2)}
+
+Answer in EXACTLY this format, with no other text:
+### SECTION_OVERVIEW
+💡 Insight: ...
+🚀 Action: ...
+
+### SECTION_SESSION
+💡 Insight: ...
+🚀 Action: ...
+
+### SECTION_PRODUCT
+💡 Insight: ...
+🚀 Action: ...
+
+### SECTION_SEGMENT_WEEKDAY
+💡 Insight: ...
+🚀 Action: ...
+
+### SECTION_SEGMENT_WEEKOFMONTH
+💡 Insight: ...
+🚀 Action: ...
+
+### SECTION_SEGMENT_TIMESLOT
+💡 Insight: ...
+🚀 Action: ...
+
+### SECTION_SEGMENT_DAYSTAGE
+💡 Insight: ...
+🚀 Action: ...`;
+
+  try{
+    const {text} = await sample(prompt, { modelTier:'default' });
+    const parsed = parseSectionedAIResponse(text);
+    STATE.aiSections = parsed;
+    STATE._aiGenerated = true;
+    keys.forEach(k=>{
+      const elb = document.getElementById('ai-block-'+k);
+      if(elb) elb.innerHTML = parsed[k] ? mdLite(parsed[k]) : mdLite('_The AI returned no content for this section._');
+    });
+  }catch(e){
+    const copy = {
+      not_granted: 'You declined to let this page use Claude.',
+      rate_limited: 'Too many requests right now, please try again in a few minutes.',
+      refused: 'Claude declined this request. Please try again.',
+    };
+    const msg = 'Could not generate AI Insight: ' + (copy[e.code] || e.message || 'Unknown error.');
+    keys.forEach(k=>{
+      const elb = document.getElementById('ai-block-'+k);
+      if(elb) elb.innerHTML = mdLite(msg);
+    });
+  }finally{
+    document.querySelectorAll('.ai-trigger-btn').forEach(b=>{ b.disabled = false; b.textContent = STATE._aiGenerated? '🔄 Regenerate AI Insight (applies to all tabs)' : '✨ Generate AI Insight (applies to all tabs: Overview, Livestream sessions, Products, Group analysis)'; });
+  }
+}
+
+
+/* ---------- Data Quality View ---------- */
+function dqSectionHTML(){
+  if(!STATE.dq) return '';
+  const dq = STATE.dq;
+  return `
+  <div class="panel">
+    <h3>Data quality</h3>
+    <p class="sub" style="margin-bottom:14px;">No row is silently dropped. All warnings below are informational; figures in other tabs are still computed on all readable data.</p>
+    <h4 style="font-size:12.5px;color:var(--ink-muted);margin:0 0 8px;">Detected files</h4>
+    <div class="tablewrap"><table><thead><tr><th>Type</th><th>File name</th><th>Sheet</th><th class="num">Rows</th></tr></thead><tbody>
+    ${dq.files.map(f=>`<tr><td>${f.type}</td><td class="text">${f.fileName}</td><td>${f.sheet}</td><td class="num">${f.rows}</td></tr>`).join('')}
+    </tbody></table></div>
+    <h4 style="font-size:12.5px;color:var(--ink-muted);margin:16px 0 8px;">Data time range</h4>
+    ${dq.dateRanges.length? dq.dateRanges.map(d=>`<div class="dq-issue info">${d.file}: ${d.min.toLocaleDateString('vi-VN')} → ${d.max.toLocaleDateString('vi-VN')}</div>`).join('') : '<div class="empty">Cannot be determined from the current data.</div>'}
+    <h4 style="font-size:12.5px;color:var(--ink-muted);margin:16px 0 8px;">Warnings & cross-checks</h4>
+    ${dq.issues.map(i=>`<div class="dq-issue ${i.level}">${i.msg}</div>`).join('')}
+  </div>`;
+}
+
+/* ---------- Export View ---------- */
+function renderExport(){
+  const el = document.getElementById('view-export');
+  let html = `<h2 class="pagetitle">Export Excel</h2>
+  <p class="sub">Exports <b>Livestream_Channel_Report.xlsx</b> with sheets: Overview, Session Performance, Product Performance, SKU Type Summary, Benchmark, Insights, AI_Insight (if generated), 4 Segment sheets (Day/Week/Time slot/Day stage), Daily Trend, Action Playbook, <b>Weekly Report (Live Self Channel)</b>, Data Quality, Calculation Logic.</p>
+  <div class="panel">
+    <h3>Ready to export</h3>
+    <div class="badgebar">
+      ${STATE.overview?'<span class="badge on">✓ Overview</span>':'<span class="badge">Overview</span>'}
+      ${STATE.session?'<span class="badge on">✓ Session Performance</span>':'<span class="badge">Session Performance</span>'}
+      ${STATE.product?'<span class="badge on">✓ Product Performance</span>':'<span class="badge">Product Performance</span>'}
+      ${STATE.product?'<span class="badge on">✓ SKU Type Summary</span>':'<span class="badge">SKU Type Summary</span>'}
+      ${STATE.benchmark&&(STATE.benchmark.session.n||STATE.benchmark.product.n)?'<span class="badge on">✓ Benchmark</span>':'<span class="badge">Benchmark</span>'}
+      ${STATE.insights?'<span class="badge on">✓ Insights</span>':'<span class="badge">Insights</span>'}
+      ${STATE.session?'<span class="badge on">✓ Segment (4 sheet)</span>':'<span class="badge">Segment (4 sheet)</span>'}
+      ${STATE.session?'<span class="badge on">✓ Daily Trend</span>':'<span class="badge">Daily Trend</span>'}
+      <span class="badge on">✓ Action Playbook</span>
+      ${STATE.session?'<span class="badge on">✓ Weekly report: Live Self Channel</span>':'<span class="badge">Weekly report: Live Self Channel (needs the Live List)</span>'}
+      ${STATE.dq?'<span class="badge on">✓ Data Quality</span>':'<span class="badge">Data Quality</span>'}
+      <span class="badge on">✓ Calculation Logic</span>
+    </div>
+    <button class="btn accent" id="export-btn">⬇ Export Livestream_Channel_Report.xlsx</button>
+  </div>`;
+  el.innerHTML = html;
+  document.getElementById('export-btn').onclick = doExport;
+}
+
+async function doExport(){
+  const wb = ExportEngine.build();
+  const wbout = XLSX.write(wb, {bookType:'xlsx', type:'array'});
+  const blob = new Blob([wbout], {type:'application/octet-stream'});
+  const filename = 'Livestream_Channel_Report.xlsx';
+  const downloads = window.claude ? await window.claude.use('downloads') : null;
+  if(downloads){
+    try{ await downloads.save({filename, data: blob}); return; }catch(e){ /* fall through to anchor */ }
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+
+/* ---------- Master render ---------- */
+function renderAll(){
+  renderNav();
+  switchView();
+  renderUpload();
+  renderOverview();
+  renderSession();
+  renderProduct();
+  renderSegment();
+  renderBenchmark();
+  renderExport();
+}
+
+/* ---------- Global tooltip (fixed to viewport, không bị .tablewrap che) ---------- */
+function initGlobalTooltip(){
+  const tipEl = document.createElement('div');
+  tipEl.className = 'gtooltip';
+  document.body.appendChild(tipEl);
+  function place(target){
+    const tip = target.getAttribute('data-tip');
+    if(!tip) return;
+    tipEl.textContent = tip;
+    tipEl.style.display = 'block';
+    const r = target.getBoundingClientRect();
+    tipEl.style.left = (r.left + r.width/2) + 'px';
+    tipEl.style.top = Math.max(8, r.top - 8) + 'px';
+    requestAnimationFrame(()=>{
+      const tw = tipEl.offsetWidth, th = tipEl.offsetHeight;
+      let left = r.left + r.width/2 - tw/2;
+      left = Math.min(Math.max(8, left), window.innerWidth - tw - 8);
+      let top = r.top - th - 8;
+      if(top < 8) top = r.bottom + 8;
+      tipEl.style.left = left + 'px';
+      tipEl.style.top = top + 'px';
+    });
+  }
+  function hide(){ tipEl.style.display = 'none'; }
+  document.addEventListener('mouseover', e=>{ const t = e.target.closest('.infodot'); if(t) place(t); });
+  document.addEventListener('mouseout', e=>{ if(e.target.closest('.infodot')) hide(); });
+  document.addEventListener('focusin', e=>{ const t = e.target.closest('.infodot'); if(t) place(t); });
+  document.addEventListener('focusout', e=>{ if(e.target.closest('.infodot')) hide(); });
+  document.addEventListener('scroll', hide, true);
+}
+
+renderAll();
+initGlobalTooltip();
+</script>
+</body>
+</html>

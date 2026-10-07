@@ -12,7 +12,8 @@ export default async function ReportViewerPage({ params }: PageProps<"/reports/[
   const report = getReport(id);
   if (!report || !canOpen(user, "reports")) notFound();
   const { locale, t } = await getI18n();
-  const src = `/reports/${report.file}`;
+  // English copies are built by scripts/report-i18n from the originals.
+  const src = locale === "en" ? `/reports/en/${report.file}` : `/reports/${report.file}`;
 
   return (
     <>
