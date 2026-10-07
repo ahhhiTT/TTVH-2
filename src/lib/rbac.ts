@@ -1,0 +1,83 @@
+// Visibility rules. Every page must go through these helpers instead of
+// reading the raw data, so a user never sees a store or person outside scope.
+//
+// director  → everything
+// manager   → people in teams they manage (+ their stores)
+// teamlead  → people in their team (+ their stores)
+// staff     → own stores and own figures
+// viewer / brand → only explicitly granted stores, no people data
+
+import { assignments, stores, teams, users } from "./data/seed";
+import type { Permission, Role, User } from "./data/types";
+
+export function isLeader(role: Role) {
+  return role === "director" || role === "manager" || role === "teamlead";
+}
+
+export function hasPermission(user: User, permission: Permission) {
+  return user.role === "director" || user.permissions.includes(permission);
+}
+
+export function visibleUserIds(user: User): Set<string> {
+  switch (user.role) {
+    case "director":
+      return new Set(users.filter((u) => u.role !== "viewer" && u.role !== "brand").map((u) => u.id));
+    case "manager": {
+      const teamIds = teams.filter((t) => t.managerId === user.id).map((t) => t.id);
+      return new Set([
+        user.id,
+        ...users.filter((u) => u.managerId === user.id || (u.teamId && teamIds.includes(u.teamId))).map((u) => u.id),
+      ]);
+    }
+    case "teamlead": {
+      const teamIds = teams.filter((t) => t.leadId === user.id).map((t) => t.id);
+      return new Set([user.id, ...users.filter((u) => u.teamId && teamIds.includes(u.teamId)).map((u) => u.id)]);
+    }
+    case "staff":
+      return new Set([user.id]);
+    default:
+      return new Set();
+  }
+}
+
+export function visibleStoreIds(user: User): Set<string> {
+  if (user.role === "director") return new Set(stores.map((s) => s.id));
+  if (user.role === "viewer" || user.role === "brand") return new Set(user.grantedStoreIds);
+  const people = visibleUserIds(user);
+  return new Set(assignments.filter((a) => people.has(a.userId)).map((a) => a.storeId));
+}
+
+export function canViewStore(user: User, storeId: string) {
+  return visibleStoreIds(user).has(storeId);
+}
+
+export function canViewUser(user: User, targetId: string) {
+  return visibleUserIds(user).has(targetId);
+}
+
+// Which sidebar modules a role can open.
+export type ModuleKey =
+  | "overview"
+  | "stores"
+  | "people"
+  | "planning"
+  | "tasks"
+  | "reports"
+  | "career"
+  | "knowledge"
+  | "settings";
+
+const MODULES_BY_ROLE: Record<Role, ModuleKey[]> = {
+  director: ["overview", "stores", "people", "planning", "tasks", "reports", "career", "knowledge", "settings"],
+  manager: ["overview", "stores", "people", "planning", "tasks", "reports", "career", "knowledge"],
+  teamlead: ["overview", "stores", "people", "planning", "tasks", "reports", "career", "knowledge"],
+  staff: ["overview", "stores", "people", "planning", "tasks", "reports", "career", "knowledge"],
+  viewer: ["overview", "stores", "knowledge"],
+  brand: ["overview", "stores", "reports"],
+};
+
+export function canOpen(user: User, module: ModuleKey) {
+  return MODULES_BY_ROLE[user.role].includes(module);
+}
+
+export const ROLE_MODULES = MODULES_BY_ROLE;

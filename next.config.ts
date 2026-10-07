@@ -1,7 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
   cacheComponents: true,
   partialPrefetching: true,
   turbopack: {
@@ -11,6 +10,11 @@ const nextConfig: NextConfig = {
         as: "*.css",
       },
     },
+  },
+  experimental: {
+    // Every page here is per-user and blocks on the session by design, so only
+    // validate instant navigation on segments that opt in explicitly.
+    instantInsights: { validationLevel: "manual-warning" },
   },
 };
 
