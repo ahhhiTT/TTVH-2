@@ -17,3 +17,7 @@ are translated identically on both sides.
 
 If an original file changes, token ids shift: rerun `extract.py`, review the
 diff and update the JSON before regenerating.
+
+The tools load `public/reports/_bridge.js` (shared filter from the dashboard). Its
+hooks inside the tool files contain no Vietnamese text, so they add no tokens; the
+bridge holds its own vi/en strings.

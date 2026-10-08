@@ -376,6 +376,7 @@ const Normalizer = {
         revenuePlaced: RawParser.toNum(get('Doanh thu(Đơn đã đặt)')),
         revenueConfirmed: RawParser.toNum(get('Doanh thu(Đơn hàng được xác nhận)')),
       });
+      if(window.TTVH2 && window.TTVH2.skip(rows[rows.length-1].startAt)) rows.pop();
     }
     return { headers, rows, fileName: meta.fileName, sheetName: meta.sheetName };
   },
@@ -2256,5 +2257,6 @@ function initGlobalTooltip(){
 renderAll();
 initGlobalTooltip();
 </script>
+<script src="/reports/_bridge.js" data-mode="rows"></script>
 </body>
 </html>

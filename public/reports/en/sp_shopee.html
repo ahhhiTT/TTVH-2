@@ -714,7 +714,8 @@ function runProduct(ds) {
     src.rows.forEach(r => {
       rawCount++;
       const l = normalizeOrderLine(r);
-      const v = classifyLine(l);
+      const outOfPeriod = window.TTVH2 && window.TTVH2.exclude(l.date);
+      const v = outOfPeriod ? { keep: false, reason: outOfPeriod } : classifyLine(l);
       if (!v.keep) { excluded[v.reason] = (excluded[v.reason] || 0) + 1; return; }
       l.effQty = CONFIG.order.subtractReturnedQty
         ? (l.qty || 0) - (l.returnedQty || 0)
@@ -2392,5 +2393,6 @@ function exportPromotion(p, P) {
 
 </script>
 <script>boot();</script>
+<script src="/reports/_bridge.js" data-mode="rows"></script>
 </body>
 </html>

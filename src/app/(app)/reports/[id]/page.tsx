@@ -6,14 +6,19 @@ import { getReport } from "@/lib/reports";
 import { getI18n, requireUser } from "@/lib/session";
 
 // Hosts one of the Director's report tools unchanged, inside the app frame.
-export default async function ReportViewerPage({ params }: PageProps<"/reports/[id]">) {
+export default async function ReportViewerPage({ params, searchParams }: PageProps<"/reports/[id]">) {
   const { id } = await params;
+  // Shared filter from the dashboard, forwarded to the tool (see public/reports/_bridge.js).
+  const sp = await searchParams;
+  const pass = new URLSearchParams();
+  for (const k of ["from", "to", "scope"]) if (typeof sp[k] === "string") pass.set(k, sp[k] as string);
+  const query = pass.size ? `?${pass}` : "";
   const user = await requireUser();
   const report = getReport(id);
   if (!report || !canOpen(user, "reports")) notFound();
   const { locale, t } = await getI18n();
   // English copies are built by scripts/report-i18n from the originals.
-  const src = locale === "en" ? `/reports/en/${report.file}` : `/reports/${report.file}`;
+  const src = `${locale === "en" ? "/reports/en/" : "/reports/"}${report.file}${query}`;
 
   return (
     <>

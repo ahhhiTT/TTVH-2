@@ -141,6 +141,8 @@ async function Dashboard({ sp, locale, t }: { sp: SP; locale: Locale; t: Diction
   ]
     .filter(Boolean)
     .join(" / ");
+  // Passed to the embedded tool; public/reports/_bridge.js reads it.
+  const toolQuery = new URLSearchParams({ from: period.from, to: period.to, scope: scopeText }).toString();
   const vsLabel = `${T.compareTo} ${rangeLabel(period.compare)}`;
   const missingNote = (field: keyof Totals["missing"]) =>
     cur.missing[field] > 0
@@ -455,6 +457,7 @@ async function Dashboard({ sp, locale, t }: { sp: SP; locale: Locale; t: Diction
           platform={toolPlatform}
           open={one("tool")}
           scopeText={scopeText}
+          toolQuery={toolQuery}
           href={href}
           closeHref={href({ tool: "" })}
         />
@@ -490,6 +493,7 @@ function ToolSection({
   platform,
   open,
   scopeText,
+  toolQuery,
   href,
   closeHref,
 }: {
@@ -500,6 +504,7 @@ function ToolSection({
   platform: Channel | null;
   open: string | null;
   scopeText: string;
+  toolQuery: string;
   href: (patch: Record<string, string>) => string;
   closeHref: string;
 }) {
@@ -507,7 +512,7 @@ function ToolSection({
   const items = section.items.filter((it) => !platform || !it.platform || PLATFORM_OF[it.platform] === platform);
   const hidden = section.items.length - items.length;
   const active = items.find((it) => it.id === open && it.status === "ok") ?? null;
-  const src = active ? (locale === "en" ? `/reports/en/${active.file}` : `/reports/${active.file}`) : null;
+  const src = active ? `${locale === "en" ? "/reports/en/" : "/reports/"}${active.file}?${toolQuery}` : null;
 
   return (
     <section className={`accent-${ACCENTS[index]} space-y-3`}>
@@ -573,7 +578,7 @@ function ToolSection({
               </div>
             </div>
             <div className="flex gap-2">
-              <Link href={`/reports/${active.id}`} className={cx(buttonSecondary, "h-9 text-[13px]")}>
+              <Link href={`/reports/${active.id}?${toolQuery}`} className={cx(buttonSecondary, "h-9 text-[13px]")}>
                 {T.toolFull}
               </Link>
               <Link href={`${closeHref}#flow-${section.id}`} scroll={false} className={cx(buttonSecondary, "h-9 text-[13px]")}>

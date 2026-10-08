@@ -425,6 +425,7 @@ function cleanVideo(aoa, headerRow) {
       diag_src: toText(o.diag_src)
     };
     if (!rec.video_id) continue;
+    if (window.TTVH2 && window.TTVH2.skip(rec.time)) continue;
     for (const f of NUM_FIELDS) rec[f] = toNumber(o[f]);
     for (const f of PCT_FIELDS) rec[f] = toPercent(o[f]);
     rec.products = parseProducts(rec.products_raw);
@@ -2079,5 +2080,6 @@ render();
 })();
 
 </script>
+<script src="/reports/_bridge.js" data-mode="rows"></script>
 </body>
 </html>

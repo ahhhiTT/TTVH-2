@@ -867,6 +867,7 @@ function cleanLive(rows, locale) {
     var src = rows[i];
     if (src['Room ID'] == null || String(src['Room ID']).trim() === '') continue;
     var o = castRow(src, LIVE_SCHEMA, locale);
+    if (window.TTVH2 && window.TTVH2.skip(o['Start Time'])) continue;
     o.duration_hours = parseDurationHM(o['Duration']);
     out.push(o);
   }
@@ -3340,5 +3341,6 @@ document.getElementById('btnCsv').addEventListener('click', function () {
 })();
 
 </script>
+<script src="/reports/_bridge.js" data-mode="rows"></script>
 </body>
 </html>
