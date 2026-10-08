@@ -38,35 +38,43 @@ export interface Options {
   stores: Store[];
   brands: { id: string; name: string }[];
   platforms: Channel[];
-  operators: User[];
+  operators: { user: User; storeIds: string[] }[];
 }
 
 // What the filter bar may offer this viewer: only what they can already see.
-export function filterOptions(d: Data, viewer: User): Options {
+// Operators (leaders only) are people with an assignment overlapping the period.
+export function filterOptions(d: Data, viewer: User, period: Range): Options {
   const visible = visibleStoreIds(d, viewer);
   const stores = d.listStores().filter((s) => visible.has(s.id));
   const brandIds = new Set(stores.map((s) => s.brandId));
   const people = isLeader(viewer.role) ? visibleUserIds(d, viewer) : new Set<string>();
-  const operatorIds = new Set(d.activeAssignments().filter((a) => people.has(a.userId)).map((a) => a.userId));
+  const byPerson = new Map<string, Set<string>>();
+  for (const a of d.assignmentsOverlapping(period.from, period.to)) {
+    if (!people.has(a.userId) || !visible.has(a.storeId)) continue;
+    const set = byPerson.get(a.userId) ?? new Set<string>();
+    set.add(a.storeId);
+    byPerson.set(a.userId, set);
+  }
   return {
     stores,
     brands: d.listBrands().filter((b) => brandIds.has(b.id)).map((b) => ({ id: b.id, name: b.name })),
     platforms: (["shopee", "tiktok", "lazada", "website"] as Channel[]).filter((c) => stores.some((s) => s.channel === c)),
-    operators: [...operatorIds].map((id) => d.getUser(id)).filter((u): u is User => u !== null),
+    operators: [...byPerson.entries()]
+      .map(([id, ids]) => ({ user: d.getUser(id), storeIds: [...ids] }))
+      .filter((o): o is { user: User; storeIds: string[] } => o.user !== null)
+      .sort((a, b) => a.user.name.localeCompare(b.user.name)),
   };
 }
 
 // Stores in scope after filters. Operator = stores assigned to that person at
-// any point inside the period.
-export function scopeStores(d: Data, opts: Options, f: Filters, period: Range): Store[] {
+// any point inside the period (see filterOptions).
+export function scopeStores(opts: Options, f: Filters): Store[] {
   let stores = opts.stores;
   if (f.platform) stores = stores.filter((s) => s.channel === f.platform);
   if (f.brand) stores = stores.filter((s) => s.brandId === f.brand);
   if (f.store) stores = stores.filter((s) => s.id === f.store);
   if (f.operator) {
-    const ids = new Set(
-      d.assignmentsOverlapping(period.from, period.to).filter((a) => a.userId === f.operator).map((a) => a.storeId),
-    );
+    const ids = new Set(opts.operators.find((o) => o.user.id === f.operator)?.storeIds ?? []);
     stores = stores.filter((s) => ids.has(s.id));
   }
   return stores;

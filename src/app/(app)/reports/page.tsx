@@ -5,7 +5,7 @@ import { DailyChart } from "@/components/daily-chart";
 import { MODULE_META, type Accent } from "@/components/module-meta";
 import { ReportFilters } from "@/components/report-filters";
 import { FlowArrow } from "@/components/svg";
-import { Badge, Card, cx, EmptyState, Notice, PageHeader, StatTile, Tbd, td, tdNum, th } from "@/components/ui";
+import { Badge, buttonSecondary, Card, cx, EmptyState, Notice, PageHeader, StatTile, Tbd, td, tdNum, th } from "@/components/ui";
 import { getData } from "@/lib/data/dataset";
 import type { Channel } from "@/lib/data/types";
 import { money, num, pct, ratio } from "@/lib/format";
@@ -29,7 +29,7 @@ import { REPORT_SECTIONS } from "@/lib/reports";
 import { getI18n, requireUser } from "@/lib/session";
 
 const ACCENTS: Accent[] = ["blue", "cyan", "purple", "green", "orange", "pink", "blue"];
-type View = "dashboard" | "template" | "tools";
+type View = "dashboard" | "template";
 type SP = Record<string, string | string[] | undefined>;
 
 const signed = (v: number | null, locale: Locale) =>
@@ -51,13 +51,11 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
   if (!canOpen(user, "reports")) notFound();
   const sp = await searchParams;
   const { locale, t } = await getI18n();
-  const view: View = sp.view === "template" || sp.view === "tools" ? sp.view : "dashboard";
-  const ready = REPORT_SECTIONS.flatMap((s) => s.items).filter((i) => i.status === "ok").length;
-  const total = REPORT_SECTIONS.flatMap((s) => s.items).length;
+  // The old "tools" tab now lives inside the dashboard flow.
+  const view: View = sp.view === "template" ? "template" : "dashboard";
   const tabs: { key: View; label: string }[] = [
     { key: "dashboard", label: t.dash.tabDashboard },
     { key: "template", label: t.dash.tabTemplate },
-    { key: "tools", label: `${t.dash.tabTools} (${ready}/${total})` },
   ];
 
   return (
@@ -80,7 +78,6 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
       </nav>
       {view === "dashboard" && <Dashboard sp={sp} locale={locale} t={t} />}
       {view === "template" && <Template t={t} />}
-      {view === "tools" && <Tools locale={locale} t={t} />}
     </>
   );
 }
@@ -108,29 +105,42 @@ async function Dashboard({ sp, locale, t }: { sp: SP; locale: Locale; t: Diction
   const d = await getData();
   const T = t.dash;
   const one = (k: string) => (typeof sp[k] === "string" ? (sp[k] as string) : null);
-  const opts = filterOptions(d, user);
-  const pick = <V extends string>(v: string | null, allowed: V[]) => (v && allowed.includes(v as V) ? (v as V) : null);
-  const f: Filters = {
-    platform: pick<Channel>(one("platform"), opts.platforms),
-    brand: pick(one("brand"), opts.brands.map((b) => b.id)),
-    store: pick(one("store"), opts.stores.map((s) => s.id)),
-    operator: pick(one("operator"), opts.operators.map((u) => u.id)),
-  };
   const kind = (PERIOD_KINDS.includes(one("period") as PeriodKind) ? one("period") : "mtd") as PeriodKind;
   const today = toIso(new Date());
   const date = one("date");
   const period = makePeriod(kind, isIsoDate(date) ? date : today, one("from") ?? undefined, one("to") ?? undefined);
-  const stores = scopeStores(d, opts, f, period);
+  const opts = filterOptions(d, user, period);
+  const pick = <V extends string>(v: string | null, allowed: V[]) => (v && allowed.includes(v as V) ? (v as V) : null);
+  const leader = isLeader(user.role);
+  const f: Filters = {
+    platform: pick<Channel>(one("platform"), opts.platforms),
+    brand: pick(one("brand"), opts.brands.map((b) => b.id)),
+    store: pick(one("store"), opts.stores.map((s) => s.id)),
+    operator: leader ? pick(one("operator"), opts.operators.map((o) => o.user.id)) : null,
+  };
+  const stores = scopeStores(opts, f);
   const ids = stores.map((s) => s.id);
   const cur = totals(d, ids, period);
   const prev = totals(d, ids, period.compare);
   const target = targetFor(d, ids, period);
   const series = dailySeries(d, ids, period);
-  const leader = isLeader(user.role);
   const dims: Dimension[] = leader ? ["platform", "brand", "store", "operator"] : ["platform", "brand", "store"];
   const by = pick<Dimension>(one("by"), dims) ?? "platform";
   const rows = breakdown(d, user, stores, period, by);
   const gaps = completeness(d, stores, period);
+  // The marketplace the file tools should follow: the platform filter, or the
+  // single platform left in scope (e.g. one store chosen).
+  const channels = [...new Set(stores.map((s) => s.channel))];
+  const toolPlatform = f.platform ?? (channels.length === 1 ? channels[0] : null);
+  const scopeText = [
+    f.operator ? d.getUser(f.operator)?.name : null,
+    f.brand ? d.getBrand(f.brand)?.name : null,
+    f.platform ? t.channel[f.platform] : null,
+    f.store ? d.getStore(f.store)?.name : null,
+    `${T.kinds[period.kind]} ${rangeLabel(period)}`,
+  ]
+    .filter(Boolean)
+    .join(" / ");
   const vsLabel = `${T.compareTo} ${rangeLabel(period.compare)}`;
   const missingNote = (field: keyof Totals["missing"]) =>
     cur.missing[field] > 0
@@ -157,9 +167,11 @@ async function Dashboard({ sp, locale, t }: { sp: SP; locale: Locale; t: Diction
           kinds={PERIOD_KINDS.map((k) => ({ value: k, label: T.kinds[k], hint: T.kindHint[k] }))}
           platforms={opts.platforms.map((p) => ({ value: p, label: t.channel[p] }))}
           brands={opts.brands.map((b) => ({ value: b.id, label: b.name }))}
-          stores={opts.stores.map((s) => ({ value: s.id, label: s.name, brand: s.brandId }))}
-          operators={leader ? opts.operators.map((u) => ({ value: u.id, label: u.name })) : null}
+          stores={opts.stores.map((s) => ({ value: s.id, label: s.name, brand: s.brandId, platform: s.channel }))}
+          operators={leader ? opts.operators.map((o) => ({ value: o.user.id, label: o.user.name, storeIds: o.storeIds })) : null}
           labels={{
+            scope: T.stepScope,
+            time: T.stepTime,
             period: T.period,
             date: T.date,
             from: T.from,
@@ -192,6 +204,23 @@ async function Dashboard({ sp, locale, t }: { sp: SP; locale: Locale; t: Diction
         <Notice>{t.common.naLegend}</Notice>
       </div>
 
+      <nav
+        aria-label={T.flowNav}
+        className="sticky top-16 z-20 -mx-1 flex gap-1.5 overflow-x-auto rounded-full border border-hairline-strong bg-canvas/90 p-1 backdrop-blur"
+      >
+        {REPORT_SECTIONS.map((section, si) => (
+          <a
+            key={section.id}
+            href={`#flow-${section.id}`}
+            className="flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium text-body transition-colors hover:bg-panel hover:text-ink"
+          >
+            <span className="tabular text-muted">{si + 1}</span>
+            {si === 0 ? T.flowOverview : section.name[locale]}
+          </a>
+        ))}
+      </nav>
+
+      <FlowHeader index={0} id={REPORT_SECTIONS[0].id} title={T.flowOverview} sub={T.flowOverviewSub} />
       {stores.length === 0 ? (
         <Card index={1}>
           <EmptyState>{T.noScope}</EmptyState>
@@ -415,77 +444,154 @@ async function Dashboard({ sp, locale, t }: { sp: SP; locale: Locale; t: Diction
           </Card>
         </>
       )}
+
+      {REPORT_SECTIONS.map((section, si) => (
+        <ToolSection
+          key={section.id}
+          section={section}
+          index={si}
+          locale={locale}
+          t={t}
+          platform={toolPlatform}
+          open={one("tool")}
+          scopeText={scopeText}
+          href={href}
+          closeHref={href({ tool: "" })}
+        />
+      ))}
     </div>
   );
 }
 
-function Tools({ locale, t }: { locale: Locale; t: Dictionary }) {
+const PLATFORM_OF: Record<string, Channel> = { Shopee: "shopee", "TikTok Shop": "tiktok" };
+
+function FlowHeader({ index, id, title, sub }: { index: number; id: string; title: string; sub: string }) {
   return (
-    <>
-      <div className="mb-6 space-y-2">
-        <Notice tone="warning">{t.reports.templateNote}</Notice>
-        <Notice>{t.reports.privacy}</Notice>
+    <div id={`flow-${id}`} className={`accent-${ACCENTS[index]} flex scroll-mt-32 items-baseline gap-3 pt-2`}>
+      <span className="accent-plate tabular flex size-7 shrink-0 items-center justify-center rounded-md text-[13px] font-semibold">
+        {index + 1}
+      </span>
+      <div>
+        <h2 className="text-lg font-semibold text-ink">{title}</h2>
+        <p className="text-[13px] text-body">{sub}</p>
       </div>
-      <div className="space-y-8">
-        {REPORT_SECTIONS.map((section, si) => (
-          <section key={section.id} className={`accent-${ACCENTS[si]}`}>
-            <div className="mb-3 flex items-baseline gap-3">
-              <span className="accent-plate tabular flex size-7 shrink-0 items-center justify-center rounded-md text-[13px] font-semibold">
-                {si + 1}
-              </span>
-              <div>
-                <h2 className="text-base font-semibold text-ink">{section.name[locale]}</h2>
-                <p className="text-[13px] text-body">{section.sub[locale]}</p>
+    </div>
+  );
+}
+
+// One step of the flow: the Director's tools for this part, unchanged. The shared
+// platform filter decides which tools apply; the other filters are shown as the
+// scope the uploaded file should match (the tools read only the uploaded file).
+function ToolSection({
+  section,
+  index,
+  locale,
+  t,
+  platform,
+  open,
+  scopeText,
+  href,
+  closeHref,
+}: {
+  section: (typeof REPORT_SECTIONS)[number];
+  index: number;
+  locale: Locale;
+  t: Dictionary;
+  platform: Channel | null;
+  open: string | null;
+  scopeText: string;
+  href: (patch: Record<string, string>) => string;
+  closeHref: string;
+}) {
+  const T = t.dash;
+  const items = section.items.filter((it) => !platform || !it.platform || PLATFORM_OF[it.platform] === platform);
+  const hidden = section.items.length - items.length;
+  const active = items.find((it) => it.id === open && it.status === "ok") ?? null;
+  const src = active ? (locale === "en" ? `/reports/en/${active.file}` : `/reports/${active.file}`) : null;
+
+  return (
+    <section className={`accent-${ACCENTS[index]} space-y-3`}>
+      {index > 0 && <FlowHeader index={index} id={section.id} title={section.name[locale]} sub={section.sub[locale]} />}
+      {index === 0 && <h3 className="pt-2 text-sm font-semibold text-ink">{T.flowToolsHere}</h3>}
+      {hidden > 0 && <p className="text-[13px] text-muted">{T.hiddenByPlatform.replace("{n}", String(hidden))}</p>}
+      <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {items.map((item, i) => {
+          const ok = item.status === "ok";
+          const isOpen = active?.id === item.id;
+          const body = (
+            <>
+              <div className="flex items-start justify-between gap-2">
+                <div className="text-sm font-semibold text-ink">{item.label[locale]}</div>
+                <span
+                  className={cx(
+                    "shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold",
+                    ok ? "accent-plate" : "border border-dashed border-hairline-strong text-muted",
+                  )}
+                >
+                  {ok ? t.reports.ready : t.reports.waiting}
+                </span>
+              </div>
+              {(item.group || item.platform) && (
+                <div className="mt-1 text-[12px] text-muted">{[item.group, item.platform].filter(Boolean).join(" / ")}</div>
+              )}
+              <p className="mt-2 text-[13px] leading-relaxed text-body">{item.desc[locale]}</p>
+              {ok && (
+                <div className="mt-3 flex items-center gap-1.5 text-[13px] font-medium text-[color:var(--accent)]">
+                  {isOpen ? T.toolOpened : t.reports.open} {!isOpen && <FlowArrow />}
+                </div>
+              )}
+            </>
+          );
+          return (
+            <li key={item.id} className="enter" style={{ "--i": i } as CSSProperties}>
+              {ok ? (
+                <Link
+                  href={`${href({ tool: item.id })}#flow-${section.id}`}
+                  scroll={false}
+                  aria-current={isOpen ? "true" : undefined}
+                  className={cx(
+                    "lift block h-full rounded-lg border bg-canvas p-4",
+                    isOpen ? "border-[color:var(--accent)] ring-1 ring-[color:var(--accent)]" : "border-hairline-strong",
+                  )}
+                >
+                  {body}
+                </Link>
+              ) : (
+                <div className="h-full rounded-lg border border-dashed border-hairline-strong bg-canvas-soft p-4 opacity-80">{body}</div>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+      {active && src && (
+        <div className="enter space-y-2 rounded-2xl border border-hairline-strong bg-canvas p-3 md:p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="min-w-0">
+              <div className="text-sm font-semibold text-ink">{active.label[locale]}</div>
+              <div className="text-[12.5px] text-body">
+                <span className="font-medium text-ink">{T.toolScope}:</span> {scopeText}
               </div>
             </div>
-            <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {section.items.map((item, i) => {
-                const ok = item.status === "ok";
-                const body = (
-                  <>
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="text-sm font-semibold text-ink">{item.label[locale]}</div>
-                      <span
-                        className={cx(
-                          "shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold",
-                          ok ? "accent-plate" : "border border-dashed border-hairline-strong text-muted",
-                        )}
-                      >
-                        {ok ? t.reports.ready : t.reports.waiting}
-                      </span>
-                    </div>
-                    {(item.group || item.platform) && (
-                      <div className="mt-1 text-[12px] text-muted">{[item.group, item.platform].filter(Boolean).join(" / ")}</div>
-                    )}
-                    <p className="mt-2 text-[13px] leading-relaxed text-body">{item.desc[locale]}</p>
-                    {ok && (
-                      <div className="mt-3 flex items-center gap-1.5 text-[13px] font-medium text-[color:var(--accent)]">
-                        {t.reports.open} <FlowArrow />
-                      </div>
-                    )}
-                  </>
-                );
-                return (
-                  <li key={item.id} className="enter" style={{ "--i": i } as CSSProperties}>
-                    {ok ? (
-                      <Link
-                        href={`/reports/${item.id}`}
-                        className="lift block h-full rounded-lg border border-hairline-strong bg-canvas p-4"
-                      >
-                        {body}
-                      </Link>
-                    ) : (
-                      <div className="h-full rounded-lg border border-dashed border-hairline-strong bg-canvas-soft p-4 opacity-80">
-                        {body}
-                      </div>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          </section>
-        ))}
-      </div>
-    </>
+            <div className="flex gap-2">
+              <Link href={`/reports/${active.id}`} className={cx(buttonSecondary, "h-9 text-[13px]")}>
+                {T.toolFull}
+              </Link>
+              <Link href={`${closeHref}#flow-${section.id}`} scroll={false} className={cx(buttonSecondary, "h-9 text-[13px]")}>
+                {T.toolClose}
+              </Link>
+            </div>
+          </div>
+          <p className="text-[12.5px] text-muted">
+            {T.toolNote} {t.reports.privacy}
+          </p>
+          <iframe
+            key={active.id}
+            src={src}
+            title={active.label[locale]}
+            className="h-[calc(100dvh-12rem)] min-h-[560px] w-full rounded-lg border border-hairline-strong bg-white"
+          />
+        </div>
+      )}
+    </section>
   );
 }

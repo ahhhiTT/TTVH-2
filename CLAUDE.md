@@ -9,15 +9,17 @@ running Planning, Execution (checklist, SLA) and Report, plus career path / L&D.
 
 ## Stack
 - Next.js 16 (App Router, Cache Components on), TypeScript, Tailwind v4.
-- No database yet: sample data in `src/lib/data/seed.ts`, read through
-  `src/lib/data/repo.ts`. Planned: PostgreSQL + Prisma, swapped in behind `repo.ts`.
+- Data: Supabase (Postgres) through `src/lib/data/dataset.ts`, with the sample seed in
+  `src/lib/data/seed.ts` as fallback. See "Data layer" below.
 - Auth is a demo cookie (`src/lib/session.ts`). Planned: Auth.js + Lark OAuth.
 - Bilingual vi/en via `src/lib/i18n/dictionaries.ts` (cookie `ttvh2_locale`).
   Every user-visible string goes in both dictionaries, no hard-coded text.
 - `/` is the department homepage (public, richer when signed in). The KPI
   dashboard lives at `/overview`.
-- `/reports` lists the report tools from the Director's manifest
-  (`src/lib/reports.ts`). Tool files are served unchanged from `public/reports/`.
+- `/reports` is one flow: shared filters (operator -> brand -> platform -> store, then
+  time), the DB-backed overview, then each manifest section (`src/lib/reports.ts`) with
+  its tools embedded inline. Tool files are served unchanged from `public/reports/`;
+  the platform filter only decides which tools show.
 
 ## Data rules (set by the Director, non-negotiable)
 1. Never change business logic without the Director's confirmation.
@@ -72,7 +74,7 @@ running Planning, Execution (checklist, SLA) and Report, plus career path / L&D.
 
 ## Access rules
 - Every app page goes through `requireUser()` and the `rbac.ts` helpers. Never read
-  `seed`/`repo` lists directly in a page without filtering by `visibleStoreIds` /
+  `Data` lists directly in a page without filtering by `visibleStoreIds` /
   `visibleUserIds`. Out-of-scope records return `notFound()` (same as missing).
 - The public homepage shows only public information (UpBase public figures,
   roles, process). Names and internal data appear only when signed in.
