@@ -7,13 +7,15 @@ import { currentMonth } from "@/lib/metrics";
 import { canOpen, isLeader } from "@/lib/rbac";
 import { getI18n, requireUser } from "@/lib/session";
 import { storeRows } from "@/lib/views";
+import { getData } from "@/lib/data/dataset";
 
 export default async function StoresPage() {
   const user = await requireUser();
+  const d = await getData();
   if (!canOpen(user, "stores")) notFound();
   const { locale, t } = await getI18n();
   // Missing GMV sorts last, never as if it were 0.
-  const rows = storeRows(user).sort((a, b) => (b.kpis.gmv ?? -Infinity) - (a.kpis.gmv ?? -Infinity));
+  const rows = storeRows(d, user).sort((a, b) => (b.kpis.gmv ?? -Infinity) - (a.kpis.gmv ?? -Infinity));
   const showOwners = isLeader(user.role);
 
   return (

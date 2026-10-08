@@ -3,7 +3,7 @@ import "server-only";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
-import { getUser } from "./data/repo";
+import { getData } from "./data/dataset";
 import { DEFAULT_LOCALE, dictionaries, LOCALES, type Locale } from "./i18n/dictionaries";
 
 export const SESSION_COOKIE = "ttvh2_uid";
@@ -13,7 +13,7 @@ export const LOCALE_COOKIE = "ttvh2_locale";
 // OAuth before any real data is loaded.
 export async function getCurrentUser() {
   const id = (await cookies()).get(SESSION_COOKIE)?.value;
-  return id ? getUser(id) : null;
+  return id ? (await getData()).getUser(id) : null;
 }
 
 export async function requireUser() {

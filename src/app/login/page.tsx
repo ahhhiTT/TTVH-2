@@ -4,7 +4,7 @@ import { Chevron, LogoMark } from "@/components/svg";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { buttonPrimary, buttonSecondary, cx } from "@/components/ui";
 import { demoSignIn, setLocale } from "@/lib/actions";
-import { listUsers } from "@/lib/data/repo";
+import { getData } from "@/lib/data/dataset";
 import type { Role } from "@/lib/data/types";
 import { getCurrentUser, getI18n } from "@/lib/session";
 
@@ -13,7 +13,7 @@ const ROLE_ORDER: Role[] = ["director", "manager", "teamlead", "staff", "viewer"
 export default async function LoginPage() {
   if (await getCurrentUser()) redirect("/");
   const { locale, t } = await getI18n();
-  const users = listUsers();
+  const users = (await getData()).listUsers();
 
   return (
     <div className="sky-wash relative flex min-h-dvh flex-col items-center justify-center overflow-hidden px-4 py-10">

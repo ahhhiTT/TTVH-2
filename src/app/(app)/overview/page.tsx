@@ -3,7 +3,7 @@ import type { CSSProperties } from "react";
 import { GmvChart } from "@/components/gmv-chart";
 import { MODULE_META, type Accent } from "@/components/module-meta";
 import { Card, EmptyState, Notice, PageHeader, ProgressBar, StatTile, StatusLabel, Tbd, td, tdNum, th } from "@/components/ui";
-import { listStores } from "@/lib/data/repo";
+import { getData } from "@/lib/data/dataset";
 import { money, monthLabel, num, pct, ratio } from "@/lib/format";
 import { currentMonth, kpisFor, monthElapsedShare, paceStatus, trendFor } from "@/lib/metrics";
 import { canOpen, hasPermission, isLeader, visibleStoreIds } from "@/lib/rbac";
@@ -12,24 +12,25 @@ import { personRows, storeRows } from "@/lib/views";
 
 export default async function OverviewPage() {
   const user = await requireUser();
+  const d = await getData();
   const { locale, t } = await getI18n();
-  const scope = visibleStoreIds(user);
-  const kpis = kpisFor(scope);
+  const scope = visibleStoreIds(d, user);
+  const kpis = kpisFor(d, scope);
   const status = paceStatus(kpis.pace);
-  const trend = trendFor(scope);
-  const rows = storeRows(user);
+  const trend = trendFor(d, scope);
+  const rows = storeRows(d, user);
   // Rows with unknown pace sort last; they are not counted as "behind".
   const byPace = (a: { kpis: { pace: number | null } }, b: { kpis: { pace: number | null } }) =>
     (a.kpis.pace ?? Infinity) - (b.kpis.pace ?? Infinity);
   const below = rows.filter((r) => r.kpis.pace !== null && r.kpis.pace < 1).sort(byPace);
   const unknown = rows.filter((r) => r.kpis.pace === null).length;
   const people = isLeader(user.role)
-    ? personRows(user)
+    ? personRows(d, user)
         .filter((p) => p.items.length > 0)
         .sort((a, b) => (b.kpis.pace ?? -1) - (a.kpis.pace ?? -1))
     : [];
   const benchmark =
-    !isLeader(user.role) && hasPermission(user, "benchmark:view") ? kpisFor(new Set(listStores().map((s) => s.id))) : null;
+    !isLeader(user.role) && hasPermission(user, "benchmark:view") ? kpisFor(d, new Set(d.listStores().map((s) => s.id))) : null;
   const now = new Date();
   const daysLeft = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate() - now.getDate();
   const missingNote = (n: number) =>

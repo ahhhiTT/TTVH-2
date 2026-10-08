@@ -8,7 +8,8 @@ import type {
   Assignment,
   Brand,
   Channel,
-  MonthlyMetric,
+  DailyMetric,
+  MonthlyTarget,
   Store,
   Team,
   User,
@@ -145,6 +146,7 @@ stores.forEach((store, i) => {
   storesByUser.set(owner.id, [...(storesByUser.get(owner.id) ?? []), store.id]);
 });
 
+export const SAMPLE_START = "2026-05-01";
 export const assignments: Assignment[] = [];
 for (const [userId, storeIds] of storesByUser) {
   // Leave 0–20% for "other projects", split the rest across stores.
@@ -158,7 +160,16 @@ for (const [userId, storeIds] of storesByUser) {
         ? remaining
         : Math.round(((100 - other) * weights[i]) / total / 5) * 5;
     remaining -= pct;
-    assignments.push({ userId, storeId, workloadPct: pct, isPrimary: true });
+    assignments.push({
+      id: assignments.length + 1,
+      userId,
+      storeId,
+      workloadPct: pct,
+      isPrimary: true,
+      validFrom: SAMPLE_START,
+      validTo: null,
+      archivedAt: null,
+    });
   });
 }
 
@@ -195,40 +206,63 @@ users.push(
   },
 );
 
-// Six months of monthly figures ending with the current month (month-to-date).
-export function monthKeys(count = 6, now = new Date()): string[] {
-  return Array.from({ length: count }, (_, i) => {
-    const d = new Date(now.getFullYear(), now.getMonth() - (count - 1 - i), 1);
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
-  });
-}
+// Daily figures from SAMPLE_START to today. Same rules as
+// scripts/sample-data/metrics.sql (which fills Supabase), different random
+// stream, so the two sample sets do not match number for number.
+const iso = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const SCALE_DAILY = { S: 10e6, M: 30e6, L: 85e6, XL: 200e6 };
+const WEEKDAY = [1.1, 0.9, 0.95, 0.95, 1.0, 1.05, 1.15]; // Sun..Sat
 
-const SCALE_GMV = { S: 300e6, M: 900e6, L: 2.5e9, XL: 6e9 };
+export const daily: DailyMetric[] = [];
+export const targets: MonthlyTarget[] = [];
 
-export const metrics: MonthlyMetric[] = [];
-const now = new Date();
-const mtdShare = now.getDate() / new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+const start = new Date(2026, 4, 1);
+const today = new Date();
+today.setHours(0, 0, 0, 0);
 for (const store of stores) {
-  const base = SCALE_GMV[store.scale] * between(0.6, 1.4);
-  const growth = between(-0.03, 0.08);
-  const noAdsImport = rand() > 0.85; // Ads report not connected yet → Missing
-  const noAds = !noAdsImport && rand() > 0.9; // store genuinely runs no Ads → Zero
-  monthKeys(6, now).forEach((month, i, all) => {
-    const isCurrent = i === all.length - 1;
-    const target = Math.round(base * (1 + growth) ** i * between(1.0, 1.15));
-    const achievement = between(0.7, 1.2);
-    const gmv = Math.round(target * achievement * (isCurrent ? mtdShare : 1));
-    const aov = between(180e3, 450e3);
-    const orders = Math.max(1, Math.round(gmv / aov));
-    metrics.push({
+  const base = SCALE_DAILY[store.scale] * between(0.6, 1.4);
+  const growth = between(-0.004, 0.008); // per week
+  const rAds = rand();
+  const lagged = rand() > 0.9; // today's import has not arrived
+  const aov = between(180e3, 450e3);
+  const cr = between(0.012, 0.045);
+
+  for (let m = 0; m < 6; m++) {
+    const month = new Date(2026, 4 + m, 1);
+    const days = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
+    targets.push({
       storeId: store.id,
-      month,
-      gmvTarget: store.status === "onboarding" ? null : target,
-      gmv,
+      month: iso(month).slice(0, 7),
+      gmvTarget:
+        store.status === "onboarding" && m >= 4
+          ? null
+          : Math.round(base * days * (1 + growth * 4 * m) * between(1.0, 1.18) * 1.12),
+    });
+  }
+
+  for (const d = new Date(start); d <= today; d.setDate(d.getDate() + 1)) {
+    const date = iso(d);
+    if (lagged && d.getTime() === today.getTime()) {
+      daily.push({ storeId: store.id, date, gmv: null, nmv: null, orders: null, traffic: null, adSpend: null });
+      continue;
+    }
+    const weeks = (d.getTime() - start.getTime()) / (7 * 86400000);
+    const dd = d.getDate();
+    const mm = d.getMonth() + 1;
+    let f = WEEKDAY[d.getDay()] * (1 + growth * weeks) * between(0.75, 1.25);
+    if (dd === mm) f *= between(3, 5); // double day
+    else if (dd === 15 || dd === 25) f *= between(1.6, 2.2);
+    else if (dd === mm - 1 || dd === mm - 2) f *= between(1.2, 1.5); // pre-campaign
+    const gmv = base * f;
+    const orders = Math.max(0, Math.round(gmv / (aov * between(0.9, 1.1))));
+    daily.push({
+      storeId: store.id,
+      date,
+      gmv: Math.round(gmv),
       nmv: Math.round(gmv * between(0.78, 0.9)),
       orders,
-      traffic: store.channel === "website" ? null : Math.round(orders / between(0.012, 0.045)),
-      adSpend: noAdsImport ? null : noAds ? 0 : Math.round(gmv / between(5, 14)),
+      traffic: store.channel === "website" ? null : Math.round(orders / (cr * between(0.85, 1.15))),
+      adSpend: rAds > 0.85 ? null : rAds > 0.76 ? 0 : Math.round(gmv / between(5, 14)),
     });
-  });
+  }
 }

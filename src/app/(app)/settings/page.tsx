@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MODULE_META } from "@/components/module-meta";
-import { Card, Notice, PageHeader, Tbd, td, th } from "@/components/ui";
-import { getUser, listTeams, listUsers } from "@/lib/data/repo";
+import { buttonPrimary, Card, Notice, PageHeader, Tbd, td, th } from "@/components/ui";
+import { getData } from "@/lib/data/dataset";
 import type { Role } from "@/lib/data/types";
 import { KPI_DEFINITIONS } from "@/lib/kpi-definitions";
 import { canOpen, ROLE_MODULES, type ModuleKey } from "@/lib/rbac";
@@ -25,17 +25,21 @@ function Access({ allowed }: { allowed: boolean }) {
 
 export default async function SettingsPage() {
   const user = await requireUser();
+  const d = await getData();
   if (!canOpen(user, "settings")) notFound();
   const { t } = await getI18n();
-  const people = listUsers().filter((u) => u.role !== "viewer" && u.role !== "brand");
+  const people = d.listUsers().filter((u) => u.role !== "viewer" && u.role !== "brand");
   const director = people.find((u) => u.role === "director");
-  const teams = listTeams();
+  const teams = d.listTeams();
 
   return (
     <>
       <PageHeader accent={MODULE_META.settings.accent} title={t.settings.title} subtitle={t.settings.subtitle} />
       <div className="mb-6">
         <Notice>{t.settings.editNote}</Notice>
+        <Link href="/settings/data" className={`${buttonPrimary} mt-3`}>
+          {t.admin.openAdmin}
+        </Link>
       </div>
 
       <div className="space-y-6">
@@ -46,7 +50,7 @@ export default async function SettingsPage() {
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             {teams.map((team) => {
-              const lead = team.leadId ? getUser(team.leadId) : null;
+              const lead = team.leadId ? d.getUser(team.leadId) : null;
               const members = people.filter((u) => u.teamId === team.id && u.id !== team.leadId);
               return (
                 <div key={team.id} className="rounded-lg border border-hairline-strong p-4">

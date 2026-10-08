@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { MODULE_META } from "@/components/module-meta";
 import { Card, Notice, PageHeader, StatusLabel, Tbd, td, tdNum, th } from "@/components/ui";
-import { getTeam } from "@/lib/data/repo";
+import { getData } from "@/lib/data/dataset";
 import { money, pct } from "@/lib/format";
 import { canOpen } from "@/lib/rbac";
 import { getI18n, requireUser } from "@/lib/session";
@@ -10,11 +10,12 @@ import { personRows } from "@/lib/views";
 
 export default async function PeoplePage() {
   const user = await requireUser();
+  const d = await getData();
   if (!canOpen(user, "people")) notFound();
   // Staff only see themselves, so go straight to their own profile.
   if (user.role === "staff") redirect(`/people/${user.id}`);
   const { locale, t } = await getI18n();
-  const rows = personRows(user).sort((a, b) => a.person.id.localeCompare(b.person.id));
+  const rows = personRows(d, user).sort((a, b) => a.person.id.localeCompare(b.person.id));
 
   return (
     <>
@@ -57,7 +58,7 @@ export default async function PeoplePage() {
                       <div className="text-[13px] text-muted">{r.person.title}</div>
                     </td>
                     <td className={`${td} whitespace-nowrap text-body`}>{t.roles[r.person.role]}</td>
-                    <td className={`${td} whitespace-nowrap text-body`}>{getTeam(r.person.teamId)?.name ?? t.common.none}</td>
+                    <td className={`${td} whitespace-nowrap text-body`}>{d.getTeam(r.person.teamId)?.name ?? t.common.none}</td>
                     <td className={`${td} text-body`}>{r.person.level}</td>
                     <td className={tdNum(false)}>{r.items.length}</td>
                     <td className={tdNum(!has)}>{has ? `${r.workload}%` : t.common.none}</td>

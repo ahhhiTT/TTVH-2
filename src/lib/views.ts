@@ -1,24 +1,23 @@
 // Row builders shared by pages: combine store/person data with KPIs.
 
-import { assignmentsForUser, getBrand, getStore, getUser, listStores } from "./data/repo";
-import { assignments, metrics } from "./data/seed";
+import type { Data } from "./data/dataset";
 import type { User } from "./data/types";
-import { currentMonth, kpisFor, paceStatus } from "./metrics";
+import { currentMonth, kpisFor, monthKeys, paceStatus } from "./metrics";
 import { visibleStoreIds, visibleUserIds } from "./rbac";
 
-export function storeRows(viewer: User, month = currentMonth()) {
-  const ids = visibleStoreIds(viewer);
-  return listStores()
+export function storeRows(d: Data, viewer: User, month = currentMonth()) {
+  const ids = visibleStoreIds(d, viewer);
+  return d.listStores()
     .filter((s) => ids.has(s.id))
     .map((store) => {
-      const kpis = kpisFor(new Set([store.id]), month);
-      const owners = assignments
-        .filter((a) => a.storeId === store.id)
-        .map((a) => getUser(a.userId))
+      const kpis = kpisFor(d, new Set([store.id]), month);
+      const owners = d
+        .assignmentsForStore(store.id)
+        .map((a) => d.getUser(a.userId))
         .filter((u) => u !== null);
       return {
         store,
-        brand: getBrand(store.brandId),
+        brand: d.getBrand(store.brandId),
         owners,
         kpis,
         status: paceStatus(kpis.pace),
@@ -26,24 +25,25 @@ export function storeRows(viewer: User, month = currentMonth()) {
     });
 }
 
-export function personRows(viewer: User, month = currentMonth()) {
-  const ids = visibleUserIds(viewer);
+export function personRows(d: Data, viewer: User, month = currentMonth()) {
+  const ids = visibleUserIds(d, viewer);
   return [...ids]
-    .map((id) => getUser(id))
+    .map((id) => d.getUser(id))
     .filter((u) => u !== null)
-    .map((person) => personSummary(person, month));
+    .map((person) => personSummary(d, person, month));
 }
 
-export function personSummary(person: User, month = currentMonth()) {
-  const items = assignmentsForUser(person.id)
-    .map((a) => ({ a, store: getStore(a.storeId) }))
+export function personSummary(d: Data, person: User, month = currentMonth()) {
+  const items = d
+    .assignmentsForUser(person.id)
+    .map((a) => ({ a, store: d.getStore(a.storeId) }))
     .filter((x) => x.store !== null && x.store.archivedAt === null)
     .map(({ a, store }) => {
-      const kpis = kpisFor(new Set([a.storeId]), month);
+      const kpis = kpisFor(d, new Set([a.storeId]), month);
       return { assignment: a, store: store!, kpis, status: paceStatus(kpis.pace) };
     });
   const storeIds = new Set(items.map((i) => i.store.id));
-  const kpis = kpisFor(storeIds, month);
+  const kpis = kpisFor(d, storeIds, month);
   // Formula TBD: credit each store's GMV by the person's workload share.
   // null when no assigned store has GMV data.
   const withGmv = items.filter((i) => i.kpis.gmv !== null);
@@ -61,6 +61,6 @@ export function personSummary(person: User, month = currentMonth()) {
   };
 }
 
-export function storeHistory(storeId: string) {
-  return metrics.filter((m) => m.storeId === storeId).sort((a, b) => a.month.localeCompare(b.month));
+export function storeHistory(d: Data, storeId: string) {
+  return monthKeys(6).flatMap((month) => d.monthly(month).filter((m) => m.storeId === storeId));
 }

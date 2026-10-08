@@ -1,5 +1,5 @@
-// Domain model. Kept independent of storage so the mock repo can later be
-// swapped for a real database (Prisma/Postgres) without touching the UI.
+// Domain model. Kept independent of storage: the same shapes come from
+// Supabase (lib/data/dataset.ts) or from the in-repo sample seed.
 
 export type Role =
   | "director" // Giám đốc TTVH, sees everything
@@ -60,14 +60,48 @@ export interface Store extends Archivable {
 
 // Who runs which store, and what share of their time it takes.
 // Workload is agreed by director, line manager and the staff member.
-export interface Assignment {
+// validFrom/validTo (inclusive, ISO dates) keep history when owners change.
+export interface Assignment extends Archivable {
+  id: number;
   userId: string;
   storeId: string;
   workloadPct: number;
   isPrimary: boolean;
+  validFrom: string;
+  validTo: string | null;
 }
 
-// One row per store per month. Raw inputs only; ratios are derived in metrics.ts.
+// Raw daily figures per store. null = not received (Missing); 0 = real zero.
+// A row whose values are all null means the day exists but the import has
+// not arrived yet.
+export interface DailyMetric {
+  storeId: string;
+  date: string; // "YYYY-MM-DD"
+  gmv: number | null;
+  nmv: number | null;
+  orders: number | null;
+  traffic: number | null;
+  adSpend: number | null;
+}
+
+export interface MonthlyTarget {
+  storeId: string;
+  month: string; // "YYYY-MM"
+  gmvTarget: number | null;
+}
+
+export interface AuditEntry {
+  id: number;
+  at: string;
+  actorId: string | null;
+  entity: string;
+  entityId: string;
+  action: "create" | "update" | "archive" | "restore";
+  before: Record<string, unknown> | null;
+  after: Record<string, unknown> | null;
+}
+
+// One row per store per month, summed from DailyMetric. Ratios are derived in metrics.ts.
 // null = data not received (Missing). 0 = the real value is zero.
 export interface MonthlyMetric {
   storeId: string;

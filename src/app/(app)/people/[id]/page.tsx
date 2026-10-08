@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MODULE_META } from "@/components/module-meta";
 import { Badge, Card, Notice, PageHeader, StatTile, StatusLabel, Tbd, td, tdNum, th } from "@/components/ui";
-import { getTeam, getUser } from "@/lib/data/repo";
+import { getData } from "@/lib/data/dataset";
 import { money, pct } from "@/lib/format";
 import { canOpen, canViewUser } from "@/lib/rbac";
 import { getI18n, requireUser } from "@/lib/session";
@@ -11,11 +11,12 @@ import { personSummary } from "@/lib/views";
 export default async function PersonPage({ params }: PageProps<"/people/[id]">) {
   const { id } = await params;
   const user = await requireUser();
-  const person = getUser(id);
-  if (!person || person.archivedAt || !canOpen(user, "people") || !canViewUser(user, id)) notFound();
+  const d = await getData();
+  const person = d.getUser(id);
+  if (!person || person.archivedAt || !canOpen(user, "people") || !canViewUser(d, user, id)) notFound();
   const { locale, t } = await getI18n();
-  const s = personSummary(person);
-  const manager = person.managerId ? getUser(person.managerId) : null;
+  const s = personSummary(d, person);
+  const manager = person.managerId ? d.getUser(person.managerId) : null;
   const other = 100 - s.workload;
   const has = s.items.length > 0;
 
@@ -25,7 +26,7 @@ export default async function PersonPage({ params }: PageProps<"/people/[id]">) 
         back={user.role !== "staff" ? { href: "/people", label: t.common.back } : undefined}
         accent={MODULE_META.people.accent}
         title={person.name}
-        subtitle={[person.title, getTeam(person.teamId)?.name, manager && `${t.settings.reportsTo}: ${manager.name}`]
+        subtitle={[person.title, d.getTeam(person.teamId)?.name, manager && `${t.settings.reportsTo}: ${manager.name}`]
           .filter(Boolean)
           .join(". ")}
         actions={

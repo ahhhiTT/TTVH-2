@@ -8,7 +8,7 @@ import { MODULE_META, type Accent } from "@/components/module-meta";
 import { Reveal } from "@/components/reveal";
 import { FlowArrow } from "@/components/svg";
 import { buttonPrimary, buttonSecondary, cx } from "@/components/ui";
-import { getTeam, listUsers } from "@/lib/data/repo";
+import { getData } from "@/lib/data/dataset";
 import { UPBASE_BRAND_LOGOS, UPBASE_SOURCE, UPBASE_STATS } from "@/lib/home-content";
 import { canOpen, type ModuleKey } from "@/lib/rbac";
 import { getCurrentUser, getI18n } from "@/lib/session";
@@ -28,8 +28,9 @@ export default async function HomePage() {
   const [user, { t }] = await Promise.all([getCurrentUser(), getI18n()]);
   const h = t.home;
   const internal = user && ["director", "manager", "teamlead", "staff"].includes(user.role);
-  const team = internal ? listUsers().filter((u) => u.role !== "viewer" && u.role !== "brand") : [];
-  const teams = Map.groupBy(team, (u) => getTeam(u.teamId)?.name ?? t.roles.director);
+  const d = internal ? await getData() : null;
+  const team = d ? d.listUsers().filter((u) => u.role !== "viewer" && u.role !== "brand") : [];
+  const teams = Map.groupBy(team, (u) => d?.getTeam(u.teamId)?.name ?? t.roles.director);
   const shortcuts: ModuleKey[] = user
     ? (["overview", "stores", "people", "reports", "planning", "tasks"] as ModuleKey[]).filter((k) => canOpen(user, k))
     : [];

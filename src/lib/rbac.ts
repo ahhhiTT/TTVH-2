@@ -7,8 +7,7 @@
 // staff     → own stores and own figures
 // viewer / brand → only explicitly granted stores, no people data
 
-import { listStores, listTeams, listUsers } from "./data/repo";
-import { assignments } from "./data/seed";
+import type { Data } from "./data/dataset";
 import type { Permission, Role, User } from "./data/types";
 
 export function isLeader(role: Role) {
@@ -19,9 +18,9 @@ export function hasPermission(user: User, permission: Permission) {
   return user.role === "director" || user.permissions.includes(permission);
 }
 
-export function visibleUserIds(user: User): Set<string> {
-  const users = listUsers();
-  const teams = listTeams();
+export function visibleUserIds(d: Data, user: User): Set<string> {
+  const users = d.listUsers();
+  const teams = d.listTeams();
   switch (user.role) {
     case "director":
       return new Set(users.filter((u) => u.role !== "viewer" && u.role !== "brand").map((u) => u.id));
@@ -43,22 +42,22 @@ export function visibleUserIds(user: User): Set<string> {
   }
 }
 
-export function visibleStoreIds(user: User): Set<string> {
-  const stores = listStores();
+export function visibleStoreIds(d: Data, user: User): Set<string> {
+  const stores = d.listStores();
   if (user.role === "director") return new Set(stores.map((s) => s.id));
   if (user.role === "viewer" || user.role === "brand")
     return new Set(user.grantedStoreIds.filter((id) => stores.some((s) => s.id === id)));
-  const people = visibleUserIds(user);
+  const people = visibleUserIds(d, user);
   const live = new Set(stores.map((s) => s.id));
-  return new Set(assignments.filter((a) => people.has(a.userId) && live.has(a.storeId)).map((a) => a.storeId));
+  return new Set(d.activeAssignments().filter((a) => people.has(a.userId) && live.has(a.storeId)).map((a) => a.storeId));
 }
 
-export function canViewStore(user: User, storeId: string) {
-  return visibleStoreIds(user).has(storeId);
+export function canViewStore(d: Data, user: User, storeId: string) {
+  return visibleStoreIds(d, user).has(storeId);
 }
 
-export function canViewUser(user: User, targetId: string) {
-  return visibleUserIds(user).has(targetId);
+export function canViewUser(d: Data, user: User, targetId: string) {
+  return visibleUserIds(d, user).has(targetId);
 }
 
 // Which sidebar modules a role can open.

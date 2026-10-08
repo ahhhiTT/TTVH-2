@@ -2,7 +2,7 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { getUser } from "./data/repo";
+import { getData } from "./data/dataset";
 import { LOCALES, type Locale } from "./i18n/dictionaries";
 import { LOCALE_COOKIE, SESSION_COOKIE } from "./session";
 
@@ -16,7 +16,7 @@ const cookieOptions = {
 
 export async function demoSignIn(formData: FormData) {
   const id = String(formData.get("userId") ?? "");
-  if (!getUser(id)) redirect("/login");
+  if (!(await getData()).getUser(id)) redirect("/login");
   (await cookies()).set(SESSION_COOKIE, id, cookieOptions);
   redirect("/");
 }

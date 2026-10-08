@@ -4,7 +4,7 @@
 // missing rows and report how many were missing; a sum over only-missing rows
 // is null. A ratio is null when an input is missing or the denominator is 0.
 
-import { metrics, monthKeys } from "./data/seed";
+import type { Data } from "./data/dataset";
 import type { MetricField, MonthlyMetric } from "./data/types";
 
 export interface Kpis {
@@ -24,6 +24,16 @@ export interface Kpis {
 }
 
 const FIELDS: MetricField[] = ["gmvTarget", "gmv", "nmv", "traffic", "orders", "adSpend"];
+
+const pad = (n: number) => String(n).padStart(2, "0");
+
+// The last `count` months ending with the current one, as "YYYY-MM".
+export function monthKeys(count = 6, now = new Date()): string[] {
+  return Array.from({ length: count }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - (count - 1 - i), 1);
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
+  });
+}
 
 export function currentMonth() {
   return monthKeys(1)[0];
@@ -71,15 +81,15 @@ export function aggregate(rows: MonthlyMetric[], month: string): Kpis {
   };
 }
 
-export function kpisFor(storeIds: Set<string>, month = currentMonth()): Kpis {
+export function kpisFor(d: Data, storeIds: Set<string>, month = currentMonth()): Kpis {
   return aggregate(
-    metrics.filter((m) => m.month === month && storeIds.has(m.storeId)),
+    d.monthly(month).filter((m) => storeIds.has(m.storeId)),
     month,
   );
 }
 
-export function trendFor(storeIds: Set<string>, months = monthKeys(6)) {
-  return months.map((month) => ({ month, ...kpisFor(storeIds, month) }));
+export function trendFor(d: Data, storeIds: Set<string>, months = monthKeys(6)) {
+  return months.map((month) => ({ month, ...kpisFor(d, storeIds, month) }));
 }
 
 // "unknown" when pace cannot be computed (e.g. no target). Thresholds are TBD.

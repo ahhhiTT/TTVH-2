@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MODULE_META } from "@/components/module-meta";
 import { Badge, Card, Notice, PageHeader, StatTile, StatusLabel, Tbd, td, tdNum, th } from "@/components/ui";
-import { assignmentsForStore, getBrand, getStore, getUser } from "@/lib/data/repo";
+import { getData } from "@/lib/data/dataset";
 import { money, monthLabel, num, pct, ratio } from "@/lib/format";
 import { aggregate, kpisFor, paceStatus } from "@/lib/metrics";
 import { canViewStore, canViewUser, isLeader } from "@/lib/rbac";
@@ -12,17 +12,18 @@ import { storeHistory } from "@/lib/views";
 export default async function StoreDetailPage({ params }: PageProps<"/stores/[id]">) {
   const { id } = await params;
   const user = await requireUser();
-  const store = getStore(id);
+  const d = await getData();
+  const store = d.getStore(id);
   // Same 404 for "doesn't exist" and "not allowed", so scope can't be probed.
-  if (!store || store.archivedAt || !canViewStore(user, id)) notFound();
+  if (!store || store.archivedAt || !canViewStore(d, user, id)) notFound();
   const { locale, t } = await getI18n();
-  const brand = getBrand(store.brandId);
-  const kpis = kpisFor(new Set([id]));
+  const brand = d.getBrand(store.brandId);
+  const kpis = kpisFor(d, new Set([id]));
   const status = paceStatus(kpis.pace);
-  const team = assignmentsForStore(id)
-    .map((a) => ({ a, person: getUser(a.userId) }))
+  const team = d.assignmentsForStore(id)
+    .map((a) => ({ a, person: d.getUser(a.userId) }))
     .filter((x) => x.person !== null);
-  const history = storeHistory(id).reverse();
+  const history = storeHistory(d, id).reverse();
 
   return (
     <>
@@ -132,7 +133,7 @@ export default async function StoreDetailPage({ params }: PageProps<"/stores/[id
           <ul className="divide-y divide-hairline">
             {team.map(({ a, person }) => {
               const p = person!;
-              const linkable = isLeader(user.role) ? canViewUser(user, p.id) : p.id === user.id;
+              const linkable = isLeader(user.role) ? canViewUser(d, user, p.id) : p.id === user.id;
               return (
                 <li key={p.id} className="flex items-center justify-between gap-3 px-4 py-3 md:px-5">
                   <span className="min-w-0">
