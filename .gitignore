@@ -40,3 +40,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 !.env.example
+
+# Report input files are filled with real brand data: never commit
+docs/report-inputs/
