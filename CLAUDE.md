@@ -23,7 +23,7 @@ running Planning, Execution (checklist, SLA) and Report, plus career path / L&D.
 - `/brand-hub` (Brand Hub, its own top-level menu item): onboarding requirements per brand/store
   (Brand Guideline, Product Information, JBP, master data), downloadable templates in
   `public/templates/` (built by `scripts/templates/build_onboarding_templates.py`, structure
-  only), the raw-file list for the automated weekly report (`src/lib/raw-sources.ts`).
+  only). Raw report files are not listed here: they go straight into the database each week.
   File submission waits for security: brand documents are confidential.
 - `/metrics`: metric dictionary for the weekly report (internal roles only), generated into
   `src/lib/metric-dictionary.ts` by `scripts/metrics/build_dictionary.py` from the Director's

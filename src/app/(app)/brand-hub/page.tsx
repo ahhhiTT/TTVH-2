@@ -3,7 +3,6 @@ import type { CSSProperties } from "react";
 import { MODULE_META } from "@/components/module-meta";
 import { buttonSecondary, Card, cx, EmptyState, Notice, PageHeader, td, th } from "@/components/ui";
 import { getData } from "@/lib/data/dataset";
-import { RAW_SOURCES, type RawStatus } from "@/lib/raw-sources";
 import { canOpen, visibleStoreIds } from "@/lib/rbac";
 import { getI18n, requireUser } from "@/lib/session";
 
@@ -14,7 +13,7 @@ const TEMPLATES: Partial<Record<(typeof DOCS)[number], string>> = {
 };
 
 // Shape + label, never color alone.
-function RawMark({ status }: { status: RawStatus }) {
+function RawMark({ status }: { status: "sample" | "missing" | "manual" | "upload" }) {
   if (status === "sample")
     return (
       <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden className="shrink-0 text-success">
@@ -43,7 +42,7 @@ function RawMark({ status }: { status: RawStatus }) {
 export default async function BrandHubPage() {
   const user = await requireUser();
   if (!canOpen(user, "brandhub")) notFound();
-  const [d, { locale, t }] = await Promise.all([getData(), getI18n()]);
+  const [d, { t }] = await Promise.all([getData(), getI18n()]);
   const B = t.brandhub;
   const scope = visibleStoreIds(d, user);
   const stores = d.listStores().filter((s) => scope.has(s.id));
@@ -110,39 +109,7 @@ export default async function BrandHubPage() {
       </section>
 
       <div className="space-y-6">
-        <Card index={4} accent="cyan" title={B.rawTitle} hint={B.rawHint} padded={false}>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="border-b border-hairline">
-                <tr>
-                  <th className={th}>#</th>
-                  <th className={th}>{B.rawCols.file}</th>
-                  <th className={th}>{B.rawCols.source}</th>
-                  <th className={th}>{B.rawCols.freq}</th>
-                  <th className={th}>{B.rawCols.status}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-hairline">
-                {RAW_SOURCES.map((r, i) => (
-                  <tr key={r.id}>
-                    <td className={`${td} tabular text-muted`}>{i + 1}</td>
-                    <td className={`${td} min-w-56 font-medium`}>{r.name[locale]}</td>
-                    <td className={`${td} whitespace-nowrap text-body`}>{r.source}</td>
-                    <td className={`${td} whitespace-nowrap text-body`}>{r.freq[locale]}</td>
-                    <td className={td}>
-                      <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-[13px]">
-                        <RawMark status={r.status} />
-                        {B.rawStatus[r.status]}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card>
-
-        <Card index={5} accent="pink" title={B.statusTitle} hint={B.statusHint} padded={false}>
+        <Card index={4} accent="pink" title={B.statusTitle} hint={B.statusHint} padded={false}>
           {brands.length === 0 ? (
             <EmptyState>{t.common.noStores}</EmptyState>
           ) : (
