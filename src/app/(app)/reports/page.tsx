@@ -60,7 +60,18 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
 
   return (
     <>
-      <PageHeader accent={MODULE_META.reports.accent} title={t.reports.title} subtitle={t.reports.subtitle} />
+      <PageHeader
+        accent={MODULE_META.reports.accent}
+        title={t.reports.title}
+        subtitle={t.reports.subtitle}
+        actions={
+          user.role !== "viewer" && user.role !== "brand" ? (
+            <Link href="/metrics" className={cx(buttonSecondary, "h-9 text-[13px]")}>
+              {t.metrics.open}
+            </Link>
+          ) : undefined
+        }
+      />
       <nav className="mb-5 flex flex-wrap gap-1.5" aria-label={t.reports.title}>
         {tabs.map((tab) => (
           <Link

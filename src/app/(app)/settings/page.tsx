@@ -105,6 +105,11 @@ export default async function SettingsPage() {
         </Card>
 
         <section id="definitions" className="scroll-mt-20">
+          <div className="mb-3">
+            <Link href="/metrics" className={buttonPrimary}>
+              {t.metrics.open}
+            </Link>
+          </div>
           <Card index={3} accent="orange" title={t.settings.definitions} hint={t.settings.definitionsNote} padded={false}>
             <div className="overflow-x-auto">
               <table className="w-full">

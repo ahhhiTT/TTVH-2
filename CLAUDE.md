@@ -25,6 +25,10 @@ running Planning, Execution (checklist, SLA) and Report, plus career path / L&D.
   `public/templates/` (built by `scripts/templates/build_onboarding_templates.py`, structure
   only), the raw-file list for the automated weekly report (`src/lib/raw-sources.ts`).
   File submission waits for security: brand documents are confidential.
+- `/metrics`: metric dictionary for the weekly report (internal roles only), generated into
+  `src/lib/metric-dictionary.ts` by `scripts/metrics/build_dictionary.py` from the Director's
+  metric file. Never hand-edit the generated file; status is "confirmed" only when the file
+  has a confirmed formula.
 
 ## Data rules (set by the Director, non-negotiable)
 1. Never change business logic without the Director's confirmation.

@@ -21,6 +21,12 @@ function RawMark({ status }: { status: RawStatus }) {
         <circle cx="6" cy="6" r="5" fill="currentColor" />
       </svg>
     );
+  if (status === "upload")
+    return (
+      <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden className="shrink-0 text-ink">
+        <rect x="1.5" y="1.5" width="9" height="9" rx="1.5" fill="currentColor" />
+      </svg>
+    );
   if (status === "manual")
     return (
       <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden className="shrink-0 text-warning">

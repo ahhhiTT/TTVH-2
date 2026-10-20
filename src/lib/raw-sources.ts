@@ -1,10 +1,11 @@
 // Raw files behind the automated TikTok Shop weekly report (from the Director's
 // FILE INPUT list and the Kuties TTS form, 2026-10-20). The extension will download
-// these from Seller Center and Lark. "sample" = a sample file has been received.
+// Seller Center files; Lark Base files are uploaded by hand until the Lark API is set up.
+// "sample" = a sample file has been received.
 
 import type { L } from "./reports";
 
-export type RawStatus = "sample" | "missing" | "manual";
+export type RawStatus = "sample" | "missing" | "manual" | "upload";
 
 export interface RawSource {
   id: string;
@@ -38,6 +39,6 @@ export const RAW_SOURCES: RawSource[] = [
   { id: "customers", name: { vi: "Phân tích khách hàng", en: "Customer analysis" }, source: "TikTok Seller Center", freq: weeklyMonthly, status: "manual" },
   { id: "shop-score", name: { vi: "Điểm cửa hàng (sức khỏe gian hàng)", en: "Shop score (account health)" }, source: "TikTok Seller Center", freq: weeklyMonthly, status: "manual" },
   { id: "income", name: { vi: "Báo cáo income (quyết toán)", en: "Income report (settlement)" }, source: "TikTok Seller Center", freq: tbd, status: "sample" },
-  { id: "booking", name: { vi: "Base Booking B2C", en: "Booking base, B2C" }, source: "Lark Base", freq: weeklyMonthly, status: "sample" },
-  { id: "live-acceptance", name: { vi: "Base Livestream nghiệm thu", en: "Livestream acceptance base" }, source: "Lark Base", freq: weeklyMonthly, status: "sample" },
+  { id: "booking", name: { vi: "Base Booking B2C", en: "Booking base, B2C" }, source: "Lark Base", freq: weeklyMonthly, status: "upload" },
+  { id: "live-acceptance", name: { vi: "Base Livestream nghiệm thu", en: "Livestream acceptance base" }, source: "Lark Base", freq: weeklyMonthly, status: "upload" },
 ];
