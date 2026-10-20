@@ -71,15 +71,16 @@ export type ModuleKey =
   | "reports"
   | "career"
   | "knowledge"
+  | "brandhub"
   | "settings";
 
 const MODULES_BY_ROLE: Record<Role, ModuleKey[]> = {
-  director: ["home", "overview", "stores", "people", "planning", "tasks", "reports", "career", "knowledge", "settings"],
-  manager: ["home", "overview", "stores", "people", "planning", "tasks", "reports", "career", "knowledge"],
-  teamlead: ["home", "overview", "stores", "people", "planning", "tasks", "reports", "career", "knowledge"],
-  staff: ["home", "overview", "stores", "people", "planning", "tasks", "reports", "career", "knowledge"],
+  director: ["home", "overview", "stores", "people", "planning", "tasks", "reports", "brandhub", "career", "knowledge", "settings"],
+  manager: ["home", "overview", "stores", "people", "planning", "tasks", "reports", "brandhub", "career", "knowledge"],
+  teamlead: ["home", "overview", "stores", "people", "planning", "tasks", "reports", "brandhub", "career", "knowledge"],
+  staff: ["home", "overview", "stores", "people", "planning", "tasks", "reports", "brandhub", "career", "knowledge"],
   viewer: ["home", "overview", "stores", "knowledge"],
-  brand: ["home", "overview", "stores", "reports"],
+  brand: ["home", "overview", "stores", "reports", "brandhub"],
 };
 
 export function canOpen(user: User, module: ModuleKey) {

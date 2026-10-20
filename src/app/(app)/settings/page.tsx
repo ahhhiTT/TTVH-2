@@ -9,7 +9,7 @@ import { canOpen, ROLE_MODULES, type ModuleKey } from "@/lib/rbac";
 import { getI18n, requireUser } from "@/lib/session";
 
 const ROLES: Role[] = ["director", "manager", "teamlead", "staff", "viewer", "brand"];
-const MODULES: ModuleKey[] = ["home", "overview", "stores", "people", "planning", "tasks", "reports", "career", "knowledge", "settings"];
+const MODULES: ModuleKey[] = ["home", "overview", "stores", "people", "planning", "tasks", "reports", "brandhub", "career", "knowledge", "settings"];
 
 function Access({ allowed }: { allowed: boolean }) {
   return allowed ? (

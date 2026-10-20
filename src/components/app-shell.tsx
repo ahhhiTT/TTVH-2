@@ -52,6 +52,7 @@ export function navGroupsFor(user: User, t: Dictionary): NavGroup[] {
     group(t.nav.groupDepartment, ["home"]),
     group(t.nav.groupPerformance, ["overview", "stores", "people"]),
     group(t.nav.groupExecution, ["planning", "tasks", "reports"]),
+    group(t.nav.brandhub, ["brandhub"]),
     group(t.nav.groupGrowth, ["career", "knowledge"]),
     group(t.nav.groupAdmin, ["settings"]),
   ].filter((g) => g.items.length > 0);

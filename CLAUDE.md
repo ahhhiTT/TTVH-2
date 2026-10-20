@@ -20,6 +20,11 @@ running Planning, Execution (checklist, SLA) and Report, plus career path / L&D.
   time), the DB-backed overview, then each manifest section (`src/lib/reports.ts`) with
   its tools embedded inline. Tool files are served unchanged from `public/reports/`;
   the platform filter only decides which tools show.
+- `/brand-hub` (Brand Hub, its own top-level menu item): onboarding requirements per brand/store
+  (Brand Guideline, Product Information, JBP, master data), downloadable templates in
+  `public/templates/` (built by `scripts/templates/build_onboarding_templates.py`, structure
+  only), the raw-file list for the automated weekly report (`src/lib/raw-sources.ts`).
+  File submission waits for security: brand documents are confidential.
 
 ## Data rules (set by the Director, non-negotiable)
 1. Never change business logic without the Director's confirmation.

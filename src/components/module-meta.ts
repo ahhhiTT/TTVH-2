@@ -13,5 +13,6 @@ export const MODULE_META: Record<ModuleKey, { href: string; accent: Accent }> = 
   reports: { href: "/reports", accent: "blue" },
   career: { href: "/career", accent: "pink" },
   knowledge: { href: "/knowledge", accent: "purple" },
+  brandhub: { href: "/brand-hub", accent: "pink" },
   settings: { href: "/settings", accent: "cyan" },
 };
