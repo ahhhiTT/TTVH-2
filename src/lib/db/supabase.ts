@@ -16,8 +16,8 @@ export function supabase(): SupabaseClient | null {
   return client;
 }
 
-// Admin edits write to the shared database. While the site is a public demo
-// with click-to-sign-in, writes stay off unless explicitly enabled.
+// Admin edits write to the shared database. With Supabase configured the site uses
+// real sign-in (no demo accounts), so the Director can edit master data.
 export function writesEnabled() {
-  return supabase() !== null && process.env.ADMIN_WRITES === "on";
+  return supabase() !== null;
 }

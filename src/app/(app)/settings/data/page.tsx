@@ -2,13 +2,15 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MODULE_META } from "@/components/module-meta";
 import { Badge, buttonPrimary, buttonSecondary, Card, cx, EmptyState, Notice, PageHeader, td, th } from "@/components/ui";
+import { ActivationCodeButton } from "@/components/auth-forms";
 import { endAssignment, saveEntity, setArchived } from "@/lib/admin-actions";
 import { ENTITIES, ENTITY_KEYS, type EntityKey, type FieldSpec, type OptionSource, STATIC_OPTIONS } from "@/lib/admin-schema";
 import { type Data, getData, readAudit } from "@/lib/data/dataset";
 import { supabase, writesEnabled } from "@/lib/db/supabase";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 import { canOpen } from "@/lib/rbac";
-import { getI18n, requireUser } from "@/lib/session";
+import { activatedIds } from "@/lib/auth";
+import { demoMode, getI18n, requireUser } from "@/lib/session";
 
 type Tab = EntityKey | "audit";
 type Row = Record<string, unknown> & { id: string | number; archived_at: string | null };
@@ -27,19 +29,28 @@ function rowsOf(d: Data, entity: EntityKey): Row[] {
         scale: s.scale,
         difficulty: s.difficulty,
         status: s.status,
+        team_id: s.teamId,
+        external_id: s.externalId,
+        customer_code: s.customerCode,
+        service_model: s.serviceModel,
+        account_pic: s.accountPic,
+        content_pic: s.contentPic,
         archived_at: s.archivedAt,
       }));
     case "people":
       return d.users.map((u) => ({
         id: u.id,
         name: u.name,
+        employee_code: u.employeeCode,
         email: u.email,
+        personal_email: u.personalEmail,
         role: u.role,
         title: u.title,
         department: u.department,
         level: u.level,
         team_id: u.teamId,
         manager_id: u.managerId,
+        start_date: u.startDate,
         permissions: u.permissions,
         granted_store_ids: u.grantedStoreIds,
         archived_at: u.archivedAt,
@@ -252,6 +263,7 @@ export default async function MasterDataPage({
     const mode = editId === "new" ? "create" : editing ? "update" : null;
     const listed = spec.fields.filter((f) => f.type !== "multi");
     const today = new Date().toISOString().slice(0, 10);
+    const accounts = tab === "people" && !demoMode() ? await activatedIds() : null;
     const totals =
       tab === "assignments"
         ? Map.groupBy(
@@ -307,6 +319,7 @@ export default async function MasterDataPage({
                     </th>
                   ))}
                   {tab === "assignments" && <th className={`${th} text-right`}>{a.workloadTotal}</th>}
+                  {accounts && <th className={th}>{a.account}</th>}
                   <th className={th} />
                 </tr>
               </thead>
@@ -315,7 +328,9 @@ export default async function MasterDataPage({
                   const archived = r.archived_at !== null;
                   const personTotal =
                     totals && typeof r.person_id === "string"
-                      ? (totals.get(r.person_id) ?? []).reduce((acc, x) => acc + x.workloadPct, 0)
+                      ? (totals.get(r.person_id) ?? []).every((x) => x.workloadPct !== null)
+                        ? (totals.get(r.person_id) ?? []).reduce((acc, x) => acc + (x.workloadPct as number), 0)
+                        : null
                       : null;
                   return (
                     <tr key={String(r.id)} className={cx(archived && "opacity-60", String(r.id) === ok && "bg-panel")}>
@@ -331,7 +346,23 @@ export default async function MasterDataPage({
                       ))}
                       {tab === "assignments" && (
                         <td className={cx(td, "tabular text-right", personTotal !== null && personTotal > 100 && "font-semibold text-error")}>
-                          {personTotal === null ? "-" : `${personTotal}%`}
+                          {personTotal === null ? "TBD" : `${personTotal}%`}
+                        </td>
+                      )}
+                      {accounts && (
+                        <td className={`${td} whitespace-nowrap`}>
+                          <div className="flex flex-col items-start gap-1">
+                            <span className={cx("text-[13px]", accounts.has(String(r.id)) ? "text-success" : "text-muted")}>
+                              {accounts.has(String(r.id)) ? a.activated : a.notActivated}
+                            </span>
+                            {!archived && (
+                              <ActivationCodeButton
+                                personId={String(r.id)}
+                                label={accounts.has(String(r.id)) ? a.reissueCode : a.issueCode}
+                                text={{ shown: a.codeShown, errors: a.codeErrors }}
+                              />
+                            )}
+                          </div>
                         </td>
                       )}
                       <td className={`${td} whitespace-nowrap text-right`}>

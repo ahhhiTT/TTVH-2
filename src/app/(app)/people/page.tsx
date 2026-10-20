@@ -61,7 +61,7 @@ export default async function PeoplePage() {
                     <td className={`${td} whitespace-nowrap text-body`}>{d.getTeam(r.person.teamId)?.name ?? t.common.none}</td>
                     <td className={`${td} text-body`}>{r.person.level}</td>
                     <td className={tdNum(false)}>{r.items.length}</td>
-                    <td className={tdNum(!has)}>{has ? `${r.workload}%` : t.common.none}</td>
+                    <td className={tdNum(!has)}>{!has ? t.common.none : r.workload === null ? "TBD" : `${r.workload}%`}</td>
                     <td className={tdNum(!has || r.weightedGmv === null)}>
                       {has ? money(r.weightedGmv, locale, true) : t.common.none}
                     </td>

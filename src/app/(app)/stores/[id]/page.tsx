@@ -31,15 +31,15 @@ export default async function StoreDetailPage({ params }: PageProps<"/stores/[id
         back={{ href: "/stores", label: t.common.back }}
         accent={MODULE_META.stores.accent}
         title={store.name}
-        subtitle={`${brand?.name}. ${brand?.category}. ${t.channel[store.channel]}.`}
+        subtitle={[brand?.name, brand?.category, t.channel[store.channel], store.serviceModel].filter(Boolean).join(". ") + "."}
         actions={
           <div className="flex flex-wrap gap-2">
             <Badge>{t.storeStatus[store.status]}</Badge>
             <Badge>
-              {t.common.scale} {store.scale}
+              {t.common.scale} {store.scale ?? "TBD"}
             </Badge>
             <Badge>
-              {t.common.difficulty} {store.difficulty}/5
+              {t.common.difficulty} {store.difficulty === null ? "TBD" : `${store.difficulty}/5`}
             </Badge>
           </div>
         }
@@ -148,7 +148,7 @@ export default async function StoreDetailPage({ params }: PageProps<"/stores/[id
                   </span>
                   {(isLeader(user.role) || p.id === user.id) && (
                     <span className="tabular shrink-0 text-sm text-body">
-                      {t.common.workload} {a.workloadPct}%
+                      {t.common.workload} {a.workloadPct === null ? "TBD" : `${a.workloadPct}%`}
                     </span>
                   )}
                 </li>

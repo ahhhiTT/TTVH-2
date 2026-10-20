@@ -3,7 +3,7 @@
 //
 // director  → everything
 // manager   → people in teams they manage (+ their stores)
-// teamlead  → people in their team (+ their stores)
+// teamlead  → people in teams they lead or who report to them (+ their stores)
 // staff     → own stores and own figures
 // viewer / brand → only explicitly granted stores, no people data
 
@@ -32,8 +32,13 @@ export function visibleUserIds(d: Data, user: User): Set<string> {
       ]);
     }
     case "teamlead": {
+      // Team members of teams they lead, plus people whose line manager they are
+      // (how the Director assigns people to a teamlead on the admin page).
       const teamIds = teams.filter((t) => t.leadId === user.id).map((t) => t.id);
-      return new Set([user.id, ...users.filter((u) => u.teamId && teamIds.includes(u.teamId)).map((u) => u.id)]);
+      return new Set([
+        user.id,
+        ...users.filter((u) => u.managerId === user.id || (u.teamId && teamIds.includes(u.teamId))).map((u) => u.id),
+      ]);
     }
     case "staff":
       return new Set([user.id]);

@@ -31,7 +31,10 @@ export interface Team extends Archivable {
 export interface User extends Archivable {
   id: string;
   name: string;
-  email: string;
+  email: string | null; // company email
+  personalEmail: string | null; // also accepted for sign-in
+  employeeCode: string | null; // HR id, e.g. HN081
+  startDate: string | null;
   role: Role;
   title: string;
   department: string;
@@ -45,7 +48,7 @@ export interface User extends Archivable {
 export interface Brand extends Archivable {
   id: string;
   name: string;
-  category: string;
+  category: string | null;
 }
 
 export interface Store extends Archivable {
@@ -53,9 +56,15 @@ export interface Store extends Archivable {
   brandId: string;
   name: string;
   channel: Channel;
-  scale: "S" | "M" | "L" | "XL";
-  difficulty: 1 | 2 | 3 | 4 | 5;
+  scale: "S" | "M" | "L" | "XL" | null; // null = not set yet
+  difficulty: 1 | 2 | 3 | 4 | 5 | null;
   status: "active" | "onboarding" | "paused";
+  externalId: string | null; // StoreID in the operation tracking system
+  customerCode: string | null;
+  serviceModel: string | null;
+  teamId: string | null; // Growth team running the store
+  accountPic: string | null; // account owner (another department), name only
+  contentPic: string | null;
 }
 
 // Who runs which store, and what share of their time it takes.
@@ -65,8 +74,8 @@ export interface Assignment extends Archivable {
   id: number;
   userId: string;
   storeId: string;
-  workloadPct: number;
-  isPrimary: boolean;
+  workloadPct: number | null; // null = not agreed yet (TBD)
+  isPrimary: boolean; // true = Growth PIC, false = Growth Support
   validFrom: string;
   validTo: string | null;
 }

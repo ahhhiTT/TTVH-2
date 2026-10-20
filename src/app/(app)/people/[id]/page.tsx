@@ -17,7 +17,7 @@ export default async function PersonPage({ params }: PageProps<"/people/[id]">) 
   const { locale, t } = await getI18n();
   const s = personSummary(d, person);
   const manager = person.managerId ? d.getUser(person.managerId) : null;
-  const other = 100 - s.workload;
+  const other = s.workload === null ? null : 100 - s.workload;
   const has = s.items.length > 0;
 
   return (
@@ -65,8 +65,9 @@ export default async function PersonPage({ params }: PageProps<"/people/[id]">) 
           index={4}
           accent="orange"
           label={t.common.workload}
-          value={`${s.workload}%`}
-          sub={other > 0 ? `${t.common.otherProjects}: ${other}%` : undefined}
+          value={s.workload === null ? "TBD" : `${s.workload}%`}
+          tbd={s.workload === null}
+          sub={other !== null && other > 0 ? `${t.common.otherProjects}: ${other}%` : undefined}
         />
       </div>
 
@@ -95,7 +96,7 @@ export default async function PersonPage({ params }: PageProps<"/people/[id]">) 
                         {i.store.name}
                       </Link>
                     </td>
-                    <td className={tdNum(false)}>{i.assignment.workloadPct}%</td>
+                    <td className={tdNum(i.assignment.workloadPct === null)}>{i.assignment.workloadPct === null ? "TBD" : `${i.assignment.workloadPct}%`}</td>
                     <td className={tdNum(false)}>{i.store.difficulty}/5</td>
                     <td className={tdNum(i.kpis.gmv === null)}>{money(i.kpis.gmv, locale, true)}</td>
                     <td className={tdNum(i.kpis.achievement === null)}>{pct(i.kpis.achievement, locale, 0, true)}</td>

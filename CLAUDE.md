@@ -11,7 +11,11 @@ running Planning, Execution (checklist, SLA) and Report, plus career path / L&D.
 - Next.js 16 (App Router, Cache Components on), TypeScript, Tailwind v4.
 - Data: Supabase (Postgres) through `src/lib/data/dataset.ts`, with the sample seed in
   `src/lib/data/seed.ts` as fallback. See "Data layer" below.
-- Auth is a demo cookie (`src/lib/session.ts`). Planned: Auth.js + Lark OAuth.
+- Auth (`src/lib/auth.ts`): with Supabase configured, email (company or personal) + password.
+  Accounts are activated with a one-time code the Director creates on /settings/data (People tab);
+  passwords are scrypt hashes, sessions are revocable rows in `sessions`, 5 failed tries per
+  15 min lock an email. Without Supabase (local sample) the demo account picker is used.
+  Lark sign-in is the planned second method.
 - Bilingual vi/en via `src/lib/i18n/dictionaries.ts` (cookie `ttvh2_locale`).
   Every user-visible string goes in both dictionaries, no hard-coded text.
 - `/` is the department homepage (public, richer when signed in). The KPI
@@ -61,7 +65,7 @@ running Planning, Execution (checklist, SLA) and Report, plus career path / L&D.
 - Supabase project `marketing-ecom` (ref tgtcyvbwvwdhoxgfqvhk). RLS on, no policies: only the
   server reads/writes. Sample data: `scripts/sample-data/generate.ts` (master) then
   `scripts/sample-data/metrics.sql` (daily metrics + monthly targets).
-- Admin `/settings/data`: writes need Supabase + `ADMIN_WRITES=on`. Every write adds an
+- Admin `/settings/data`: writes need Supabase (real sign-in). Every write adds an
   `audit_log` row (before/after); records are archived (`archived_at`), never deleted;
   assignments are closed with `valid_to`, not removed.
 - Periods (`src/lib/period.ts`): mtd = 1st..date, week = Fri..Thu, month, custom. Comparison =

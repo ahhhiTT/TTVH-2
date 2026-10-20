@@ -46,11 +46,14 @@ export function personSummary(d: Data, person: User, month = currentMonth()) {
   const kpis = kpisFor(d, storeIds, month);
   // Formula TBD: credit each store's GMV by the person's workload share.
   // null when no assigned store has GMV data.
+  // null when no assigned store has GMV data, or a workload share is not agreed yet.
   const withGmv = items.filter((i) => i.kpis.gmv !== null);
-  const weightedGmv = withGmv.length
-    ? withGmv.reduce((acc, i) => acc + (i.kpis.gmv as number) * (i.assignment.workloadPct / 100), 0)
-    : null;
-  const workload = items.reduce((acc, i) => acc + i.assignment.workloadPct, 0);
+  const workloadKnown = items.every((i) => i.assignment.workloadPct !== null);
+  const weightedGmv =
+    withGmv.length && workloadKnown
+      ? withGmv.reduce((acc, i) => acc + (i.kpis.gmv as number) * ((i.assignment.workloadPct as number) / 100), 0)
+      : null;
+  const workload = workloadKnown ? items.reduce((acc, i) => acc + (i.assignment.workloadPct as number), 0) : null;
   return {
     person,
     items,

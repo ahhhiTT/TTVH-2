@@ -62,6 +62,12 @@ for (const brand of brands) {
       scale: pick(["S", "M", "M", "L", "L", "XL"] as const),
       difficulty: pick([1, 2, 3, 3, 4, 5] as const),
       status: rand() > 0.92 ? "onboarding" : "active",
+      externalId: null,
+      customerCode: null,
+      serviceModel: null,
+      teamId: null,
+      accountPic: null,
+      contentPic: null,
       archivedAt: null,
     });
   }
@@ -77,6 +83,12 @@ while (stores.length < 51) {
     scale: "M",
     difficulty: 3,
     status: "active",
+    externalId: null,
+    customerCode: null,
+    serviceModel: null,
+    teamId: null,
+    accountPic: null,
+    contentPic: null,
     archivedAt: null,
   });
 }
@@ -94,6 +106,9 @@ export const users: User[] = [
     id: "u01",
     name: "Giám đốc TTVH2",
     email: "director@example.com",
+    personalEmail: null,
+    employeeCode: null,
+    startDate: null,
     role: "director",
     title: "Giám đốc Trung tâm Vận hành 2",
     department: "Growth",
@@ -108,6 +123,9 @@ export const users: User[] = [
     id: "u02",
     name: "Teamlead 01",
     email: "teamlead01@example.com",
+    personalEmail: null,
+    employeeCode: null,
+    startDate: null,
     role: "teamlead",
     title: "Growth Teamlead",
     department: "Growth",
@@ -125,6 +143,9 @@ for (let i = 1; i <= 25; i++) {
     id: `u${pad(i + 2)}`,
     name: `Nhân sự ${pad(i)}`,
     email: `staff${pad(i)}@example.com`,
+    personalEmail: null,
+    employeeCode: null,
+    startDate: null,
     role: "staff",
     title: "Growth Executive",
     department: "Growth",
@@ -180,6 +201,9 @@ users.push(
     id: "x01",
     name: "Demo · Media",
     email: "media@example.com",
+    personalEmail: null,
+    employeeCode: null,
+    startDate: null,
     role: "viewer",
     title: "Media Specialist",
     department: "Media",
@@ -194,6 +218,9 @@ users.push(
     id: "x02",
     name: "Demo · Brand A",
     email: "brand-a@example.com",
+    personalEmail: null,
+    employeeCode: null,
+    startDate: null,
     role: "brand",
     title: "Brand Manager",
     department: "Brand A",
@@ -220,7 +247,7 @@ const start = new Date(2026, 4, 1);
 const today = new Date();
 today.setHours(0, 0, 0, 0);
 for (const store of stores) {
-  const base = SCALE_DAILY[store.scale] * between(0.6, 1.4);
+  const base = SCALE_DAILY[store.scale ?? "M"] * between(0.6, 1.4);
   const growth = between(-0.004, 0.008); // per week
   const rAds = rand();
   const lagged = rand() > 0.9; // today's import has not arrived
