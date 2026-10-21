@@ -4,6 +4,7 @@ import { type CSSProperties, Suspense } from "react";
 import { DailyChart } from "@/components/daily-chart";
 import { MODULE_META, type Accent } from "@/components/module-meta";
 import { ReportFilters } from "@/components/report-filters";
+import { ReportTabs } from "@/components/report-tabs";
 import { FlowArrow } from "@/components/svg";
 import { Badge, buttonSecondary, Card, cx, EmptyState, Notice, PageHeader, StatTile, Tbd, td, tdNum, th } from "@/components/ui";
 import { getData } from "@/lib/data/dataset";
@@ -53,10 +54,6 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
   const { locale, t } = await getI18n();
   // The old "tools" tab now lives inside the dashboard flow.
   const view: View = sp.view === "template" ? "template" : "dashboard";
-  const tabs: { key: View; label: string }[] = [
-    { key: "dashboard", label: t.dash.tabDashboard },
-    { key: "template", label: t.dash.tabTemplate },
-  ];
 
   return (
     <>
@@ -72,21 +69,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
           ) : undefined
         }
       />
-      <nav className="mb-5 flex flex-wrap gap-1.5" aria-label={t.reports.title}>
-        {tabs.map((tab) => (
-          <Link
-            key={tab.key}
-            href={tab.key === "dashboard" ? "/reports" : `/reports?view=${tab.key}`}
-            aria-current={tab.key === view ? "page" : undefined}
-            className={cx(
-              "rounded-full px-3.5 py-1.5 text-[13px] font-semibold transition-colors",
-              tab.key === view ? "bg-primary text-on-primary" : "border border-hairline-strong text-ink hover:bg-canvas-soft",
-            )}
-          >
-            {tab.label}
-          </Link>
-        ))}
-      </nav>
+      <ReportTabs active={view} t={t} />
       {view === "dashboard" && <Dashboard sp={sp} locale={locale} t={t} />}
       {view === "template" && <Template t={t} />}
     </>

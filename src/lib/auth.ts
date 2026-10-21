@@ -3,6 +3,7 @@ import "server-only";
 import { createHash, randomBytes, randomInt, scrypt as scryptCb, timingSafeEqual } from "node:crypto";
 import { promisify } from "node:util";
 import { cookies } from "next/headers";
+import { connection } from "next/server";
 import { cache } from "react";
 import type { Data } from "./data/dataset";
 import type { User } from "./data/types";
@@ -154,6 +155,7 @@ export async function activateAccount(
 
 // Person id of the signed-in session, or null. One lookup per request.
 export const sessionPersonId = cache(async (): Promise<string | null> => {
+  await connection(); // compares with the current time: always per request
   const db = supabase();
   const token = (await cookies()).get(AUTH_COOKIE)?.value;
   if (!db || !token) return null;

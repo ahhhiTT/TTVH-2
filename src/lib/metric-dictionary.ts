@@ -115,13 +115,13 @@ export const METRIC_DICTIONARY: MetricEntry[] = [
     "group": "Chỉ số chung",
     "name": "Tỉ lệ chuyển đổi (CR)",
     "unit": "%",
-    "templateFormula": "[P1-004 Số đơn hàng]/[P1-006 Lượt truy cập gian hàng]",
+    "templateFormula": "[P1-004 Số đơn hàng]/[P1-005 Lượt nhấp vào sản phẩm]",
     "rollUp": "Tính lại từ tổng tháng",
     "source": "Tính từ chỉ số khác",
     "definition": "Hiển thị tỷ lệ phần trăm người dùng riêng biệt đã thanh toán cho đơn hàng sau khi xem trang chi tiết sản phẩm trong khoảng thời gian đã chọn.",
-    "formula": "P1-004 / P1-006 (Số đơn hàng / Khách truy cập)",
+    "formula": "P1-004 / P1-005 (Số đơn hàng / Lượt nhấp vào sản phẩm)",
     "rawColumn": "",
-    "note": "Chốt 20/10/2026: Theo công thức file Kuties.",
+    "note": "Chốt 20/10/2026: Theo công thức file Kuties (ô E12 = E9/E10).",
     "status": "confirmed"
   },
   {

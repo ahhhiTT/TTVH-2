@@ -29,6 +29,13 @@ running Planning, Execution (checklist, SLA) and Report, plus career path / L&D.
   `public/templates/` (built by `scripts/templates/build_onboarding_templates.py`, structure
   only). Raw report files are not listed here: they go straight into the database each week.
   File submission waits for security: brand documents are confidential.
+- `/reports/weekly`: TikTok Shop weekly report (Kuties template). Raw exports are parsed in the
+  browser (`src/lib/weekly/parse.ts`, detection by column headers, only needed columns read, PII
+  never sent) into aggregated facts (`wr_facts`, daily or period). A new file of a kind replaces
+  facts of that kind for the dates it covers. Template rows and formulas: `src/lib/weekly/template.ts`;
+  plans, costs outside the marketplace, shop health and weekly review are typed into `wr_inputs`
+  (month left empty = sum of weeks). Weeks are month-clipped Fri..Thu (`periods.ts`). Per-store
+  settings (self channel accounts, product lines for booking) in `stores.report_config`.
 - `/metrics`: metric dictionary for the weekly report (internal roles only), generated into
   `src/lib/metric-dictionary.ts` by `scripts/metrics/build_dictionary.py` from the Director's
   metric file. Never hand-edit the generated file; status is "confirmed" only when the file
