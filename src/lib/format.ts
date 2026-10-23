@@ -4,32 +4,48 @@ import type { Locale } from "./i18n/dictionaries";
 export const MISSING: Record<Locale, string> = { vi: "Chưa có dữ liệu", en: "No data" };
 const SHORT_MISSING = "N/A";
 
-const nfo = (locale: Locale, digits: number, extra: Intl.NumberFormatOptions = {}) =>
-  new Intl.NumberFormat(locale === "vi" ? "vi-VN" : "en-US", { maximumFractionDigits: digits, ...extra });
+// Number standard (Director 2026-10-23), same in both languages: full value, no
+// compaction, "." groups thousands, "," before decimals, at most 2 decimals.
+// Percentages always show 2 decimals.
+const NF = new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 2 });
+const PF = new Intl.NumberFormat("vi-VN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-// Compact VND: 1,25 tỷ / 1.25B, 850 tr / 850M.
+export const fmtNumber = (value: number) => NF.format(value);
+export const fmtPercent = (value: number) => `${PF.format(value * 100)}%`;
+
+// Typed input in the same standard: "1.234.567,5" -> 1234567.5. Without a comma, dots
+// followed by groups of exactly 3 digits are thousands ("1.500" -> 1500), any other
+// single dot is a decimal point ("0.12" -> 0.12).
+export function parseVnNumber(text: string): number {
+  let s = text.replace(/[\s\u00a0]/g, "");
+  if (s.includes(",")) s = s.replace(/\./g, "").replace(",", ".");
+  else if (/^-?\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, "");
+  return s === "" ? NaN : Number(s);
+}
+
+// Plain value for an edit box: no grouping, "," before decimals.
+export const editNumber = (value: number) => String(value).replace(".", ",");
+
 export function money(value: number | null, locale: Locale, short = false) {
   if (value === null) return short ? SHORT_MISSING : MISSING[locale];
-  const abs = Math.abs(value);
-  if (abs >= 1e9) return `${nfo(locale, 2).format(value / 1e9)}${locale === "vi" ? " tỷ" : "B"}`;
-  if (abs >= 1e6) return `${nfo(locale, 0).format(value / 1e6)}${locale === "vi" ? " tr" : "M"}`;
-  if (abs >= 1e3) return `${nfo(locale, 0).format(value / 1e3)}K`;
-  return nfo(locale, 0).format(value);
+  return fmtNumber(value);
 }
 
 export function num(value: number | null, locale: Locale, short = false) {
   if (value === null) return short ? SHORT_MISSING : MISSING[locale];
-  return nfo(locale, 0).format(value);
+  return fmtNumber(value);
 }
 
-export function pct(value: number | null, locale: Locale, digits = 0, short = false) {
+// `digits` is kept for existing callers; the standard is always 2 decimals.
+export function pct(value: number | null, locale: Locale, digits = 2, short = false) {
+  void digits;
   if (value === null) return short ? SHORT_MISSING : MISSING[locale];
-  return nfo(locale, digits, { style: "percent" }).format(value);
+  return fmtPercent(value);
 }
 
 export function ratio(value: number | null, locale: Locale, short = false) {
   if (value === null) return short ? SHORT_MISSING : MISSING[locale];
-  return `${nfo(locale, 1).format(value)}x`;
+  return `${fmtNumber(value)}x`;
 }
 
 export function monthLabel(month: string, locale: Locale) {

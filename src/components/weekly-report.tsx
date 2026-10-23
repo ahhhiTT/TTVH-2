@@ -2,6 +2,7 @@
 
 import { Fragment, useActionState, useState } from "react";
 import type { Dictionary, Locale } from "@/lib/i18n/dictionaries";
+import { fmtNumber, fmtPercent } from "@/lib/format";
 import type { L } from "@/lib/reports";
 import { type SaveState, saveInputs } from "@/lib/weekly/actions";
 import type { Cell, ResultSection } from "@/lib/weekly/compute";
@@ -17,29 +18,10 @@ export interface PeriodCol {
 
 type W = Dictionary["weekly"];
 
-function fmt(v: number | null, unit: Unit, locale: Locale) {
+function fmt(v: number | null, unit: Unit) {
   if (v === null) return "N/A";
-  const nf = (d: number) => new Intl.NumberFormat(locale === "vi" ? "vi-VN" : "en-US", { maximumFractionDigits: d });
-  switch (unit) {
-    case "vnd": {
-      const a = Math.abs(v);
-      if (a >= 1e9) return `${nf(2).format(v / 1e9)}${locale === "vi" ? " tỷ" : "B"}`;
-      if (a >= 1e6) return `${nf(1).format(v / 1e6)}${locale === "vi" ? " tr" : "M"}`;
-      return nf(0).format(v);
-    }
-    case "pct":
-      return `${nf(1).format(v * 100)}%`;
-    case "x":
-      return nf(2).format(v);
-    case "h":
-      return nf(1).format(v);
-    default:
-      return nf(0).format(v);
-  }
+  return unit === "pct" ? fmtPercent(v) : fmtNumber(v);
 }
-
-const full = (v: number | null, locale: Locale) =>
-  v === null ? undefined : new Intl.NumberFormat(locale === "vi" ? "vi-VN" : "en-US", { maximumFractionDigits: 4 }).format(v);
 
 const th = "px-2 py-2 text-[11px] font-semibold uppercase tracking-[0.6px] text-muted whitespace-nowrap";
 const inputCls =
@@ -82,15 +64,15 @@ export function WeeklyReport({
         <input
           name={`n|${periodId}|${field}|`}
           defaultValue={typed[`${periodId}|${field}`] ?? ""}
-          placeholder={v === null ? "" : fmt(v, unit, locale)}
+          placeholder={v === null ? "" : fmt(v, unit)}
           inputMode="decimal"
           className={inputCls}
         />
       );
     }
     return (
-      <span title={full(v, locale)} className={cx(v === null && "text-muted")}>
-        {fmt(v, unit, locale)}
+      <span className={cx(v === null && "text-muted")}>
+        {fmt(v, unit)}
         {fromWeeks && <span className="ml-0.5 text-[10px] text-muted" title={t.sumOfWeeks}>Σ</span>}
       </span>
     );
@@ -178,13 +160,13 @@ export function WeeklyReport({
                           return (
                             <Fragment key={p.key}>
                               <td className={cx("tabular border-l border-hairline px-2 py-1.5 text-right whitespace-nowrap", r.planEditable && !editing && "bg-warning-soft/40")}>
-                                {r.planEditable ? numCell(p.id, `plan:${r.key}`, c, "plan", r.unit) : <span className={cx(c.plan === null && "text-muted")}>{fmt(c.plan, r.unit, locale)}</span>}
+                                {r.planEditable ? numCell(p.id, `plan:${r.key}`, c, "plan", r.unit) : <span className={cx(c.plan === null && "text-muted")}>{fmt(c.plan, r.unit)}</span>}
                               </td>
                               <td className={cx("tabular px-2 py-1.5 text-right whitespace-nowrap", r.actualEditable && !editing && "bg-warning-soft/40")}>
-                                {r.actualEditable ? numCell(p.id, `act:${r.key}`, c, "actual", r.unit) : <span title={full(c.actual, locale)} className={cx(c.actual === null && "text-muted")}>{fmt(c.actual, r.unit, locale)}</span>}
+                                {r.actualEditable ? numCell(p.id, `act:${r.key}`, c, "actual", r.unit) : <span className={cx(c.actual === null && "text-muted")}>{fmt(c.actual, r.unit)}</span>}
                               </td>
                               <td className={cx("tabular px-2 py-1.5 text-right whitespace-nowrap", c.rate === null && "text-muted")}>
-                                {c.rate === null ? "N/A" : `${new Intl.NumberFormat(locale === "vi" ? "vi-VN" : "en-US", { maximumFractionDigits: 1 }).format(c.rate * 100)}%`}
+                                {c.rate === null ? "N/A" : fmtPercent(c.rate)}
                               </td>
                             </Fragment>
                           );

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getData } from "../data/dataset";
+import { parseVnNumber } from "../format";
 import { supabase } from "../db/supabase";
 import { canViewStore } from "../rbac";
 import { getCurrentUser } from "../session";
@@ -99,7 +100,7 @@ export async function saveInputs(_: SaveState, formData: FormData): Promise<Save
     let txt: string | null = null;
     if (type === "n") {
       if (text) {
-        const n = Number(text.replace(/[\s,]/g, ""));
+        const n = parseVnNumber(text);
         if (!isFinite(n)) return { ok: false, error: `invalid:${field}` };
         num = n;
       }

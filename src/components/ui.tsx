@@ -185,8 +185,12 @@ export function StatTile({
       </div>
       <div
         className={cx(
-          "tabular relative mt-2 font-semibold leading-none",
-          missing ? "text-[18px] tracking-normal" : "text-[24px] tracking-[-0.7px] md:text-[28px] md:tracking-[-0.84px]",
+          "tabular relative mt-2 font-semibold leading-none [overflow-wrap:anywhere]",
+          missing
+            ? "text-[18px] tracking-normal"
+            : value.length > 9 // full numbers (no "tỷ"/"tr") need room on narrow tiles
+              ? "text-[16px] tracking-[-0.3px] sm:text-[20px] md:text-[24px] md:tracking-[-0.7px]"
+              : "text-[24px] tracking-[-0.7px] md:text-[28px] md:tracking-[-0.84px]",
           featured ? "text-on-dark" : missing ? "text-muted" : "text-ink",
         )}
       >

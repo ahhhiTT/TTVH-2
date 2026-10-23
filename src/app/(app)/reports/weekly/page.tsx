@@ -6,6 +6,7 @@ import { WeeklyConfig } from "@/components/weekly-config";
 import { type PeriodCol, WeeklyReport } from "@/components/weekly-report";
 import { WeeklyUpload } from "@/components/weekly-upload";
 import { getData } from "@/lib/data/dataset";
+import { editNumber } from "@/lib/format";
 import { canOpen, visibleStoreIds } from "@/lib/rbac";
 import { getI18n, requireUser } from "@/lib/session";
 import { evaluate, periodsOf } from "@/lib/weekly/compute";
@@ -60,7 +61,7 @@ export default async function WeeklyReportPage({ searchParams }: { searchParams:
   const result = evaluate(sections, periodsOf(month, range.from, range.to, weeks), facts, inputs);
   const canEdit = INTERNAL.has(user.role);
   const typed: Record<string, string> = {};
-  for (const i of inputs) typed[`${i.period}|${i.field}`] = i.num !== null ? String(i.num) : (i.txt ?? "");
+  for (const i of inputs) typed[`${i.period}|${i.field}`] = i.num !== null ? editNumber(i.num) : (i.txt ?? "");
   const periodCols: PeriodCol[] = [
     { key: "M", id: month, label: `${W.monthCol} ${month.slice(5)}/${month.slice(0, 4)}`, range: `${dm(range.from)} - ${dm(range.to)}` },
     ...weeks.map((w) => ({ key: w.key, id: `${month}-${w.key}`, label: `${W.week} ${w.key.slice(1)}`, range: `${dm(w.from)} - ${dm(w.to)}` })),

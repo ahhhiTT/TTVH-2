@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 import type { Dictionary, Locale } from "@/lib/i18n/dictionaries";
+import { fmtNumber } from "@/lib/format";
 import { saveUpload } from "@/lib/weekly/actions";
 import { type FileKind, KINDS, type ParsedFile, type ReportConfig } from "@/lib/weekly/kinds";
 import { dm, type WeekRange } from "@/lib/weekly/periods";
@@ -237,7 +238,7 @@ export function WeeklyUpload({
                       <span className="text-muted">-</span>
                     )}
                   </td>
-                  <td className="tabular px-3 py-2 text-right">{item.rows.toLocaleString(locale === "vi" ? "vi-VN" : "en-US")}</td>
+                  <td className="tabular px-3 py-2 text-right">{fmtNumber(item.rows)}</td>
                 </tr>
               ))}
             </tbody>
