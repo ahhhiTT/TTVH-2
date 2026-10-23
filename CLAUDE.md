@@ -84,6 +84,8 @@ running Planning, Execution (checklist, SLA) and Report, plus career path / L&D.
 ## UI rules
 - No icon library and no emoji. Any graphic is hand-written inline SVG
   (`src/components/svg.tsx`): status marks, diagrams, charts, logo.
+- Numbers (Director 2026-10-23): full values, never compacted to tỷ/tr; "." thousands,
+  "," decimals, max 2 decimals; % always 2 decimals. Use `src/lib/format.ts`.
 - Plain, factual copy. No AI-style phrasing, no em dashes in UI text.
 - Visual style follows the live expo.dev (checked 2026-10-08) on top of the tokens in
   `docs/DESIGN.md`: colors are CSS variables in `globals.css`; black is the only CTA
