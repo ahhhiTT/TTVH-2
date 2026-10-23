@@ -24,7 +24,12 @@ export default async function WeeklyReportPage({ searchParams }: { searchParams:
   const W = t.weekly;
   const scope = visibleStoreIds(d, user);
   // The template is the TikTok Shop one.
-  const stores = d.listStores().filter((s) => scope.has(s.id) && s.channel === "tiktok").sort((a, b) => a.name.localeCompare(b.name));
+  // The person's own stores come first, so the default is never a colleague's store.
+  const own = new Set(d.assignmentsForUser(user.id).map((a) => a.storeId));
+  const stores = d
+    .listStores()
+    .filter((s) => scope.has(s.id) && s.channel === "tiktok")
+    .sort((a, b) => Number(own.has(b.id)) - Number(own.has(a.id)) || a.name.localeCompare(b.name));
   const now = new Date();
   const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   const month = isMonth(sp.month) ? sp.month : thisMonth;
@@ -91,7 +96,11 @@ export default async function WeeklyReportPage({ searchParams }: { searchParams:
       <div className="space-y-6">
         {canEdit ? (
           <Card accent="cyan" title={W.step1} padded>
-            <p className="mb-4 text-[13px] text-body">{W.step1Hint}</p>
+            <p className="mb-3 text-[13px] text-body">{W.step1Hint}</p>
+            <p className="mb-4 inline-flex flex-wrap items-center gap-2 rounded-full border border-hairline-strong bg-panel px-3 py-1.5 text-[13px]">
+              <span className="text-muted">{W.target_store}:</span>
+              <span className="font-semibold text-ink">{store.name}</span>
+            </p>
             <WeeklyUpload storeId={store.id} storeName={store.name} config={config} monthRange={range} weeks={weeks} locale={locale} t={W} />
             <div className="mt-6">
               <div className="mb-1 text-sm font-semibold text-ink">{W.status}</div>

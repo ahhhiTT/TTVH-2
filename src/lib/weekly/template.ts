@@ -83,7 +83,7 @@ export function buildTemplate(config: ReportConfig, skus: string[]): Section[] {
           { key: "orders", label: l("Số đơn hàng", "Orders"), unit: "num", base: fact("orders") },
           { key: "clicks", label: l("Lượt nhấp vào sản phẩm", "Product clicks"), unit: "num", base: fact("clicks") },
           { key: "visitors", label: l("Lượt truy cập gian hàng", "Store visitors"), unit: "num", base: fact("visitors") },
-          { key: "cr", label: l("Tỉ lệ chuyển đổi (CR)", "Conversion rate (CR)"), unit: "pct", calc: (g) => div(g("orders"), g("clicks")) }, // Kuties E12 = E9/E10
+          { key: "cr", label: l("Tỉ lệ chuyển đổi (CR)", "Conversion rate (CR)"), unit: "pct", calc: (g) => div(g("orders"), g("visitors")) }, // Director 2026-10-23: orders / store visitors
           { key: "aov", label: l("Giá trung bình/đơn hàng (AOV)", "Average order value (AOV)"), unit: "vnd", calc: (g) => div(g("nmv"), g("orders_eff")) },
           { key: "cancel", label: l("Tỷ lệ hủy", "Cancel rate"), unit: "pct", calc: (g) => { const r = div(g("nmv"), g("gmv")); return r === null ? null : 1 - r; } },
           { key: "cost_net", label: l("Tổng chi phí thúc đẩy (net)", "Total growth cost (net)"), unit: "vnd", manual: true },

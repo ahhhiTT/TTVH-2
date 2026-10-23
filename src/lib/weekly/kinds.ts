@@ -152,4 +152,5 @@ export interface ParsedFile {
   facts: Fact[];
   warnings: string[];
   needsPeriod: boolean; // period export: the person confirms which range it covers
+  accounts?: string[]; // shop-side handles seen in the file, to catch a wrong store
 }

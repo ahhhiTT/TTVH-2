@@ -100,7 +100,9 @@ function range(days: string[]) {
   return { from: s[0], to: s[s.length - 1] };
 }
 
-function daily(kind: FileKind, acc: Acc, days: string[], rows: number, warnings: string[] = []) {
+type Parsed = Omit<ParsedFile, "fileName" | "sheet">;
+
+function daily(kind: FileKind, acc: Acc, days: string[], rows: number, warnings: string[] = []): Parsed | null {
   if (days.length === 0) return null;
   return { kind, ...range(days), rows, facts: acc.facts(), warnings, needsPeriod: false };
 }
@@ -114,6 +116,7 @@ const orders: Detector = (rows) => {
     c("Created Time"), c("Order Channel"), c("Creator Handle"), c("Seller SKU"), c("Quantity"),
   ];
   const acc = new Acc();
+  const byCreator = new Map<string, number>();
   const all = new Map<string, Set<string>>();
   const eff = new Map<string, Set<string>>();
   const days: string[] = [];
@@ -133,12 +136,18 @@ const orders: Detector = (rows) => {
     if (!cancelled) (eff.get(d) ?? eff.set(d, new Set()).get(d)!).add(id);
     const ch = strip(r[cCh]);
     const cr = strip(r[cCr]);
-    if (cr) acc.add(d, d, "gmv_cc", `${ch}|${cr}`, v);
+    if (cr) {
+      acc.add(d, d, "gmv_cc", `${ch}|${cr}`, v);
+      byCreator.set(cr, (byCreator.get(cr) ?? 0) + v);
+    }
     if (!cancelled && cSku >= 0) acc.add(d, d, "sku_qty", String(r[cSku] ?? "").trim() || "(không có SKU)", toNum(r[cQty]) ?? 0);
   }
   for (const [d, s] of all) acc.add(d, d, "orders", "", s.size);
   for (const [d, s] of eff) acc.add(d, d, "orders_eff", "", s.size);
-  return daily("orders", acc, days, n);
+  const res = daily("orders", acc, days, n);
+  // The shop's own account is normally the top seller in its order file.
+  if (res) res.accounts = [...byCreator.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([c]) => c);
+  return res;
 };
 
 const shopOverview: Detector = (rows) => {
@@ -267,7 +276,9 @@ const live: Detector = (rows, ctx) => {
     acc.add(d, d, `${p}_sessions`, "", 1);
     if (isSelf) acc.add(d, d, "lself_hours_file", "", toHours(r[cDur]));
   }
-  return daily(kind, acc, parsed.map((x) => x.d), parsed.length, warnings);
+  const res = daily(kind, acc, parsed.map((x) => x.d), parsed.length, warnings);
+  if (res && isSelf) res.accounts = [...nicks];
+  return res;
 };
 
 const video: Detector = (rows) => {
@@ -278,13 +289,17 @@ const video: Detector = (rows) => {
   const cTime = col(h.cols, "Thời gian");
   const acc = new Acc();
   const days: string[] = [];
+  const names = new Set<string>();
   for (const r of rows.slice(h.index + 1)) {
     const d = toDay(r[cTime]);
     if (!d) continue;
     days.push(d);
+    if (!isAff) names.add(strip(r[cName]));
     acc.add(d, d, isAff ? "vaff_posted" : "vself_posted", isAff ? "" : strip(r[cName]), 1);
   }
-  return daily(isAff ? "video_aff" : "video_self", acc, days, days.length);
+  const res = daily(isAff ? "video_aff" : "video_self", acc, days, days.length);
+  if (res && !isAff) res.accounts = [...names];
+  return res;
 };
 
 const income: Detector = (rows) => {

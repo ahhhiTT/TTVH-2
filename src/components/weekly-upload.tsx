@@ -65,7 +65,7 @@ export function WeeklyUpload({
       try {
         const parsed = await parseFile(file, { storeName, config });
         if (!parsed.length) missed.push(file.name);
-        found.push(...parsed.map((p) => ({ ...p, include: p.rows > 0, period: "M" })));
+        found.push(...parsed.map((p) => checkStore({ ...p, include: p.rows > 0, period: "M" })));
       } catch {
         missed.push(file.name);
       }
@@ -73,6 +73,16 @@ export function WeeklyUpload({
     setItems((prev) => [...prev, ...found]);
     setUnknown(missed);
     setReading(false);
+  }
+
+  // Shop-side accounts in the file must belong to the selected store.
+  function checkStore(item: Item): Item {
+    if (!item.accounts?.length) return item;
+    const own = config.selfAccounts.map((a) => a.trim().toLowerCase());
+    const seen = item.accounts.join(", ");
+    if (!own.length) return { ...item, warnings: [...item.warnings, `no_config:${seen}`] };
+    if (item.accounts.some((a) => own.includes(a))) return item;
+    return { ...item, include: false, warnings: [...item.warnings, `wrong_store:${seen}`] };
   }
 
   const range = (item: Item) => {
@@ -101,9 +111,11 @@ export function WeeklyUpload({
   }
 
   const warn = (w: string) => {
-    const [key, n] = w.split(":");
+    const i = w.indexOf(":");
+    const key = i < 0 ? w : w.slice(0, i);
+    const n = i < 0 ? "" : w.slice(i + 1);
     const text = (t.warn as Record<string, string>)[key] ?? w;
-    return text.replace("{n}", n ?? "");
+    return text.replace("{n}", n).replace("{store}", storeName);
   };
 
   return (
@@ -232,7 +244,7 @@ export function WeeklyUpload({
           </table>
           <div className="flex justify-end border-t border-hairline p-3">
             <button type="button" disabled={saving || !items.some((i) => i.include)} onClick={save} className={buttonPrimary}>
-              {saving ? t.saving : t.save}
+              {saving ? t.saving : t.save.replace("{store}", storeName)}
             </button>
           </div>
         </div>
